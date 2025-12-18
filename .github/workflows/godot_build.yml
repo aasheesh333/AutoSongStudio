@@ -42,38 +42,54 @@ jobs:
           unzip Godot_v${GODOT_VERSION}-stable_export_templates.tpz
           mv templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
 
-      - name: Configure Godot Android Settings
+      - name: Configure Godot Editor Settings
         run: |
-          # Create Config Directory
           mkdir -p ~/.config/godot
 
-          # Create editor_settings-4.tres
-          # We manually write the required settings sections
+          # Detect highest build-tools version
+          BUILD_TOOLS_VER=$(ls $ANDROID_HOME/build-tools | sort -V | tail -n 1)
+          echo "Detected Build Tools Version: $BUILD_TOOLS_VER"
+
+          # Define Paths
+          ADB_PATH="$ANDROID_HOME/platform-tools/adb"
+          ZIPALIGN_PATH="$ANDROID_HOME/build-tools/$BUILD_TOOLS_VER/zipalign"
+          APKSIGNER_PATH="$ANDROID_HOME/build-tools/$BUILD_TOOLS_VER/apksigner"
+
+          # Check if they exist
+          ls -l "$ADB_PATH"
+          ls -l "$ZIPALIGN_PATH"
+          ls -l "$APKSIGNER_PATH"
+
+          # Generate Editor Settings
+          # We include both standard Godot keys and the user-requested explicit keys to be safe.
           cat <<EOF > ~/.config/godot/editor_settings-4.tres
           [gd_resource type="EditorSettings" format=3]
 
           [resource]
           export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          export/android/jdk_path = "$JAVA_HOME"
+          export/android/adb = "$ADB_PATH"
+          export/android/adb_path = "$ADB_PATH"
+          export/android/apksigner = "$APKSIGNER_PATH"
+          export/android/apksigner_path = "$APKSIGNER_PATH"
+          export/android/zipalign = "$ZIPALIGN_PATH"
+          export/android/zipalign_path = "$ZIPALIGN_PATH"
           export/android/debug_keystore = "${{ github.workspace }}/debug.keystore"
           export/android/debug_keystore_user = "androiddebugkey"
           export/android/debug_keystore_pass = "android"
           export/android/force_system_user = false
-          export/android/timestamping_authority_url = ""
           export/android/shutdown_adb_on_exit = true
           EOF
 
-          # Verify Content
-          echo "--- Editor Settings ---"
+          echo "--- Generated editor_settings-4.tres ---"
           cat ~/.config/godot/editor_settings-4.tres
 
-      - name: Debug Info
+      - name: Debug Environment
         run: |
           echo "ANDROID_HOME: $ANDROID_HOME"
-          echo "Listing Android SDK:"
-          ls -F "$ANDROID_HOME"
-          echo "Listing Templates:"
-          ls -R ~/.local/share/godot/export_templates/
-          echo "Export Presets:"
+          echo "JAVA_HOME: $JAVA_HOME"
+          echo "Export Presets Config:"
           cat export_presets.cfg
 
       - name: Create Build Directory
@@ -88,7 +104,7 @@ jobs:
       - name: Build Release AAB
         run: godot --headless --verbose --export-release "Android AAB" build/MergeIdleEmpire-release.aab
 
-      - name: List Files (Post-Build)
+      - name: List Output Files
         run: ls -R build/
 
       - name: Upload Artifacts
