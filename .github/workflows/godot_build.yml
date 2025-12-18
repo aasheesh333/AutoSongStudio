@@ -28,19 +28,23 @@ jobs:
 
       - name: Build Debug APK
         run: |
-          mkdir -p build
-          godot --headless --verbose --export-debug "Android" build/MergeIdleEmpire-debug.apk
+          godot --headless --verbose --export-debug "Android" MergeIdleEmpire-debug.apk
 
       - name: Build Release APK
         run: |
-          godot --headless --verbose --export-release "Android" build/MergeIdleEmpire-release.apk
+          godot --headless --verbose --export-release "Android" MergeIdleEmpire-release.apk
 
       - name: Build Release AAB
         run: |
-          godot --headless --verbose --export-release "Android AAB" build/MergeIdleEmpire-release.aab
+          godot --headless --verbose --export-release "Android AAB" MergeIdleEmpire-release.aab
+
+      - name: List Files (Debug)
+        run: ls -R
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Android-Builds
-          path: build/
+          path: |
+            *.apk
+            *.aab
