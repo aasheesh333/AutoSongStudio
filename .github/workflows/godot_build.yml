@@ -42,6 +42,40 @@ jobs:
           unzip Godot_v${GODOT_VERSION}-stable_export_templates.tpz
           mv templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
 
+      - name: Configure Godot Android Settings
+        run: |
+          # Create Config Directory
+          mkdir -p ~/.config/godot
+
+          # Create editor_settings-4.tres
+          # We manually write the required settings sections
+          cat <<EOF > ~/.config/godot/editor_settings-4.tres
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/debug_keystore = "${{ github.workspace }}/debug.keystore"
+          export/android/debug_keystore_user = "androiddebugkey"
+          export/android/debug_keystore_pass = "android"
+          export/android/force_system_user = false
+          export/android/timestamping_authority_url = ""
+          export/android/shutdown_adb_on_exit = true
+          EOF
+
+          # Verify Content
+          echo "--- Editor Settings ---"
+          cat ~/.config/godot/editor_settings-4.tres
+
+      - name: Debug Info
+        run: |
+          echo "ANDROID_HOME: $ANDROID_HOME"
+          echo "Listing Android SDK:"
+          ls -F "$ANDROID_HOME"
+          echo "Listing Templates:"
+          ls -R ~/.local/share/godot/export_templates/
+          echo "Export Presets:"
+          cat export_presets.cfg
+
       - name: Create Build Directory
         run: mkdir -p build
 
@@ -54,7 +88,7 @@ jobs:
       - name: Build Release AAB
         run: godot --headless --verbose --export-release "Android AAB" build/MergeIdleEmpire-release.aab
 
-      - name: List Files (Debug)
+      - name: List Files (Post-Build)
         run: ls -R build/
 
       - name: Upload Artifacts
