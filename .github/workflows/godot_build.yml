@@ -42,10 +42,15 @@ jobs:
           unzip Godot_v${GODOT_VERSION}-stable_export_templates.tpz
           mv templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
 
-      # ADDED: Generates a temporary debug keystore so the build doesn't fail if yours is missing
+      # FIXED STEP: Checks if keystore exists before creating it
       - name: Generate Debug Keystore
         run: |
-          keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999
+          if [ ! -f debug.keystore ]; then
+              echo "Generating new debug.keystore..."
+              keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999
+          else
+              echo "debug.keystore already exists. Skipping generation."
+          fi
 
       - name: Configure Godot Editor Settings
         run: |
@@ -106,7 +111,6 @@ jobs:
         if: always()
         run: ls -R build/
 
-      # FIXED: Added 'if: always()' and 'if-no-files-found'
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         if: always()
