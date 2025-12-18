@@ -1,7 +1,8 @@
 extends Control
 
-@onready var grid_container = $GridArea/GridContainer
-@onready var coins_label = $TopHUD/CoinsLabel
+@onready var grid_container = $SafeMargin/VBoxContainer/GridArea/GridContainer
+@onready var coins_label = $SafeMargin/VBoxContainer/TopBar/CoinPanel/Margin/HBox/CoinsLabel
+@onready var buy_button = $BottomBar/Margin/HBox/BuyButton
 
 var item_scene = preload("res://scenes/MergeItem.tscn")
 var slot_script = preload("res://scripts/Slot.gd")
@@ -24,15 +25,15 @@ func _build_grid():
 
 	for i in range(columns * rows):
 		var slot = Panel.new()
-		slot.custom_minimum_size = Vector2(180, 180) # Approximate for 1080 width
+		slot.custom_minimum_size = Vector2(160, 160) # Matched to item size + margin
 		slot.mouse_filter = Control.MOUSE_FILTER_PASS
 		slot.set_script(slot_script)
 		slot.index = i
 
-		# Style
+		# Invisible Style for Slot (Clean look, items float)
 		var style = StyleBoxFlat.new()
-		style.bg_color = Color(0.9, 0.9, 0.9)
-		style.set_corner_radius_all(20)
+		style.bg_color = Color(0.9, 0.9, 0.92, 0.5)
+		style.set_corner_radius_all(24)
 		slot.add_theme_stylebox_override("panel", style)
 
 		grid_container.add_child(slot)
@@ -47,7 +48,9 @@ func _spawn_item_at(index: int, level: int):
 	return false
 
 func _on_buy_button_pressed():
-	if GameManager.spend_coins(10) or GameManager.coins < 10: # Charity logic preserved
+	_animate_button_press(buy_button)
+
+	if GameManager.spend_coins(10) or GameManager.coins < 10:
 		# Find empty slot
 		for i in range(grid_container.get_child_count()):
 			var slot = grid_container.get_child(i)
@@ -57,4 +60,13 @@ func _on_buy_button_pressed():
 				break
 
 func _on_coins_changed(amount):
-	coins_label.text = "Coins: %d" % int(amount)
+	coins_label.text = "%d" % int(amount)
+	# Tiny pop animation on text
+	var tween = create_tween()
+	tween.tween_property(coins_label, "scale", Vector2(1.2, 1.2), 0.1)
+	tween.tween_property(coins_label, "scale", Vector2.ONE, 0.1)
+
+func _animate_button_press(btn: Button):
+	var tween = create_tween()
+	tween.tween_property(btn, "scale", Vector2(0.95, 0.95), 0.05)
+	tween.tween_property(btn, "scale", Vector2.ONE, 0.05)
