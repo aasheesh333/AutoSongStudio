@@ -1,0 +1,42 @@
+name: Build Godot Android
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  export-android:
+    name: Android Export
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.2.1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+
+      - name: Build Debug APK
+        run: |
+          mkdir -p build
+          godot --headless --verbose --export-debug "Android" build/MergeIdleEmpire-debug.apk
+
+      - name: Build Release APK
+        # We use the same preset "Android" but typically you'd have a separate Release preset.
+        # Here we just re-run export to show capability, or we can use the same output if config is identical.
+        # Let's just output one robust APK for now as configured in presets.
+        run: |
+          godot --headless --verbose --export-release "Android" build/MergeIdleEmpire-release.apk
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-Builds
+          path: build/
