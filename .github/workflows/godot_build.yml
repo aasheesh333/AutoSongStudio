@@ -15,32 +15,47 @@ jobs:
   export-android:
     name: Android Export
     runs-on: ubuntu-latest
-    container:
-      image: barichello/godot-ci:4.2.1
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Godot
         run: |
-          mkdir -v -p ~/.local/share/godot/export_templates/
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-          mkdir -p build
+          wget https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
+          unzip Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
+          mv Godot_v${GODOT_VERSION}-stable_linux.x86_64 /usr/local/bin/godot
+          chmod +x /usr/local/bin/godot
+
+      - name: Install Templates
+        run: |
+          wget https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          unzip Godot_v${GODOT_VERSION}-stable_export_templates.tpz
+          mv templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
+
+      - name: Create Build Directory
+        run: mkdir -p build
 
       - name: Build Debug APK
-        run: |
-          godot --headless --verbose --export-debug "Android" build/MergeIdleEmpire-debug.apk
+        run: godot --headless --verbose --export-debug "Android" build/MergeIdleEmpire-debug.apk
 
       - name: Build Release APK
-        run: |
-          godot --headless --verbose --export-release "Android" build/MergeIdleEmpire-release.apk
+        run: godot --headless --verbose --export-release "Android" build/MergeIdleEmpire-release.apk
 
       - name: Build Release AAB
-        run: |
-          godot --headless --verbose --export-release "Android AAB" build/MergeIdleEmpire-release.aab
+        run: godot --headless --verbose --export-release "Android AAB" build/MergeIdleEmpire-release.aab
 
-      - name: Fix Permissions
-        run: chmod -R 777 build/
+      - name: List Files (Debug)
+        run: ls -R build/
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
