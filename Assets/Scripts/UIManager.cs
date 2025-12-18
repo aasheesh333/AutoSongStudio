@@ -42,9 +42,16 @@ public static class UIManager
         Text txt = go.AddComponent<Text>();
         txt.text = content;
 
-        // Font Strategy: Try to find Arial, fallback to default if missing
-        Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-        if (font == null) font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        // Font Strategy: Dynamic Font (Best for code-only)
+        // Try common fonts: Arial (PC), Roboto (Android), Helvetica (iOS)
+        Font font = Font.CreateDynamicFontFromOSFont("Arial", fontSize);
+
+        // If that fails (font texture null or logic), try others
+        if (font == null) font = Font.CreateDynamicFontFromOSFont("Roboto", fontSize);
+        if (font == null) font = Font.CreateDynamicFontFromOSFont("Helvetica", fontSize);
+
+        // As a last resort, we don't set it (Unity might render nothing or default)
+        // But CreateDynamicFontFromOSFont usually returns a Font object even if it falls back.
         txt.font = font;
 
         txt.fontSize = fontSize;
@@ -96,13 +103,12 @@ public static class UIManager
 
         Image bg = popupObj.AddComponent<Image>();
         bg.color = new Color(0, 0, 0, 0.8f);
-        // Add button to background to close on click outside? Optional.
 
         // Content Box
         GameObject content = new GameObject("Content");
         content.transform.SetParent(popupObj.transform, false);
         RectTransform contentRt = content.AddComponent<RectTransform>();
-        contentRt.sizeDelta = new Vector2(800, 1000); // Larger for high res
+        contentRt.sizeDelta = new Vector2(800, 1000);
         Image contentImg = content.AddComponent<Image>();
         contentImg.color = Color.white;
 
@@ -119,7 +125,7 @@ public static class UIManager
             GameObject.Destroy(popupObj);
         });
         closeBtn.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -400);
-        closeBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(300, 100); // Bigger button
+        closeBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(300, 100);
 
         return popupObj;
     }
