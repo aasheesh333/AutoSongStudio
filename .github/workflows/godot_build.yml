@@ -42,24 +42,23 @@ jobs:
           unzip Godot_v${GODOT_VERSION}-stable_export_templates.tpz
           mv templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
 
-      # FIXED STEP: Checks if keystore exists before creating it
+      # Keystore check and generation
       - name: Generate Debug Keystore
         run: |
           if [ ! -f debug.keystore ]; then
               echo "Generating new debug.keystore..."
               keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999
           else
-              echo "debug.keystore already exists. Skipping generation."
+              echo "debug.keystore already exists. Using existing file."
           fi
 
       - name: Configure Godot Editor Settings
         run: |
           mkdir -p ~/.config/godot
-
+          
           # Detect highest build-tools version
           BUILD_TOOLS_VER=$(ls $ANDROID_HOME/build-tools | sort -V | tail -n 1)
-          echo "Detected Build Tools Version: $BUILD_TOOLS_VER"
-
+          
           # Define Paths
           ADB_PATH="$ANDROID_HOME/platform-tools/adb"
           ZIPALIGN_PATH="$ANDROID_HOME/build-tools/$BUILD_TOOLS_VER/zipalign"
@@ -86,36 +85,43 @@ jobs:
           export/android/shutdown_adb_on_exit = true
           EOF
 
-      - name: Debug Environment
-        run: |
-          echo "ANDROID_HOME: $ANDROID_HOME"
-          echo "JAVA_HOME: $JAVA_HOME"
-          echo "Check if export_presets.cfg exists:"
-          ls -l export_presets.cfg || echo "WARNING: export_presets.cfg NOT FOUND"
-
       - name: Create Build Directory
         run: mkdir -p build
 
-      # Note: Ensure your export preset name in Godot matches "Android" exactly
+      # --- BUILD STEPS ---
+      # Maine yahan "|| true" hata diya hai taki agar fail ho to error dikhe
+      
       - name: Build Debug APK
         run: godot --headless --verbose --export-debug "Android" build/MergeIdleEmpire-debug.apk
 
       - name: Build Release APK
         run: godot --headless --verbose --export-release "Android" build/MergeIdleEmpire-release.apk
 
-      # Note: Ensure you have a separate export preset named "Android AAB" checked as 'Export AAB' in Godot
       - name: Build Release AAB
         run: godot --headless --verbose --export-release "Android AAB" build/MergeIdleEmpire-release.aab
 
-      - name: List Output Files
+      # --- DEBUGGING STEP ---
+      # Ye step dhundega ki APK actually bana kahan hai (agar build folder me nahi hai to)
+      - name: Find ANY APK files
         if: always()
-        run: ls -R build/
+        run: |
+          echo "Looking for .apk files anywhere in the runner..."
+          find . -name "*.apk"
+          echo "Looking for .aab files anywhere in the runner..."
+          find . -name "*.aab"
+          echo "Listing build directory:"
+          ls -R build/
 
+      # --- UPLOAD STEP ---
+      # Maine path change karke '**/*.apk' kar diya hai. 
+      # Isse wo folder ke andar dhundh kar upload karega.
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: Android-Builds
-          path: build/*
+          path: |
+            **/*.apk
+            **/*.aab
           if-no-files-found: warn
           retention-days: 5
