@@ -25,26 +25,25 @@ jobs:
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
           mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -p build
 
       - name: Build Debug APK
         run: |
-          godot --headless --verbose --export-debug "Android" MergeIdleEmpire-debug.apk
+          godot --headless --verbose --export-debug "Android" build/MergeIdleEmpire-debug.apk
 
       - name: Build Release APK
         run: |
-          godot --headless --verbose --export-release "Android" MergeIdleEmpire-release.apk
+          godot --headless --verbose --export-release "Android" build/MergeIdleEmpire-release.apk
 
       - name: Build Release AAB
         run: |
-          godot --headless --verbose --export-release "Android AAB" MergeIdleEmpire-release.aab
+          godot --headless --verbose --export-release "Android AAB" build/MergeIdleEmpire-release.aab
 
-      - name: List Files (Debug)
-        run: ls -R
+      - name: Fix Permissions
+        run: chmod -R 777 build/
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Android-Builds
-          path: |
-            *.apk
-            *.aab
+          path: build/
