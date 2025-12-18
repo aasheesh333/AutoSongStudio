@@ -42,29 +42,26 @@ jobs:
           unzip Godot_v${GODOT_VERSION}-stable_export_templates.tpz
           mv templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
 
-      # Keystore check and generation
-      - name: Generate Debug Keystore
-        run: |
-          if [ ! -f debug.keystore ]; then
-              echo "Generating new debug.keystore..."
-              keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999
-          else
-              echo "debug.keystore already exists. Using existing file."
-          fi
-
       - name: Configure Godot Editor Settings
         run: |
           mkdir -p ~/.config/godot
-          
+
           # Detect highest build-tools version
           BUILD_TOOLS_VER=$(ls $ANDROID_HOME/build-tools | sort -V | tail -n 1)
-          
+          echo "Detected Build Tools Version: $BUILD_TOOLS_VER"
+
           # Define Paths
           ADB_PATH="$ANDROID_HOME/platform-tools/adb"
           ZIPALIGN_PATH="$ANDROID_HOME/build-tools/$BUILD_TOOLS_VER/zipalign"
           APKSIGNER_PATH="$ANDROID_HOME/build-tools/$BUILD_TOOLS_VER/apksigner"
 
+          # Check if they exist
+          ls -l "$ADB_PATH"
+          ls -l "$ZIPALIGN_PATH"
+          ls -l "$APKSIGNER_PATH"
+
           # Generate Editor Settings
+          # We include both standard Godot keys and the user-requested explicit keys to be safe.
           cat <<EOF > ~/.config/godot/editor_settings-4.tres
           [gd_resource type="EditorSettings" format=3]
 
@@ -85,12 +82,19 @@ jobs:
           export/android/shutdown_adb_on_exit = true
           EOF
 
+          echo "--- Generated editor_settings-4.tres ---"
+          cat ~/.config/godot/editor_settings-4.tres
+
+      - name: Debug Environment
+        run: |
+          echo "ANDROID_HOME: $ANDROID_HOME"
+          echo "JAVA_HOME: $JAVA_HOME"
+          echo "Export Presets Config:"
+          cat export_presets.cfg
+
       - name: Create Build Directory
         run: mkdir -p build
 
-      # --- BUILD STEPS ---
-      # Maine yahan "|| true" hata diya hai taki agar fail ho to error dikhe
-      
       - name: Build Debug APK
         run: godot --headless --verbose --export-debug "Android" build/MergeIdleEmpire-debug.apk
 
@@ -100,28 +104,11 @@ jobs:
       - name: Build Release AAB
         run: godot --headless --verbose --export-release "Android AAB" build/MergeIdleEmpire-release.aab
 
-      # --- DEBUGGING STEP ---
-      # Ye step dhundega ki APK actually bana kahan hai (agar build folder me nahi hai to)
-      - name: Find ANY APK files
-        if: always()
-        run: |
-          echo "Looking for .apk files anywhere in the runner..."
-          find . -name "*.apk"
-          echo "Looking for .aab files anywhere in the runner..."
-          find . -name "*.aab"
-          echo "Listing build directory:"
-          ls -R build/
+      - name: List Output Files
+        run: ls -R build/
 
-      # --- UPLOAD STEP ---
-      # Maine path change karke '**/*.apk' kar diya hai. 
-      # Isse wo folder ke andar dhundh kar upload karega.
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: Android-Builds
-          path: |
-            **/*.apk
-            **/*.aab
-          if-no-files-found: warn
-          retention-days: 5
+          path: build/
