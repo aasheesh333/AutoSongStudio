@@ -32,10 +32,12 @@ jobs:
           godot --headless --verbose --export-debug "Android" build/MergeIdleEmpire-debug.apk
 
       - name: Build Release APK
-        # Exporting Release APK using the same preset but with release flag.
-        # Ensure export_presets.cfg has valid keystore/release fields.
         run: |
           godot --headless --verbose --export-release "Android" build/MergeIdleEmpire-release.apk
+
+      - name: Build Release AAB
+        run: |
+          godot --headless --verbose --export-release "Android AAB" build/MergeIdleEmpire-release.aab
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
