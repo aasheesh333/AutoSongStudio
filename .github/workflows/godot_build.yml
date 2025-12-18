@@ -8,6 +8,9 @@ on:
     branches:
       - '**'
 
+env:
+  GODOT_VERSION: 4.2.1
+
 jobs:
   export-android:
     name: Android Export
@@ -29,9 +32,8 @@ jobs:
           godot --headless --verbose --export-debug "Android" build/MergeIdleEmpire-debug.apk
 
       - name: Build Release APK
-        # We use the same preset "Android" but typically you'd have a separate Release preset.
-        # Here we just re-run export to show capability, or we can use the same output if config is identical.
-        # Let's just output one robust APK for now as configured in presets.
+        # Exporting Release APK using the same preset but with release flag.
+        # Ensure export_presets.cfg has valid keystore/release fields.
         run: |
           godot --headless --verbose --export-release "Android" build/MergeIdleEmpire-release.apk
 
