@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  FLUTTER_VERSION: "3.16.5"
+  FLUTTER_VERSION: "3.22.2"
 
 jobs:
   # Flutter Android Build
