@@ -25,6 +25,11 @@ jobs:
           java-version: "17"
           distribution: "temurin"
 
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: 8.3
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -137,9 +142,8 @@ jobs:
         run: flutter analyze || echo "⚠️  Analysis issues found (non-blocking)"
 
       - name: Build APK (Release)
-        working-directory: ./android_app
         run: |
-          chmod +x android/gradlew
+          rm -f android/gradlew android/gradlew.bat
           flutter build apk --release --verbose
           echo "✅ APK built successfully"
 
