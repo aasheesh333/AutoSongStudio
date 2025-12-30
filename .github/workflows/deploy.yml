@@ -139,7 +139,7 @@ jobs:
       - name: Build APK (Release)
         working-directory: ./android_app
         run: |
-          flutter build apk --release --verbose --stacktrace
+          flutter build apk --release --verbose
           echo "✅ APK built successfully"
 
       - name: Build AAB (Release)
