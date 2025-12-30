@@ -2,9 +2,9 @@ name: Build and Deploy AutoSong Studio
 
 on:
     push:
-        branches: [main, master]
+        branches: ["**"]
     pull_request:
-        branches: [main, master]
+        branches: ["**"]
     workflow_dispatch:
 
 env:
