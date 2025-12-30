@@ -85,30 +85,48 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_PASSWORD" ]; then
-              echo "decrypting keystore..."
-              echo "$KEYSTORE_BASE64" | base64 -d > android_app/android/app/upload-keystore.jks
-              
-              echo "storePassword=$KEYSTORE_PASSWORD" > android_app/android/key.properties
-              echo "keyPassword=$KEY_PASSWORD" >> android_app/android/key.properties
-              echo "keyAlias=upload" >> android_app/android/key.properties
-              echo "storeFile=upload-keystore.jks" >> android_app/android/key.properties
-              
-              echo "✅ Keystore configured from secrets"
-          else
-              echo "⚠️ Secrets missing. Generating temporary keystore for build..."
-              keytool -genkey -v -keystore android_app/android/app/upload-keystore.jks \
+          KEYSTORE_PATH="android_app/android/app/upload-keystore.jks"
+          PROPS_PATH="android_app/android/key.properties"
+
+          # Function to generate debug keystore
+          generate_debug_keystore() {
+              echo "⚠️ Generating temporary keystore..."
+              keytool -genkey -v -keystore $KEYSTORE_PATH \
                   -keyalg RSA -keysize 2048 -validity 10000 \
                   -alias upload -storepass android -keypass android \
-                  -dname "CN=Android Debug,O=Android,C=US"
+                  -dname "CN=Android Debug,O=Android,C=US" \
+                  -noprompt
               
-              echo "storePassword=android" > android_app/android/key.properties
-              echo "keyPassword=android" >> android_app/android/key.properties
-              echo "keyAlias=upload" >> android_app/android/key.properties
-              echo "storeFile=upload-keystore.jks" >> android_app/android/key.properties
-              
+              echo "storePassword=android" > $PROPS_PATH
+              echo "keyPassword=android" >> $PROPS_PATH
+              echo "keyAlias=upload" >> $PROPS_PATH
+              echo "storeFile=upload-keystore.jks" >> $PROPS_PATH
               echo "✅ Temporary keystore generated"
+          }
+
+          if [ -n "$KEYSTORE_BASE64" ]; then
+              echo "🔐 Decoding keystore from secrets..."
+              # Try to decode
+              echo "$KEYSTORE_BASE64" | base64 -d --ignore-garbage > $KEYSTORE_PATH || true
+              
+              # Check if file exists and has size > 0
+              if [ -s "$KEYSTORE_PATH" ]; then
+                  echo "✅ Keystore decoded successfully"
+                  echo "storePassword=$KEYSTORE_PASSWORD" > $PROPS_PATH
+                  echo "keyPassword=$KEY_PASSWORD" >> $PROPS_PATH
+                  echo "keyAlias=upload" >> $PROPS_PATH
+                  echo "storeFile=upload-keystore.jks" >> $PROPS_PATH
+              else
+                  echo "❌ Keystore decode produced empty/invalid file. Falling back."
+                  generate_debug_keystore
+              fi
+          else
+              echo "ℹ️ No keystore secret found. Using debug keystore."
+              generate_debug_keystore
           fi
+
+      - name: Flutter Doctor
+        run: flutter doctor -v
 
       - name: Install Flutter dependencies
         working-directory: ./android_app
@@ -125,7 +143,7 @@ jobs:
       - name: Build APK (Release)
         working-directory: ./android_app
         run: |
-          flutter build apk --release --verbose
+          flutter build apk --release --verbose --stacktrace
           echo "✅ APK built successfully"
 
       - name: Build AAB (Release)
