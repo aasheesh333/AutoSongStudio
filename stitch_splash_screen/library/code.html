@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AutoSong Studio - Library</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2565e4",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                        "surface-dark": "#1c222e", // Slightly lighter for cards
+                        "surface-light": "#ffffff",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }.icon-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display min-h-screen overflow-x-hidden selection:bg-primary/30">
+<div class="w-full max-w-md mx-auto min-h-screen relative flex flex-col pb-24 bg-background-light dark:bg-background-dark transition-colors duration-300">
+<header class="sticky top-0 z-20 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-transparent dark:border-white/5 px-5 py-4 flex items-center justify-between transition-all">
+<h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Library</h1>
+<button class="flex items-center justify-center h-10 w-10 rounded-full bg-slate-200/50 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-slate-700 dark:text-slate-200" style="font-size: 24px;">filter_list</span>
+</button>
+</header>
+<div class="px-5 pt-2 pb-4">
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-slate-400 group-focus-within:text-primary transition-colors">search</span>
+</div>
+<input class="block w-full pl-12 pr-4 py-3.5 bg-white dark:bg-surface-dark border-none rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary/50 shadow-sm transition-all" placeholder="Search your tracks..." type="text"/>
+</div>
+</div>
+<div class="flex gap-2.5 px-5 overflow-x-auto no-scrollbar mb-6 pb-1">
+<button class="flex-none px-5 py-2 rounded-full bg-primary text-white text-sm font-semibold shadow-lg shadow-primary/20 transition-transform active:scale-95">
+            All Songs
+        </button>
+<button class="flex-none px-5 py-2 rounded-full bg-white dark:bg-surface-dark text-slate-600 dark:text-slate-300 text-sm font-medium border border-slate-200 dark:border-white/5 hover:border-primary/30 transition-all active:scale-95">
+            Ready
+        </button>
+<button class="flex-none px-5 py-2 rounded-full bg-white dark:bg-surface-dark text-slate-600 dark:text-slate-300 text-sm font-medium border border-slate-200 dark:border-white/5 hover:border-primary/30 transition-all active:scale-95">
+            Uploaded
+        </button>
+<button class="flex-none px-5 py-2 rounded-full bg-white dark:bg-surface-dark text-slate-600 dark:text-slate-300 text-sm font-medium border border-slate-200 dark:border-white/5 hover:border-primary/30 transition-all active:scale-95">
+            Processing
+        </button>
+<button class="flex-none px-5 py-2 rounded-full bg-white dark:bg-surface-dark text-slate-600 dark:text-slate-300 text-sm font-medium border border-slate-200 dark:border-white/5 hover:border-primary/30 transition-all active:scale-95">
+            Failed
+        </button>
+</div>
+<div class="flex flex-col px-5 gap-3.5 flex-1">
+<div class="group relative flex items-center gap-4 p-3 bg-white dark:bg-surface-dark rounded-xl border border-slate-100 dark:border-white/5 shadow-sm hover:border-primary/30 transition-all active:scale-[0.99] cursor-pointer">
+<div class="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg">
+<img alt="Abstract dark blue and purple waveform gradient representing lofi beats" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Abstract dark blue and purple waveform gradient" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpgBhQYWvIiU9NyRVMWKqaYQqpacS-6wdVZMcXLeowFVKGv1uF2fjwr7zxCJkAF57bw0iK_fsLRe0p0k9dIXK1YUi3W6lEIiW_JmplphhkGpDIF79PxhT4UsQ4DIuBO9KjEYwK4wi32eV9anj-hxTLoOFS5ZikpYpVOd2O9-5zQCPrksto-7f-kGaYsoMCd11ARJfQkgdZyCoyt_kHGCgE9EK5LPkWSn7BjHi_WBfUidhYQDFN6EvzfVQSznS3EQPQoQD_1qowWScr"/>
+<div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white drop-shadow-md">play_circle</span>
+</div>
+</div>
+<div class="flex flex-1 flex-col justify-center min-w-0">
+<div class="flex items-center justify-between mb-0.5">
+<h3 class="text-base font-bold text-slate-900 dark:text-white truncate pr-2">LoFi Chill Beat #042</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-primary/10 text-primary">
+                        Ready
+                    </span>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-1">Chill Hop • 85 BPM</p>
+<p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 font-medium">2 hours ago • 3:45</p>
+</div>
+</div>
+<div class="group relative flex items-center gap-4 p-3 bg-white dark:bg-surface-dark rounded-xl border border-slate-100 dark:border-white/5 shadow-sm transition-all cursor-default">
+<div class="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+<span class="material-symbols-outlined text-amber-500 animate-spin" style="font-size: 24px;">progress_activity</span>
+</div>
+<div class="flex flex-1 flex-col justify-center min-w-0">
+<div class="flex items-center justify-between mb-0.5">
+<h3 class="text-base font-bold text-slate-900 dark:text-white truncate pr-2">Cyberpunk Synthwave Beta</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-amber-500/10 text-amber-600 dark:text-amber-500">
+                        Generating
+                    </span>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-1 italic">Processing stems...</p>
+<div class="w-full bg-slate-200 dark:bg-slate-700 h-1 mt-2 rounded-full overflow-hidden">
+<div class="bg-amber-500 h-full rounded-full w-2/3"></div>
+</div>
+</div>
+</div>
+<div class="group relative flex items-center gap-4 p-3 bg-white dark:bg-surface-dark rounded-xl border border-slate-100 dark:border-white/5 shadow-sm transition-all cursor-default">
+<div class="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg opacity-80">
+<img alt="Close up of piano keys in low light" class="h-full w-full object-cover grayscale transition-all" data-alt="Close up of piano keys in low light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqSQbcudx9sGqH-hIIQ2o8gDAI9mxfbtSAbZrWV56wW5IQpCq36STh9M8r6Zdu8VRHcZKAdgoSRjy7Kf2rZPTyPviD4FAVQe04ThZR9dnZTShBeU7l5m2SZWr8qGg_6ISUZFA5Vf3a5VnVBJMjE1tyIO4HR3ToWvsZf3E_e9aS2qmN3_kYlIhqXuOx3_1MlybNGMCC1nSWTHqZd4yQQsrXSfSVPmVDTbLCK5jhcteBBE0hYu8NGtfzJqnS2BOKtUDTtMwgvbCZSrrw"/>
+<div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+<span class="material-symbols-outlined text-white/80 animate-pulse">hourglass_empty</span>
+</div>
+</div>
+<div class="flex flex-1 flex-col justify-center min-w-0">
+<div class="flex items-center justify-between mb-0.5">
+<h3 class="text-base font-bold text-slate-900 dark:text-white truncate pr-2">Midnight Jazz Project</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                        Processing
+                    </span>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-1">Jazz / Soul • 110 BPM</p>
+<p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 font-medium">Rendering video output...</p>
+</div>
+</div>
+<div class="group relative flex items-center gap-4 p-3 bg-white dark:bg-surface-dark rounded-xl border border-slate-100 dark:border-white/5 shadow-sm hover:border-primary/30 transition-all active:scale-[0.99] cursor-pointer">
+<div class="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg">
+<img alt="Abstract scenic mountains with retro synthwave sunset colors" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Abstract scenic mountains with retro synthwave sunset colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTEBeTlCSXHKZ8tX0aA0ckwt6OoIzL0xG19vs89bmn-dmjhPS-sjaJHQHBZjkA0N_1HNwLENeW1OJ29LxDEceSEniV0jRAOov3D1AuZc4Uek385z5HSXWQX1_UK0UHkVal2VcOHu3TpaSGTR-lwS0VXGRJ5xZ9KtX-8Ww1jGXVgvPUZmZLX8lghWVr4dnufHwxAlzTzPoWlzCX1LaAZamw1waXofGr-DsPiroDzEG_3fGCpky6GSgQTx58p-BawKsn5144bm2I9ceh"/>
+<div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white drop-shadow-md">open_in_new</span>
+</div>
+</div>
+<div class="flex flex-1 flex-col justify-center min-w-0">
+<div class="flex items-center justify-between mb-0.5">
+<h3 class="text-base font-bold text-slate-900 dark:text-white truncate pr-2">Sunset Drive Vol. 2</h3>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                        Uploaded
+                    </span>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-1">Synthwave • 120 BPM</p>
+<p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 font-medium">3 days ago • Live on YT</p>
+</div>
+</div>
+<div class="group relative flex items-center gap-4 p-3 bg-white dark:bg-surface-dark rounded-xl border border-rose-100 dark:border-rose-900/30 shadow-sm transition-all cursor-pointer">
+<div class="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg">
+<img alt="Neon blue liquid texture background" class="h-full w-full object-cover opacity-70" data-alt="Neon blue liquid texture background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNkqL0KNtd3Cq9J_W2xRyd8oB7pqku8053c3TzPjPTD5S_cMdZBkPZJNuqhfO4-PsoF6N-XcLiqRdMnU6lAqVAqrWboqsPhrUARtiwOJ6dL8IKD-Gif78ycXsFVOpH1Q2d0hFKZP_BWVzX0zRkWe2cnG25MTmRPZU0FsLkSYnog3C8HitlflSIWzsAozxSXyDDBGcU05SHWcWEKqoYlg6Q4c3xy1LrxCqaSj8_077avLAEYvxkHrSTirmk8HsMGcxwmwQpPL0r4r8A"/>
+<div class="absolute inset-0 bg-rose-900/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-rose-500 drop-shadow-md">warning</span>
+</div>
+</div>
+<div class="flex flex-1 flex-col justify-center min-w-0">
+<div class="flex items-center justify-between mb-0.5">
+<h3 class="text-base font-bold text-slate-900 dark:text-white truncate pr-2">Deep Focus Alpha</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                        Failed
+                    </span>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-1">Ambient • 60 BPM</p>
+<p class="text-xs text-rose-500/80 dark:text-rose-400/80 mt-0.5 font-medium">Upload failed: API Error</p>
+</div>
+</div>
+<div class="h-4"></div>
+</div>
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-background-dark/90 backdrop-blur-xl border-t border-slate-200 dark:border-white/5 pb-5 pt-3 max-w-md mx-auto">
+<div class="grid grid-cols-4 items-center px-2">
+<button class="flex flex-col items-center justify-center gap-1 p-2 text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary transition-colors group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 p-2 text-primary relative">
+<div class="absolute -top-3.5 h-1 w-10 bg-primary rounded-full shadow-[0_0_10px_rgba(37,101,228,0.5)]"></div>
+<span class="material-symbols-outlined icon-filled">library_music</span>
+<span class="text-[10px] font-bold">Library</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 p-2 text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary transition-colors group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">calendar_month</span>
+<span class="text-[10px] font-medium">Schedulers</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 p-2 text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary transition-colors group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">settings</span>
+<span class="text-[10px] font-medium">Settings</span>
+</button>
+</div>
+</nav>
+</div>
+
+</body></html>

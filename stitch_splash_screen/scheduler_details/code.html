@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scheduler Details - AutoSong Studio</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Manrope -->
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Theme Configuration -->
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#2565e4",
+              "background-light": "#f6f6f8",
+              "background-dark": "#111621",
+              "surface-dark": "#1c2333",
+              "border-dark": "#2d3648",
+            },
+            fontFamily: {
+              "display": ["Manrope", "sans-serif"]
+            },
+            borderRadius: {
+              "DEFAULT": "0.5rem", 
+              "lg": "0.75rem", 
+              "xl": "1rem", 
+              "2xl": "1.5rem",
+              "full": "9999px"
+            },
+          },
+        },
+      }
+    </script>
+<style>
+        /* Custom scrollbar hiding for cleaner mobile look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased selection:bg-primary/30">
+<!-- Main Container -->
+<div class="relative flex min-h-screen w-full flex-col overflow-hidden pb-32">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 flex items-center justify-between bg-background-light dark:bg-background-dark p-4 border-b border-gray-200 dark:border-border-dark/50 backdrop-blur-md bg-opacity-90 dark:bg-opacity-90">
+<div class="flex size-10 shrink-0 items-center justify-center rounded-full active:bg-gray-200 dark:active:bg-surface-dark transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-slate-900 dark:text-white" style="font-size: 24px;">arrow_back</span>
+</div>
+<h1 class="text-lg font-bold leading-tight tracking-tight flex-1 text-center">Scheduler Details</h1>
+<div class="flex w-10 items-center justify-end">
+<button class="text-primary text-base font-bold leading-normal tracking-wide shrink-0 active:opacity-70 transition-opacity">Save</button>
+</div>
+</header>
+<!-- Content Scroll View -->
+<main class="flex flex-col p-4 gap-6">
+<!-- Section 1: Scheduler Info (Read-Only) -->
+<section>
+<h3 class="text-slate-900 dark:text-white text-lg font-bold mb-3 px-1">Scheduler Info</h3>
+<div class="rounded-xl border border-gray-200 dark:border-border-dark bg-white dark:bg-surface-dark overflow-hidden shadow-sm">
+<div class="grid grid-cols-[35%_1fr] gap-x-4 p-4 text-sm">
+<!-- Row 1 -->
+<div class="py-2.5 border-b border-gray-100 dark:border-border-dark/50">
+<p class="text-slate-500 dark:text-slate-400 font-medium">Frequency</p>
+</div>
+<div class="py-2.5 border-b border-gray-100 dark:border-border-dark/50 flex items-center justify-end text-right">
+<p class="text-slate-900 dark:text-slate-200 font-medium">Daily</p>
+</div>
+<!-- Row 2 -->
+<div class="py-2.5 border-b border-gray-100 dark:border-border-dark/50">
+<p class="text-slate-500 dark:text-slate-400 font-medium">Active Days</p>
+</div>
+<div class="py-2.5 border-b border-gray-100 dark:border-border-dark/50 flex items-center justify-end text-right">
+<p class="text-slate-900 dark:text-slate-200 font-medium">Mon, Wed, Fri</p>
+</div>
+<!-- Row 3 -->
+<div class="py-2.5 border-b border-gray-100 dark:border-border-dark/50">
+<p class="text-slate-500 dark:text-slate-400 font-medium">Post Time</p>
+</div>
+<div class="py-2.5 border-b border-gray-100 dark:border-border-dark/50 flex items-center justify-end text-right">
+<p class="text-slate-900 dark:text-slate-200 font-medium">14:00 EST</p>
+</div>
+<!-- Row 4 -->
+<div class="py-2.5 border-b border-gray-100 dark:border-border-dark/50">
+<p class="text-slate-500 dark:text-slate-400 font-medium">Language</p>
+</div>
+<div class="py-2.5 border-b border-gray-100 dark:border-border-dark/50 flex items-center justify-end text-right">
+<p class="text-slate-900 dark:text-slate-200 font-medium">English</p>
+</div>
+<!-- Row 5 -->
+<div class="pt-2.5">
+<p class="text-slate-500 dark:text-slate-400 font-medium">Status</p>
+</div>
+<div class="pt-2.5 flex items-center justify-end text-right">
+<span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-500 ring-1 ring-inset ring-emerald-500/20">
+<span class="size-1.5 rounded-full bg-emerald-500"></span>
+                                Active
+                            </span>
+</div>
+</div>
+</div>
+<p class="text-slate-500 dark:text-slate-500 text-xs mt-2 px-1">These settings can’t be changed after creation to ensure scheduling accuracy.</p>
+</section>
+<!-- Section 2: Genres (Editable) -->
+<section>
+<div class="flex items-center justify-between mb-3 px-1">
+<h3 class="text-slate-900 dark:text-white text-lg font-bold">Genre Rotation</h3>
+<button class="text-primary text-sm font-bold flex items-center gap-1 active:opacity-70">
+<span class="material-symbols-outlined text-lg">add</span> Add Genre
+                    </button>
+</div>
+<div class="flex flex-col gap-2">
+<!-- Genre Item 1 -->
+<div class="group flex items-center gap-3 p-3 bg-white dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-border-dark shadow-sm active:border-primary/50 transition-colors">
+<span class="material-symbols-outlined text-slate-400 cursor-grab active:cursor-grabbing">drag_indicator</span>
+<div class="flex-1">
+<p class="text-slate-900 dark:text-white font-medium text-sm">Lofi Hip Hop</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">Priority 1</p>
+</div>
+<button class="size-8 flex items-center justify-center rounded-full text-slate-400 hover:text-red-500 active:bg-red-500/10 transition-colors">
+<span class="material-symbols-outlined text-xl">remove_circle</span>
+</button>
+</div>
+<!-- Genre Item 2 -->
+<div class="group flex items-center gap-3 p-3 bg-white dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-border-dark shadow-sm active:border-primary/50 transition-colors">
+<span class="material-symbols-outlined text-slate-400 cursor-grab active:cursor-grabbing">drag_indicator</span>
+<div class="flex-1">
+<p class="text-slate-900 dark:text-white font-medium text-sm">Jazz Hop</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">Priority 2</p>
+</div>
+<button class="size-8 flex items-center justify-center rounded-full text-slate-400 hover:text-red-500 active:bg-red-500/10 transition-colors">
+<span class="material-symbols-outlined text-xl">remove_circle</span>
+</button>
+</div>
+<!-- Genre Item 3 -->
+<div class="group flex items-center gap-3 p-3 bg-white dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-border-dark shadow-sm active:border-primary/50 transition-colors">
+<span class="material-symbols-outlined text-slate-400 cursor-grab active:cursor-grabbing">drag_indicator</span>
+<div class="flex-1">
+<p class="text-slate-900 dark:text-white font-medium text-sm">Chillhop</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">Priority 3</p>
+</div>
+<button class="size-8 flex items-center justify-center rounded-full text-slate-400 hover:text-red-500 active:bg-red-500/10 transition-colors">
+<span class="material-symbols-outlined text-xl">remove_circle</span>
+</button>
+</div>
+</div>
+<p class="text-slate-500 dark:text-slate-500 text-xs mt-2 px-1">Updates to the queue affect future runs only.</p>
+</section>
+<!-- Section 3: Content Prompts (Editable) -->
+<section class="flex flex-col gap-5">
+<h3 class="text-slate-900 dark:text-white text-lg font-bold px-1">Content Prompts</h3>
+<!-- Description Field -->
+<div class="space-y-1.5">
+<label class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-1">Video Description</label>
+<div class="relative">
+<textarea class="w-full bg-white dark:bg-surface-dark text-slate-900 dark:text-white rounded-xl border border-gray-200 dark:border-border-dark p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600" placeholder="Leave empty for AI auto-generation..." rows="3"></textarea>
+<span class="absolute bottom-2 right-3 text-[10px] font-medium text-slate-400 dark:text-slate-600">0/500</span>
+</div>
+</div>
+<!-- Tags Field -->
+<div class="space-y-1.5">
+<label class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-1">Tags</label>
+<div class="relative">
+<textarea class="w-full bg-white dark:bg-surface-dark text-slate-900 dark:text-white rounded-xl border border-gray-200 dark:border-border-dark p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600" placeholder="#lofi #chill #study..." rows="2"></textarea>
+<span class="absolute bottom-2 right-3 text-[10px] font-medium text-slate-400 dark:text-slate-600">0/200</span>
+</div>
+</div>
+<!-- Lyrics Prompt Field -->
+<div class="space-y-1.5">
+<label class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-1">Lyrics Theme / Prompt</label>
+<div class="relative">
+<textarea class="w-full bg-white dark:bg-surface-dark text-slate-900 dark:text-white rounded-xl border border-gray-200 dark:border-border-dark p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600" placeholder="A rainy day in Tokyo, studying late at night..." rows="3"></textarea>
+<span class="absolute bottom-2 right-3 text-[10px] font-medium text-slate-400 dark:text-slate-600">0/300</span>
+</div>
+</div>
+</section>
+<!-- Section 4: AI Notice -->
+<section>
+<div class="flex items-start gap-4 rounded-xl bg-primary/10 border border-primary/20 p-4">
+<div class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/20 text-primary">
+<span class="material-symbols-outlined text-lg">auto_awesome</span>
+</div>
+<div>
+<h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">AI Auto-Completion</h4>
+<p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">If optional fields are left empty, our AI will auto-generate optimized content based on your genre and lyrics settings.</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Fixed Action Bar -->
+<div class="fixed bottom-0 left-0 right-0 z-40 bg-background-light dark:bg-background-dark border-t border-gray-200 dark:border-border-dark p-4 pb-8 flex flex-col gap-3 backdrop-blur-xl bg-opacity-95 dark:bg-opacity-95">
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3.5 rounded-xl text-base shadow-lg shadow-primary/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                Save Changes
+            </button>
+<button class="w-full text-red-500 hover:text-red-400 font-bold py-2 rounded-lg text-sm transition-colors active:opacity-70">
+                Delete Scheduler
+            </button>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AutoSong Studio Dashboard</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2565e4",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                        "surface-dark": "#1a1f2b",
+                        "surface-highlight": "#232936",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111621;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #232936;
+            border-radius: 2px;
+        }
+        .glass-nav {
+            background: rgba(17, 22, 33, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased selection:bg-primary selection:text-white">
+<div class="relative flex h-full min-h-screen w-full flex-col max-w-md mx-auto shadow-2xl overflow-hidden bg-background-light dark:bg-background-dark">
+<header class="flex items-center justify-between px-5 py-4 z-20 sticky top-0 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-black/5 dark:border-white/5">
+<div class="flex items-center gap-2">
+<div class="size-8 rounded-lg bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[20px]">equalizer</span>
+</div>
+<h1 class="text-lg font-bold leading-tight tracking-tight">AutoSong</h1>
+</div>
+<button class="group flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-surface-dark/5 dark:bg-white/5 hover:bg-surface-dark/10 dark:hover:bg-white/10 transition-colors border border-black/5 dark:border-white/10">
+<div class="relative">
+<img alt="Channel Avatar" class="size-7 rounded-full object-cover border border-white/20" data-alt="Abstract neon circular channel avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0BLeFg6-_WgwX5Sc39usYzKRCA5KPxja0lqQW_8joU3ukJXyvtENwcN4uldQDEdNVek8KGyj3Ym1OnQ9UhiBsbSAA2A1qNw1qd8kvznHjiy64Be1HMXfWdV68pITWJDEj7AzK4ojDgnkY2NzR5HXagJzEIeGQYRy3gWsaoBAsu5KRWUwvjiGHokhU5rFf9oER6EwNXZNOmsJhfVn_-o1t7vPQY-X_1Gi5IRkLU3MG-GVp0jzj9jCasN36KmPqiYO_r0RNy_E2fzn8"/>
+<div class="absolute bottom-0 right-0 size-2.5 rounded-full bg-green-500 border-2 border-[#111621]"></div>
+</div>
+<span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Lofi Vibes</span>
+<span class="material-symbols-outlined text-slate-400 text-[16px]">expand_more</span>
+</button>
+</header>
+<main class="flex-1 flex flex-col overflow-y-auto pb-28 pt-2">
+<div class="px-5 pt-6 pb-2">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">Good afternoon,</p>
+<h2 class="text-2xl font-bold tracking-tight">Dashboard</h2>
+</div>
+<div class="flex gap-3 px-5 py-4 overflow-x-auto no-scrollbar">
+<div class="flex-1 min-w-[140px] bg-white dark:bg-surface-dark p-4 rounded-2xl border border-black/5 dark:border-white/5">
+<div class="flex items-center justify-between mb-3">
+<span class="material-symbols-outlined text-slate-400 dark:text-slate-500">schedule</span>
+<span class="text-xs font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">+2</span>
+</div>
+<p class="text-2xl font-bold mb-0.5">8</p>
+<p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Scheduled</p>
+</div>
+<div class="flex-1 min-w-[140px] bg-white dark:bg-surface-dark p-4 rounded-2xl border border-black/5 dark:border-white/5">
+<div class="flex items-center justify-between mb-3">
+<span class="material-symbols-outlined text-slate-400 dark:text-slate-500">cloud_upload</span>
+</div>
+<p class="text-2xl font-bold mb-0.5">24</p>
+<p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Uploaded this week</p>
+</div>
+</div>
+<div class="flex items-center justify-between px-5 pt-6 pb-3">
+<h3 class="text-lg font-bold leading-tight">Upcoming Releases</h3>
+<button class="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">View All</button>
+</div>
+<div class="flex flex-col gap-3 px-5">
+<div class="group relative flex items-center gap-4 bg-white dark:bg-surface-dark p-3 rounded-xl border border-primary/20 shadow-sm transition-all active:scale-[0.99]">
+<div class="relative shrink-0">
+<div class="size-16 rounded-lg bg-cover bg-center" data-alt="Abstract colorful neon waves" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuATC5-yruvmoyQU7Gx-b4vKSP-36jMykkJsCmrN05oVYIMbguechmTsxHSj2IVz-3rJvv33GnjWX_WO_9IjLWcly0HQ1KkpNQu9j_tTbyemokC-ogzCJaAn2-nUq5nQgoDaycLwvrwLEt3EkgbKli8wKF7SBruKImZBy2ObgqzlX4uevHI7Z3qS7_meGqCPxAvrbhZ9fWVxK_WS_mLu0iOGpVy67k_XqK3DHUntcU3Wlj_zJHCZpOK9JkV0KupW_fN6AY-EwsBEmRKd');"></div>
+<div class="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center backdrop-blur-[1px]">
+<span class="material-symbols-outlined text-white animate-spin">progress_activity</span>
+</div>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<p class="text-sm font-bold text-slate-900 dark:text-white truncate pr-2">Chill Hop Mix 2024</p>
+<span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider text-blue-500 bg-blue-500/10">Processing</span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400">Generative Video • 45% Complete</p>
+</div>
+</div>
+<div class="group relative flex items-center gap-4 bg-white dark:bg-surface-dark p-3 rounded-xl border border-black/5 dark:border-white/5 shadow-sm transition-all active:scale-[0.99]">
+<div class="relative shrink-0">
+<div class="size-16 rounded-lg bg-cover bg-center" data-alt="Night city lights bokeh blur" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDr4HBjhNvbge4XmqiUXCXk7DGukmIM7Y-tW1i_dQ54crBDL_D_nZlUrbWVjFFgx7q8icGgnSRt10rJMUvPi-vwPM6bhrpuxUSGbXF2i7Kx81lifjjmLNQzLdWVm5uIlnd7UnS73rjsyr3MYxExhtJIPxwkYLZKmr84hPVmKVo0FcpOyQoMA6Kj3KkzPncLwKWrt1Jrvbas19z0LvlwLtf35-Y5PGOiX6VDAaIebPDSeYrzs0CnRJGa8A2Zy7NIsVvYfVXw6s8znAhS');"></div>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<p class="text-sm font-bold text-slate-900 dark:text-white truncate pr-2">Synthwave Night Drive</p>
+<span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider text-emerald-500 bg-emerald-500/10">Ready</span>
+</div>
+<div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+<span>Tomorrow, 6:00 PM</span>
+</div>
+</div>
+</div>
+<div class="group relative flex items-center gap-4 bg-white dark:bg-surface-dark p-3 rounded-xl border border-black/5 dark:border-white/5 shadow-sm transition-all active:scale-[0.99]">
+<div class="relative shrink-0">
+<div class="size-16 rounded-lg bg-cover bg-center grayscale-[50%]" data-alt="Dark stormy clouds abstract" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDKcIjtI2ZqR2T6g22E0rgI4rPoWASQ-Gm4GE0pNwpc7d-PGhyipkXSo-sCuafJ6WBa4LU_OwUMJzQqny5s8tyQ5AeICmvtjsEFI9i49ezdmNrkS_9gHqkjbVnTA2_231_7iaty3YiuYcfxKIoCsYosL2DxMSK3UJcGeRezTF_5i5mVjNgav7OIJNq-xh56DUylx83-SJE6xOdfMTrnVCXTgfgT5TaZr-zEgSRciNgW0YTSdrEF2V1WgE79A3yQdMqX5kIcIGOENU3V');"></div>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<p class="text-sm font-bold text-slate-900 dark:text-white truncate pr-2">Lo-Fi Beats Vol. 4</p>
+<span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider text-amber-500 bg-amber-500/10">Queued</span>
+</div>
+<div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+<span>Nov 24, 4:00 PM</span>
+</div>
+</div>
+</div>
+<div class="group relative flex items-center gap-4 bg-white dark:bg-surface-dark p-3 rounded-xl border border-red-500/20 shadow-sm transition-all active:scale-[0.99]">
+<div class="relative shrink-0">
+<div class="size-16 rounded-lg bg-cover bg-center opacity-70" data-alt="Abstract liquid oil paint texture" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCu63OxOYwQs2saxD-IPfeMmxSPtPBaf3DyCPGcfcG8m1zuzzYIfHOSj1FG_uEg5TA_M1zk99mDGQbErr15_IraTECb_3PkTvRJWMRF62kfE9CyTYsHY2pLxRlKBzBA389gHHBNIbrRjGqvq8jCfLKTWnOKengKm65YZq6KLuy7cwSSavl_9f-Ogk2onvoi8CPdtvTc5ZKz-cXE8j0EGpvr0InBESsFj92hAqbkIHaL04Ilw5TG5U2ti8D_7E1FPObOur_34sMhoKBM');"></div>
+<div class="absolute -top-1 -right-1 bg-red-500 rounded-full p-0.5 border-2 border-[#1a1f2b]">
+<span class="material-symbols-outlined text-white text-[12px] font-bold block">priority_high</span>
+</div>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<p class="text-sm font-bold text-slate-900 dark:text-white truncate pr-2">Ambient Focus Study</p>
+<span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider text-red-500 bg-red-500/10">Failed</span>
+</div>
+<p class="text-xs text-red-400/80">API Error: Thumbnail rejection</p>
+</div>
+</div>
+<div class="group relative flex items-center gap-4 bg-white dark:bg-surface-dark p-3 rounded-xl border border-black/5 dark:border-white/5 shadow-sm transition-all active:scale-[0.99] opacity-75 hover:opacity-100">
+<div class="relative shrink-0">
+<div class="size-16 rounded-lg bg-cover bg-center grayscale" data-alt="Abstract colorful neon waves" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuATC5-yruvmoyQU7Gx-b4vKSP-36jMykkJsCmrN05oVYIMbguechmTsxHSj2IVz-3rJvv33GnjWX_WO_9IjLWcly0HQ1KkpNQu9j_tTbyemokC-ogzCJaAn2-nUq5nQgoDaycLwvrwLEt3EkgbKli8wKF7SBruKImZBy2ObgqzlX4uevHI7Z3qS7_meGqCPxAvrbhZ9fWVxK_WS_mLu0iOGpVy67k_XqK3DHUntcU3Wlj_zJHCZpOK9JkV0KupW_fN6AY-EwsBEmRKd');"></div>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<p class="text-sm font-bold text-slate-700 dark:text-slate-300 truncate pr-2">Urban Night Walk</p>
+<span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider text-slate-500 bg-slate-500/10 dark:text-slate-400 dark:bg-slate-400/10">Uploaded</span>
+</div>
+<div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-500">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span>Yesterday, 10:00 AM</span>
+</div>
+</div>
+</div>
+<div class="group relative flex items-center gap-4 bg-white dark:bg-surface-dark p-3 rounded-xl border border-black/5 dark:border-white/5 shadow-sm transition-all active:scale-[0.99] opacity-75 hover:opacity-100">
+<div class="relative shrink-0">
+<div class="size-16 rounded-lg bg-cover bg-center grayscale" data-alt="Night city lights bokeh blur" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDr4HBjhNvbge4XmqiUXCXk7DGukmIM7Y-tW1i_dQ54crBDL_D_nZlUrbWVjFFgx7q8icGgnSRt10rJMUvPi-vwPM6bhrpuxUSGbXF2i7Kx81lifjjmLNQzLdWVm5uIlnd7UnS73rjsyr3MYxExhtJIPxwkYLZKmr84hPVmKVo0FcpOyQoMA6Kj3KkzPncLwKWrt1Jrvbas19z0LvlwLtf35-Y5PGOiX6VDAaIebPDSeYrzs0CnRJGa8A2Zy7NIsVvYfVXw6s8znAhS');"></div>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<p class="text-sm font-bold text-slate-700 dark:text-slate-300 truncate pr-2">Golden Hour Guitar</p>
+<span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider text-slate-500 bg-slate-500/10 dark:text-slate-400 dark:bg-slate-400/10">Uploaded</span>
+</div>
+<div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-500">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span>Nov 21, 8:00 PM</span>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-8 mx-5 p-6 border border-dashed border-slate-700/50 rounded-2xl flex flex-col items-center justify-center text-center opacity-60">
+<span class="material-symbols-outlined text-4xl text-slate-600 mb-2">library_music</span>
+<p class="text-sm font-medium text-slate-500">Drafts Folder is empty</p>
+</div>
+</main>
+<button class="absolute bottom-24 right-5 z-30 flex items-center gap-2 bg-primary text-white pl-4 pr-5 py-3.5 rounded-full shadow-lg shadow-primary/30 hover:bg-primary/90 transition-transform active:scale-95 group">
+<span class="material-symbols-outlined">add</span>
+<span class="font-bold text-sm tracking-wide">Start Automation</span>
+</button>
+<nav class="glass-nav absolute bottom-0 w-full pb-6 pt-2 px-6 flex justify-between items-center z-40 border-t border-white/5">
+<button class="flex flex-col items-center gap-1 p-2 text-primary group">
+<span class="material-symbols-outlined text-[26px] group-hover:scale-110 transition-transform">dashboard</span>
+<span class="text-[10px] font-medium">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 text-slate-500 dark:text-slate-400 hover:text-white group transition-colors">
+<span class="material-symbols-outlined text-[26px] group-hover:scale-110 transition-transform">library_music</span>
+<span class="text-[10px] font-medium">Library</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 text-slate-500 dark:text-slate-400 hover:text-white group transition-colors">
+<span class="material-symbols-outlined text-[26px] group-hover:scale-110 transition-transform">calendar_month</span>
+<span class="text-[10px] font-medium">Schedulers</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 text-slate-500 dark:text-slate-400 hover:text-white group transition-colors">
+<span class="material-symbols-outlined text-[26px] group-hover:scale-110 transition-transform">settings</span>
+<span class="text-[10px] font-medium">Settings</span>
+</button>
+</nav>
+</div>
+
+</body></html>

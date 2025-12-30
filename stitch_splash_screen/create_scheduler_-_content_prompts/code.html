@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Create Scheduler - Content Prompts</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2565e4",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                        "surface-dark": "#1c1f26",
+                        "border-dark": "#3c4453",
+                        "text-secondary": "#9da6b8"
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem", 
+                        "lg": "0.5rem", 
+                        "xl": "0.75rem", 
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: #111621; 
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background: #3c4453; 
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-thumb:hover {
+            background: #4b5563; 
+        }
+    </style>
+<style>
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased selection:bg-primary/30 selection:text-primary">
+<div class="relative flex h-full min-h-screen w-full max-w-md mx-auto flex-col overflow-x-hidden shadow-2xl">
+<div class="sticky top-0 z-50 flex items-center bg-background-light dark:bg-background-dark/95 backdrop-blur-md p-4 pb-2 justify-between border-b border-gray-200 dark:border-white/5">
+<button class="text-slate-900 dark:text-white flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Create Scheduler</h2>
+<button class="flex w-12 items-center justify-center rounded text-primary hover:text-blue-400 transition-colors">
+<p class="text-base font-bold leading-normal tracking-[0.015em]">Save</p>
+</button>
+</div>
+<div class="flex w-full flex-col items-center justify-center gap-2 py-4 bg-background-light dark:bg-background-dark">
+<div class="flex flex-row gap-2">
+<div class="h-2 w-2 rounded-full bg-border-dark/40 dark:bg-border-dark"></div>
+<div class="h-2 w-2 rounded-full bg-primary"></div>
+<div class="h-2 w-2 rounded-full bg-border-dark/40 dark:bg-border-dark"></div>
+</div>
+</div>
+<div class="flex-1 flex flex-col px-5 pb-32">
+<div class="mt-2 mb-6">
+<h3 class="text-slate-900 dark:text-white text-xl font-bold leading-tight pb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">video_settings</span>
+                    Video Metadata
+                </h3>
+<div class="flex flex-col gap-1 mb-5">
+<div class="flex justify-between items-baseline">
+<label class="text-slate-700 dark:text-gray-200 text-sm font-medium leading-normal pl-1" for="description">Description Prompt</label>
+<span class="text-xs text-text-secondary">Optional</span>
+</div>
+<div class="relative group">
+<textarea class="form-input w-full resize-none rounded-lg border border-gray-300 dark:border-border-dark bg-white dark:bg-surface-dark text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-gray-400 dark:placeholder:text-text-secondary p-4 text-base font-normal leading-relaxed min-h-[120px] transition-all" id="description" maxlength="500" placeholder="Describe the desired mood or theme for descriptions"></textarea>
+<div class="absolute bottom-3 right-3 text-[10px] text-text-secondary font-mono bg-white/50 dark:bg-surface-dark/80 px-1 rounded">0/500</div>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-baseline">
+<label class="text-slate-700 dark:text-gray-200 text-sm font-medium leading-normal pl-1" for="tags">Tags Prompt</label>
+<span class="text-xs text-text-secondary">Optional</span>
+</div>
+<div class="relative group mb-1">
+<textarea class="form-input w-full resize-none rounded-lg border border-gray-300 dark:border-border-dark bg-white dark:bg-surface-dark text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-gray-400 dark:placeholder:text-text-secondary p-4 text-base font-normal leading-relaxed min-h-[100px] transition-all" id="tags" maxlength="500" placeholder="Suggest keywords or themes for video tags"></textarea>
+<div class="absolute bottom-3 right-3 text-[10px] text-text-secondary font-mono bg-white/50 dark:bg-surface-dark/80 px-1 rounded">0/500</div>
+</div>
+<p class="text-xs text-text-secondary pl-1 flex items-start gap-1">
+<span class="material-symbols-outlined text-[14px] mt-0.5">info</span>
+                        Tags will be expanded to YouTube’s maximum allowed length.
+                    </p>
+</div>
+</div>
+<div class="h-px w-full bg-gray-200 dark:bg-border-dark/50 my-4"></div>
+<div class="mt-2 mb-4">
+<h3 class="text-slate-900 dark:text-white text-xl font-bold leading-tight pb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">music_note</span>
+                    Song Details
+                </h3>
+<div class="flex flex-col gap-1 mb-5">
+<div class="flex justify-between items-baseline">
+<label class="text-slate-700 dark:text-gray-200 text-sm font-medium leading-normal pl-1" for="lyrics">
+                            Lyrics Prompt <span class="text-red-500 ml-0.5">*</span>
+</label>
+<span class="text-xs text-primary font-medium bg-primary/10 px-2 py-0.5 rounded-full">Required</span>
+</div>
+<textarea class="form-input w-full resize-none rounded-lg border border-gray-300 dark:border-border-dark bg-white dark:bg-surface-dark text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-gray-400 dark:placeholder:text-text-secondary p-4 text-base font-normal leading-relaxed min-h-[160px] transition-all" id="lyrics" placeholder="Provide a theme or keywords for AI to generate lyrics"></textarea>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-slate-700 dark:text-gray-200 text-sm font-medium leading-normal pl-1" for="language">Output Language</label>
+<div class="relative">
+<select class="form-select w-full appearance-none rounded-lg border border-gray-300 dark:border-border-dark bg-white dark:bg-surface-dark text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 focus:border-primary p-4 pr-10 text-base font-normal leading-normal cursor-pointer transition-all" id="language">
+<option selected="" value="hindi">Hindi</option>
+<option value="english">English</option>
+<option value="spanish">Spanish</option>
+<option value="french">French</option>
+<option value="japanese">Japanese</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-text-secondary">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-6 flex gap-3 p-4 rounded-lg bg-primary/5 border border-primary/10 items-start">
+<span class="material-symbols-outlined text-primary shrink-0 mt-0.5" style="font-size: 20px;">auto_awesome</span>
+<p class="text-sm text-slate-600 dark:text-gray-300 leading-relaxed">
+<span class="font-semibold text-slate-900 dark:text-white">AI Automation:</span> If optional fields are left empty, our AI will automatically generate optimized content based on your lyrics.
+                </p>
+</div>
+</div>
+<div class="fixed bottom-0 w-full max-w-md bg-background-light dark:bg-background-dark border-t border-gray-200 dark:border-white/5 p-4 z-40 pb-8 backdrop-blur-xl bg-opacity-90 dark:bg-opacity-90">
+<button class="w-full h-12 flex items-center justify-center gap-2 rounded-lg bg-primary hover:bg-blue-600 active:scale-[0.98] transition-all shadow-lg shadow-primary/20">
+<span class="text-white text-base font-bold tracking-wide">Continue</span>
+<span class="material-symbols-outlined text-white text-[20px]">arrow_forward</span>
+</button>
+</div>
+</div>
+
+</body></html>

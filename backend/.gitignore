@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Firebase
+firebase-adminsdk-*.json
+serviceAccountKey.json
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.log
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build artifacts
+dist/
+build/
+
+# FFmpeg outputs
+output/
+videos/

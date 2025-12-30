@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Song Detail / Review - AutoSong Studio</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+            extend: {
+                colors: {
+                "primary": "#2565e4",
+                "background-light": "#f6f6f8",
+                "background-dark": "#111621",
+                "surface-dark": "#1A1D23",
+                "input-dark": "#232730", 
+                "border-dark": "#363B47"
+                },
+                fontFamily: {
+                "display": ["Manrope", "Noto Sans", "sans-serif"]
+                },
+                borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+            },
+            },
+        }
+    </script>
+<!-- Google Fonts: Manrope -->
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111621; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #363B47; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2565e4; 
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased selection:bg-primary selection:text-white">
+<div class="relative min-h-screen flex flex-col w-full max-w-md mx-auto overflow-hidden bg-background-light dark:bg-background-dark shadow-2xl">
+<!-- TopAppBar: Sticky Header -->
+<header class="sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-gray-200 dark:border-white/5">
+<button class="flex items-center justify-center w-10 h-10 -ml-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<h2 class="text-base font-bold leading-tight tracking-wide uppercase text-slate-900 dark:text-white">Review Details</h2>
+<div class="w-10"></div> <!-- Spacer for optical centering -->
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto pb-32">
+<!-- Video Player Preview -->
+<div class="p-4 pb-2">
+<div class="relative w-full aspect-video rounded-xl overflow-hidden shadow-lg border border-gray-200 dark:border-white/10 group cursor-pointer">
+<!-- Thumbnail Image -->
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="Abstract dark gradient background representing music visualization" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBqXqD9FIcvCCUEapLmKY0NQK2lw1WFepqRZJZ-Uv7eeS7Vu4YddLnFJJDpRlK_GiigO903mSr5FLJJi1U8DsXyrW59GjJSRXwUHvyCrKz5-cUNye-5nC1l6RDas3a5hILZF4JnVoppg3-1pxEZ9eFuiIuZVZSRLixdMhDgpvS2oXuRU46bEwJeb4o4790r0n_NT70CFVweD4cLRrtnWf01W2yzQdIy0qFg96iPhIQRztPeKQ2Ic7yU8pwIumBmfGvygkBlJyHDhSgO");'>
+<div class="absolute inset-0 bg-black/40"></div>
+</div>
+<!-- Play Button -->
+<div class="absolute inset-0 flex items-center justify-center">
+<button class="flex items-center justify-center w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-primary hover:scale-110 transition-all duration-300 shadow-xl border border-white/20">
+<span class="material-symbols-outlined text-[32px] ml-1 fill-current">play_arrow</span>
+</button>
+</div>
+<!-- Video UI Overlays -->
+<div class="absolute bottom-3 right-3 px-2 py-1 bg-black/80 rounded text-xs font-medium text-white backdrop-blur-sm">
+                        03:45
+                    </div>
+<div class="absolute top-3 left-3 px-2 py-1 bg-primary/90 rounded text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                        Preview
+                    </div>
+</div>
+</div>
+<!-- Edit Form Section -->
+<div class="px-4 space-y-5 mt-2">
+<!-- Title Input -->
+<div class="space-y-2">
+<label class="text-sm font-semibold text-slate-500 dark:text-slate-400" for="video-title">Video Title</label>
+<input class="w-full bg-white dark:bg-input-dark border border-gray-200 dark:border-border-dark rounded-lg px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm" id="video-title" type="text" value="Lo-Fi Beats to Study To - Vol 4"/>
+</div>
+<!-- Description Input -->
+<div class="space-y-2">
+<label class="text-sm font-semibold text-slate-500 dark:text-slate-400" for="video-desc">Description</label>
+<textarea class="w-full bg-white dark:bg-input-dark border border-gray-200 dark:border-border-dark rounded-lg px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm resize-none leading-relaxed" id="video-desc" rows="4">Listen to our latest mix designed for deep focus and relaxation. Don't forget to subscribe for weekly uploads! #lofi #study #chill</textarea>
+</div>
+<!-- Tags Input -->
+<div class="space-y-2">
+<div class="flex items-center justify-between">
+<label class="text-sm font-semibold text-slate-500 dark:text-slate-400">Tags</label>
+<span class="text-xs text-slate-400 dark:text-slate-600">3/15 used</span>
+</div>
+<div class="flex flex-wrap gap-2 p-3 bg-white dark:bg-input-dark border border-gray-200 dark:border-border-dark rounded-lg min-h-[3rem] shadow-sm">
+<!-- Chip 1 -->
+<div class="flex items-center gap-1 pl-3 pr-2 py-1 bg-primary/10 border border-primary/20 rounded-full">
+<span class="text-sm font-medium text-primary">Lo-fi</span>
+<button class="p-0.5 hover:bg-primary/20 rounded-full text-primary transition-colors">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+<!-- Chip 2 -->
+<div class="flex items-center gap-1 pl-3 pr-2 py-1 bg-primary/10 border border-primary/20 rounded-full">
+<span class="text-sm font-medium text-primary">Study</span>
+<button class="p-0.5 hover:bg-primary/20 rounded-full text-primary transition-colors">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+<!-- Chip 3 -->
+<div class="flex items-center gap-1 pl-3 pr-2 py-1 bg-primary/10 border border-primary/20 rounded-full">
+<span class="text-sm font-medium text-primary">Chill</span>
+<button class="p-0.5 hover:bg-primary/20 rounded-full text-primary transition-colors">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+<!-- Add Tag Input Placeholder -->
+<input class="bg-transparent border-none focus:ring-0 p-1 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 min-w-[80px] flex-1" placeholder="+ Add tag" type="text"/>
+</div>
+</div>
+<!-- Read-Only Info Card -->
+<div class="pt-4">
+<h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 px-1">Schedule Info</h3>
+<div class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/5 rounded-xl p-4 shadow-sm">
+<div class="grid grid-cols-1 divide-y divide-gray-100 dark:divide-white/5">
+<!-- Date Row -->
+<div class="flex items-center justify-between py-3 first:pt-0">
+<div class="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-[20px]">calendar_today</span>
+<span class="text-sm font-medium">Scheduled Date</span>
+</div>
+<span class="text-sm font-semibold text-slate-900 dark:text-white">Oct 24, 2023</span>
+</div>
+<!-- Time Row -->
+<div class="flex items-center justify-between py-3">
+<div class="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-[20px]">schedule</span>
+<span class="text-sm font-medium">Time</span>
+</div>
+<span class="text-sm font-semibold text-slate-900 dark:text-white">14:00 PM EST</span>
+</div>
+<!-- Frequency Row -->
+<div class="flex items-center justify-between py-3 last:pb-0">
+<div class="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-[20px]">repeat</span>
+<span class="text-sm font-medium">Frequency</span>
+</div>
+<span class="text-sm font-semibold text-slate-900 dark:text-white">Weekly</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Fixed Bottom Action Bar -->
+<div class="absolute bottom-0 left-0 w-full p-4 bg-background-light/80 dark:bg-background-dark/95 backdrop-blur-xl border-t border-gray-200 dark:border-white/5 z-20">
+<div class="flex flex-col gap-3">
+<div class="flex gap-3">
+<button class="flex-1 h-12 bg-primary hover:bg-blue-600 active:scale-[0.98] text-white font-bold rounded-lg shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">save</span>
+                        Save Changes
+                    </button>
+<button aria-label="Instant Upload Disabled" class="h-12 w-14 flex items-center justify-center border border-gray-300 dark:border-border-dark bg-white dark:bg-surface-dark text-slate-400 rounded-lg opacity-50 cursor-not-allowed">
+<span class="material-symbols-outlined text-[24px]">rocket_launch</span>
+</button>
+</div>
+<button class="w-full py-2 text-sm font-medium text-red-500 hover:text-red-400 transition-colors flex items-center justify-center gap-1 opacity-80 hover:opacity-100">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+                    Delete Video
+                </button>
+</div>
+</div>
+</div>
+</body></html>

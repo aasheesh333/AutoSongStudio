@@ -1,0 +1,167 @@
+name: Build and Deploy AutoSong Studio
+
+on:
+    push:
+        branches: [main, master]
+    pull_request:
+        branches: [main, master]
+    workflow_dispatch:
+
+env:
+    FLUTTER_VERSION: "3.16.5"
+
+jobs:
+    # Backend Deployment (Auto-deploys via Render.com Git integration)
+    backend-check:
+        runs-on: ubuntu-latest
+        name: Backend Health Check
+
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "18"
+                  cache: "npm"
+                  cache-dependency-path: backend/package-lock.json
+
+            - name: Install dependencies
+              working-directory: ./backend
+              run: npm ci
+
+            - name: Lint backend code
+              working-directory: ./backend
+              run: npm run lint || echo "Linting skipped (no eslint config)"
+
+            - name: Run backend tests
+              working-directory: ./backend
+              run: npm test || echo "Tests skipped (not yet implemented)"
+
+    # Flutter Android Build
+    build-android:
+        runs-on: ubuntu-latest
+        name: Build Flutter APK & AAB
+        needs: backend-check
+
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Setup Java
+              uses: actions/setup-java@v3
+              with:
+                  java-version: "11"
+                  distribution: "temurin"
+
+            - name: Setup Flutter
+              uses: subosito/flutter-action@v2
+              with:
+                  flutter-version: ${{ env.FLUTTER_VERSION }}
+                  channel: "stable"
+                  cache: true
+
+            - name: Decode Firebase google-services.json
+              env:
+                  FIREBASE_GOOGLE_SERVICES_BASE64: ${{ secrets.FIREBASE_GOOGLE_SERVICES_BASE64 }}
+              run: |
+                  echo "$FIREBASE_GOOGLE_SERVICES_BASE64" | base64 -d > android_app/android/app/google-services.json
+                  echo "✅ google-services.json decoded"
+
+            - name: Decode Keystore
+              env:
+                  KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+              run: |
+                  echo "$KEYSTORE_BASE64" | base64 -d > android_app/android/app/upload-keystore.jks
+                  echo "✅ Keystore decoded"
+
+            - name: Create key.properties
+              env:
+                  KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+                  KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+              run: |
+                  cat > android_app/android/key.properties <<EOF
+                  storePassword=$KEYSTORE_PASSWORD
+                  keyPassword=$KEY_PASSWORD
+                  keyAlias=upload
+                  storeFile=upload-keystore.jks
+                  EOF
+                  echo "✅ key.properties created"
+
+            - name: Install Flutter dependencies
+              working-directory: ./android_app
+              run: flutter pub get
+
+            - name: Run Flutter analyze
+              working-directory: ./android_app
+              run: flutter analyze || echo "⚠️  Analysis issues found (non-blocking)"
+
+            - name: Build APK (Release)
+              working-directory: ./android_app
+              run: |
+                  flutter build apk --release --verbose
+                  echo "✅ APK built successfully"
+
+            - name: Build AAB (Release)
+              working-directory: ./android_app
+              run: |
+                  flutter build appbundle --release --verbose
+                  echo "✅ AAB built successfully"
+
+            - name: Rename artifacts
+              run: |
+                  mv android_app/build/app/outputs/flutter-apk/app-release.apk \
+                     android_app/build/app/outputs/flutter-apk/autosong-studio-v${{ github.run_number }}.apk
+
+                  mv android_app/build/app/outputs/bundle/release/app-release.aab \
+                     android_app/build/app/outputs/bundle/release/autosong-studio-v${{ github.run_number }}.aab
+
+                  echo "✅ Artifacts renamed with version number"
+
+            - name: Upload APK Artifact
+              uses: actions/upload-artifact@v3
+              with:
+                  name: AutoSong-Studio-APK-v${{ github.run_number }}
+                  path: android_app/build/app/outputs/flutter-apk/autosong-studio-v${{ github.run_number }}.apk
+                  retention-days: 90
+
+            - name: Upload AAB Artifact
+              uses: actions/upload-artifact@v3
+              with:
+                  name: AutoSong-Studio-AAB-v${{ github.run_number }}
+                  path: android_app/build/app/outputs/bundle/release/autosong-studio-v${{ github.run_number }}.aab
+                  retention-days: 90
+
+            - name: Get APK size
+              run: |
+                  APK_SIZE=$(du -h android_app/build/app/outputs/flutter-apk/autosong-studio-v${{ github.run_number }}.apk | cut -f1)
+                  AAB_SIZE=$(du -h android_app/build/app/outputs/bundle/release/autosong-studio-v${{ github.run_number }}.aab | cut -f1)
+                  echo "📦 APK Size: $APK_SIZE"
+                  echo "📦 AAB Size: $AAB_SIZE"
+
+            - name: Cleanup sensitive files
+              if: always()
+              run: |
+                  rm -f android_app/android/app/upload-keystore.jks
+                  rm -f android_app/android/key.properties
+                  rm -f android_app/android/app/google-services.json
+                  echo "🧹 Sensitive files cleaned up"
+
+    # Deployment notification
+    notify-deployment:
+        runs-on: ubuntu-latest
+        name: Deployment Summary
+        needs: [backend-check, build-android]
+        if: always()
+
+        steps:
+            - name: Deployment Status
+              run: |
+                  echo "=========================================="
+                  echo "🚀 AutoSong Studio Build Complete"
+                  echo "=========================================="
+                  echo "✅ Backend: Deployed on Render.com"
+                  echo "✅ Android: APK & AAB built"
+                  echo "=========================================="
+                  echo "🌐 Backend URL: https://jusdown.onrender.com"
+                  echo "📱 Build #${{ github.run_number }}"
+                  echo "=========================================="

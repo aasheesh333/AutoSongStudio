@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AutoSong Studio Splash Screen</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2565e4",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Ensuring full height on mobile */
+        html, body {
+            height: 100%;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased overflow-hidden">
+<div class="relative flex h-full w-full flex-col justify-between">
+<!-- Top Navigation Area -->
+<div class="flex w-full items-center justify-end p-6 pt-8 z-20">
+<button class="group flex items-center justify-center rounded-full px-4 py-2 transition-all active:scale-95 active:bg-slate-200 dark:active:bg-slate-800">
+<span class="text-slate-500 dark:text-slate-400 text-sm font-semibold tracking-wide group-hover:text-primary transition-colors">Skip</span>
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400 text-lg ml-1 group-hover:text-primary transition-colors">chevron_right</span>
+</button>
+</div>
+<!-- Center Content: Logo Lockup -->
+<div class="flex flex-1 flex-col items-center justify-center px-6 -mt-16 z-10">
+<!-- Animated Logo Container -->
+<div class="relative flex items-center justify-center mb-8">
+<!-- Abstract Glow Behind Logo -->
+<div class="absolute w-32 h-32 bg-primary/20 rounded-full blur-[60px]"></div>
+<!-- Logo Icon -->
+<div class="relative flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-white dark:from-slate-800 dark:to-slate-900 shadow-xl shadow-slate-200/50 dark:shadow-black/50 border border-slate-200 dark:border-slate-700/50">
+<span class="material-symbols-outlined text-primary text-[48px]" style="font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 48;">
+                        music_note
+                    </span>
+<!-- Decorative accent dot -->
+<div class="absolute top-3 right-3 h-2 w-2 rounded-full bg-primary"></div>
+</div>
+</div>
+<!-- Text Content -->
+<div class="flex flex-col items-center space-y-3 max-w-xs sm:max-w-md text-center">
+<h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                    AutoSong <span class="text-primary">Studio</span>
+</h1>
+<p class="text-slate-500 dark:text-slate-400 text-base sm:text-lg font-medium leading-relaxed tracking-wide">
+                    Automate music. <br class="block sm:hidden"/>Publish effortlessly.
+                </p>
+</div>
+</div>
+<!-- Footer / Version Info -->
+<div class="w-full pb-8 text-center opacity-40">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 font-semibold">
+                Version 1.0.4
+            </p>
+</div>
+<!-- Background Decorative Elements -->
+<div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+<!-- Top Left Gradient -->
+<div class="absolute -top-24 -left-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+<!-- Bottom Right Gradient -->
+<div class="absolute -bottom-32 -right-32 w-80 h-80 bg-primary/10 rounded-full blur-3xl"></div>
+</div>
+</div>
+</body></html>

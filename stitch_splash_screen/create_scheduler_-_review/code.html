@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Review Configuration - AutoSong Studio</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2565e4",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                        "surface-dark": "#1c222e", // Slightly lighter than background-dark for cards
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "Noto Sans", "sans-serif"],
+                        "body": ["Manrope", "Noto Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111621; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3c4453; 
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #545e71; 
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased text-slate-900 dark:text-white">
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto shadow-2xl bg-background-light dark:bg-background-dark border-x dark:border-[#3c4453]/20">
+<!-- Top App Bar -->
+<div class="sticky top-0 z-20 flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between border-b border-gray-200 dark:border-[#3c4453]/30 backdrop-blur-md bg-opacity-90 dark:bg-opacity-90">
+<button class="text-slate-900 dark:text-white flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-[#3c4453]/50 transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-10">Review Configuration</h2>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 flex flex-col pb-32"> <!-- Padding bottom for fixed footer -->
+<!-- Headline -->
+<div class="px-4 pt-6 pb-2">
+<h1 class="text-slate-900 dark:text-white tracking-tight text-[28px] font-bold leading-tight">Review Details</h1>
+<p class="text-slate-500 dark:text-[#9da6b8] text-sm mt-1">Check your settings before automating.</p>
+</div>
+<!-- Summary Card -->
+<div class="p-4">
+<div class="group relative overflow-hidden rounded-xl bg-surface-dark shadow-lg ring-1 ring-white/10">
+<!-- Image Background -->
+<div class="relative h-48 w-full bg-cover bg-center" data-alt="Abstract digital sound wave visualizer in dark blue and purple gradients" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAMqDqUo4_Lpv_gM1wsDsDpiV8IbRxydXz9Lb2j8_62ke8ALDL77vPmpQQS269FtXqp_jL3IkBrXrVrthkZ6f4C7vcasWei2JsgUP_EqNPFi-kaobqpO8Kb9AdiZ84qSvyt5nMkhZ9LDdcCGbKM1dZJjEVqp0IXS0M5dBcylXnhD5ZSdt4lRzX-CQpIkAnkIFOX4ZYsuk7sj3BEvL9Qmun0Db863zaLt0RX8ZN_aRklZmLBINAxFduGvchQ_eHdfeWTy45xW_nAm-ZY");'>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dark via-surface-dark/50 to-transparent"></div>
+<div class="absolute bottom-0 left-0 w-full p-4">
+<div class="flex items-center gap-2 mb-1">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-primary/20 text-primary border border-primary/20">Draft</span>
+</div>
+<h3 class="text-white text-2xl font-bold leading-tight">Lo-Fi Study Beats</h3>
+<p class="text-gray-300 text-sm font-medium">Auto-Scheduled Playlist</p>
+</div>
+</div>
+<!-- Description List Grid -->
+<div class="p-4 grid grid-cols-2 gap-x-4 gap-y-6 bg-surface-dark">
+<div class="flex flex-col gap-1 border-t border-dashed border-[#3c4453] pt-3">
+<p class="text-[#9da6b8] text-xs font-semibold uppercase tracking-wider">Source</p>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">playlist_play</span>
+<p class="text-white text-sm font-medium">My Mix (24)</p>
+</div>
+</div>
+<div class="flex flex-col gap-1 border-t border-dashed border-[#3c4453] pt-3">
+<p class="text-[#9da6b8] text-xs font-semibold uppercase tracking-wider">Frequency</p>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">schedule</span>
+<p class="text-white text-sm font-medium">Daily 10:00 AM</p>
+</div>
+</div>
+<div class="flex flex-col gap-1 border-t border-dashed border-[#3c4453] pt-3">
+<p class="text-[#9da6b8] text-xs font-semibold uppercase tracking-wider">Video Style</p>
+<p class="text-white text-sm font-medium">Abstract Waves</p>
+</div>
+<div class="flex flex-col gap-1 border-t border-dashed border-[#3c4453] pt-3">
+<p class="text-[#9da6b8] text-xs font-semibold uppercase tracking-wider">Title Format</p>
+<p class="text-white text-sm font-medium truncate">[Track] - [Artist]</p>
+</div>
+</div>
+</div>
+</div>
+<!-- AI Generated Fields Section -->
+<div class="mt-2">
+<div class="px-4 py-2 flex items-center justify-between">
+<h4 class="text-[#9da6b8] text-xs font-bold leading-normal tracking-[0.05em] uppercase">AI Generated Content</h4>
+<span class="material-symbols-outlined text-primary text-sm">auto_awesome</span>
+</div>
+<div class="mx-4 flex flex-col gap-3">
+<!-- Item 1 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-dark border border-[#3c4453]/50">
+<div class="flex flex-col">
+<span class="text-white text-sm font-medium">Video Description</span>
+<span class="text-[#9da6b8] text-xs">SEO optimized summary</span>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20">
+<span class="material-symbols-outlined text-primary text-[14px]">auto_awesome</span>
+<span class="text-primary text-xs font-semibold">Auto-Generate</span>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-dark border border-[#3c4453]/50">
+<div class="flex flex-col">
+<span class="text-white text-sm font-medium">Video Tags</span>
+<span class="text-[#9da6b8] text-xs">Based on genre &amp; mood</span>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20">
+<span class="material-symbols-outlined text-primary text-[14px]">auto_awesome</span>
+<span class="text-primary text-xs font-semibold">Auto-Generate</span>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-dark border border-[#3c4453]/50">
+<div class="flex flex-col">
+<span class="text-white text-sm font-medium">Thumbnail Art</span>
+<span class="text-[#9da6b8] text-xs">High contrast style</span>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20">
+<span class="material-symbols-outlined text-primary text-[14px]">auto_awesome</span>
+<span class="text-primary text-xs font-semibold">Auto-Generate</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Disclaimer -->
+<div class="p-6 text-center">
+<p class="text-[#9da6b8] text-xs leading-relaxed">
+                    By starting the scheduler, you agree to the <a class="text-primary hover:underline" href="#">content policy</a>.
+                    <br/>AI generation typically takes 2-3 minutes.
+                </p>
+</div>
+</div>
+<!-- Fixed Footer Action -->
+<div class="fixed bottom-0 left-0 right-0 z-30 p-4 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-lg border-t border-gray-200 dark:border-[#3c4453]/50 max-w-md mx-auto">
+<button class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-4 text-white font-bold text-base shadow-lg shadow-primary/25 hover:bg-primary/90 hover:shadow-primary/40 transition-all active:scale-[0.98]">
+<span>Start Scheduler</span>
+<span class="material-symbols-outlined text-[20px]">rocket_launch</span>
+</button>
+</div>
+<!-- Success Toast Notification (Simulated visibility) -->
+<div class="absolute top-24 left-4 right-4 z-50 animate-bounce-in">
+<div class="flex items-center gap-3 rounded-xl bg-[#0f172a] border border-[#1e293b] p-4 shadow-2xl shadow-black/50 ring-1 ring-white/10">
+<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-500/20 text-green-400">
+<span class="material-symbols-outlined text-[24px]">check_circle</span>
+</div>
+<div class="flex flex-col flex-1">
+<p class="text-white text-sm font-bold">Success</p>
+<p class="text-gray-400 text-xs">Your scheduler has successfully started.</p>
+</div>
+<button class="text-gray-400 hover:text-white">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+</div>
+</div>
+</body></html>

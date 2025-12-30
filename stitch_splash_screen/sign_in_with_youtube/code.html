@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AutoSong Studio - Connect YouTube</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2565e4",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "3xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased selection:bg-primary/30 selection:text-white">
+<div class="relative flex min-h-screen w-full flex-col overflow-hidden">
+<!-- Background Ambient Glow -->
+<div class="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[150%] h-[50%] bg-primary/10 blur-[100px] rounded-[100%] pointer-events-none z-0"></div>
+<!-- Top Navigation -->
+<div class="relative z-10 flex items-center justify-between p-6">
+<button class="text-gray-400 hover:text-white transition-colors flex items-center justify-center p-2 -ml-2 rounded-full hover:bg-white/5 group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" style="font-size: 28px;">close</span>
+</button>
+<div class="text-white/80 font-bold text-sm tracking-wide uppercase opacity-0 pointer-events-none">
+<!-- Spacer for visual balance if needed, or logo could go here -->
+</div>
+</div>
+<!-- Main Content Centered -->
+<div class="relative z-10 flex flex-1 flex-col items-center justify-center w-full max-w-md mx-auto px-6 pb-12">
+<!-- Logo / Brand Header -->
+<div class="flex items-center gap-2 mb-10">
+<div class="size-8 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-white" style="font-size: 20px;">graphic_eq</span>
+</div>
+<span class="text-white font-bold text-lg tracking-tight">AutoSong Studio</span>
+</div>
+<!-- Hero Visual: Connection -->
+<div class="relative mb-10">
+<!-- Connecting Line -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-[2px] bg-gradient-to-r from-gray-700 via-primary/50 to-gray-700 z-0"></div>
+<div class="flex items-center gap-8 relative z-10">
+<!-- App Icon Circle -->
+<div class="size-20 rounded-2xl bg-[#1c2230] border border-white/5 flex items-center justify-center shadow-2xl relative group">
+<div class="absolute inset-0 bg-primary/10 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<span class="material-symbols-outlined text-white" style="font-size: 32px;">music_note</span>
+</div>
+<!-- Connection Status Icon -->
+<div class="size-8 rounded-full bg-[#111621] border border-primary/30 flex items-center justify-center z-20 shadow-lg">
+<span class="material-symbols-outlined text-primary" style="font-size: 18px;">sync_alt</span>
+</div>
+<!-- YouTube Icon Circle (Placeholder style) -->
+<div class="size-20 rounded-2xl bg-[#1c2230] border border-white/5 flex items-center justify-center shadow-2xl relative group">
+<div class="absolute inset-0 bg-red-500/10 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<span class="material-symbols-outlined text-white" style="font-size: 32px;">smart_display</span>
+</div>
+</div>
+</div>
+<!-- Text Content -->
+<div class="text-center max-w-xs mx-auto mb-10">
+<h2 class="text-white text-[28px] font-bold leading-tight mb-4 tracking-tight">
+                    Connect your YouTube channel
+                </h2>
+<p class="text-gray-400 text-[15px] font-medium leading-relaxed">
+                    To start automating your releases, we need permission to access your channel's upload features.
+                </p>
+</div>
+<!-- Actions -->
+<div class="w-full space-y-5">
+<!-- Primary Button -->
+<button class="w-full h-14 bg-primary hover:bg-blue-600 active:scale-[0.98] transition-all rounded-xl flex items-center justify-center gap-3 shadow-lg shadow-primary/20 group cursor-pointer border border-white/5">
+<!-- YouTube logo approximation with material icon -->
+<span class="material-symbols-outlined text-white filled group-hover:scale-110 transition-transform" style="font-variation-settings: 'FILL' 1;">smart_display</span>
+<span class="text-white font-bold text-[16px]">Sign in with YouTube</span>
+</button>
+<!-- Trust Indicator -->
+<div class="flex items-center justify-center gap-2 text-gray-500">
+<span class="material-symbols-outlined text-gray-600" style="font-size: 14px;">lock</span>
+<p class="text-[12px] font-medium tracking-wide">We never upload without your permission.</p>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<div class="relative z-10 w-full p-6 pb-8">
+<div class="flex items-center justify-center gap-4">
+<a class="text-xs text-gray-500 hover:text-gray-300 transition-colors" href="#">Privacy Policy</a>
+<div class="h-1 w-1 rounded-full bg-gray-700"></div>
+<a class="text-xs text-gray-500 hover:text-gray-300 transition-colors" href="#">Terms of Service</a>
+</div>
+</div>
+</div>
+</body></html>

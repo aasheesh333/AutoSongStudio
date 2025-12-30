@@ -1,0 +1,68 @@
+# Render.com Blueprint Configuration
+# Infrastructure as Code for AutoSong Studio Backend
+
+services:
+  # Main API Server
+  - type: web
+    name: autosong-api
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BASE_URL
+        value: https://jusdown.onrender.com
+      - key: FIREBASE_JSON_BASE64
+        sync: false
+      - key: LLAMA_API_KEY
+        sync: false
+      - key: LLAMA_API_URL
+        value: https://api.groq.com/openai/v1/chat/completions
+      - key: HF_TOKEN
+        sync: false
+      - key: SUNO_API_KEY
+        sync: false
+      - key: SUNO_BASE_URL
+        value: https://api.sunoapi.org
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: PLAN_SIGN_SECRET
+        sync: false
+
+  # Background Workers
+  - type: worker
+    name: autosong-workers
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm run worker
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BASE_URL
+        value: https://jusdown.onrender.com
+      - key: FIREBASE_JSON_BASE64
+        sync: false
+      - key: LLAMA_API_KEY
+        sync: false
+      - key: LLAMA_API_URL
+        value: https://api.groq.com/openai/v1/chat/completions
+      - key: HF_TOKEN
+        sync: false
+      - key: SUNO_API_KEY
+        sync: false
+      - key: SUNO_BASE_URL
+        value: https://api.sunoapi.org
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: PLAN_SIGN_SECRET
+        sync: false

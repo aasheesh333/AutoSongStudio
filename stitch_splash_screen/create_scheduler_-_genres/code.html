@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Create Scheduler - Genres</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2565e4",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                        "surface-dark": "#1A1D23",
+                        "surface-border": "#2A2E35",
+                        "text-secondary": "#9CA3AF"
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "md": "0.375rem",
+                        "lg": "0.5rem", 
+                        "xl": "0.75rem", 
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-900 dark:text-white antialiased overflow-hidden h-screen flex flex-col">
+<header class="flex flex-col bg-background-light dark:bg-background-dark shrink-0 z-10 pt-2">
+<div class="flex items-center justify-between px-4 pb-2 relative">
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-gray-900 dark:text-white z-20">
+<span class="material-symbols-outlined text-[24px]">arrow_back_ios_new</span>
+</button>
+<h1 class="text-base font-bold tracking-tight absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 w-full text-center pointer-events-none">Create Scheduler</h1>
+<button class="text-primary text-base font-medium hover:text-blue-400 transition-colors z-20">
+            Save
+        </button>
+</div>
+<div class="flex items-center justify-center gap-2 pb-3">
+<div class="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(37,101,228,0.5)]"></div>
+<div class="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-700"></div>
+<div class="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-700"></div>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto pb-32">
+<div class="px-5 pt-4 pb-2">
+<h2 class="text-2xl font-bold tracking-tight mb-2">Choose Genres</h2>
+<p class="text-text-secondary text-sm font-medium leading-relaxed mb-6">
+                Pick the musical styles for this schedule. Drag items in the priority list below to set the playback order.
+            </p>
+<div class="relative group mb-6">
+<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-text-secondary">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+<input class="block w-full p-3 pl-10 text-sm text-gray-900 dark:text-white bg-white dark:bg-surface-dark border border-gray-200 dark:border-surface-border rounded-xl focus:ring-primary focus:border-primary placeholder-text-secondary transition-colors shadow-sm" placeholder="Search genres..." type="text"/>
+</div>
+</div>
+<div class="px-5 mb-8">
+<div class="flex items-center justify-between mb-3">
+<h3 class="text-sm font-bold uppercase tracking-wider text-text-secondary">Priority Queue (3)</h3>
+<span class="text-xs text-primary font-semibold cursor-pointer">Clear all</span>
+</div>
+<div class="flex flex-col gap-2">
+<div class="group flex items-center justify-between p-3 bg-white dark:bg-surface-dark border border-transparent dark:border-surface-border hover:border-primary/30 rounded-lg shadow-sm transition-all relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-lg"></div>
+<div class="flex items-center gap-3 pl-2">
+<button class="text-text-secondary hover:text-red-500 transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+<span class="font-semibold text-sm">Lofi Hip Hop</span>
+</div>
+<div class="text-text-secondary cursor-grab active:cursor-grabbing flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">drag_handle</span>
+</div>
+</div>
+<div class="group flex items-center justify-between p-3 bg-white dark:bg-surface-dark border border-transparent dark:border-surface-border hover:border-primary/30 rounded-lg shadow-sm transition-all relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary/50 rounded-l-lg"></div>
+<div class="flex items-center gap-3 pl-2">
+<button class="text-text-secondary hover:text-red-500 transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+<span class="font-semibold text-sm">Jazz Essentials</span>
+</div>
+<div class="text-text-secondary cursor-grab active:cursor-grabbing flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">drag_handle</span>
+</div>
+</div>
+<div class="group flex items-center justify-between p-3 bg-white dark:bg-surface-dark border border-transparent dark:border-surface-border hover:border-primary/30 rounded-lg shadow-sm transition-all relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary/30 rounded-l-lg"></div>
+<div class="flex items-center gap-3 pl-2">
+<button class="text-text-secondary hover:text-red-500 transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+<span class="font-semibold text-sm">Ambient Chill</span>
+</div>
+<div class="text-text-secondary cursor-grab active:cursor-grabbing flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">drag_handle</span>
+</div>
+</div>
+</div>
+</div>
+<div class="px-5">
+<h3 class="text-sm font-bold uppercase tracking-wider text-text-secondary mb-3">Available Genres</h3>
+<div class="flex flex-wrap gap-2.5">
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-white border border-primary shadow-lg shadow-primary/20 transition-all transform scale-[1.02]">
+<span class="material-symbols-outlined text-[18px]">headphones</span>
+<span class="text-sm font-medium">Lofi Hip Hop</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-white border border-primary shadow-lg shadow-primary/20 transition-all">
+<span class="material-symbols-outlined text-[18px]">piano</span>
+<span class="text-sm font-medium">Jazz Essentials</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-transparent border border-gray-200 dark:border-surface-border text-gray-600 dark:text-text-secondary hover:bg-gray-50 dark:hover:bg-surface-dark hover:border-gray-300 dark:hover:border-gray-600 transition-all">
+<span class="material-symbols-outlined text-[18px]">graphic_eq</span>
+<span class="text-sm font-medium">Synthwave</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-white border border-primary shadow-lg shadow-primary/20 transition-all">
+<span class="material-symbols-outlined text-[18px]">cloud</span>
+<span class="text-sm font-medium">Ambient Chill</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-transparent border border-gray-200 dark:border-surface-border text-gray-600 dark:text-text-secondary hover:bg-gray-50 dark:hover:bg-surface-dark hover:border-gray-300 dark:hover:border-gray-600 transition-all">
+<span class="material-symbols-outlined text-[18px]">music_note</span>
+<span class="text-sm font-medium">Classical</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-transparent border border-gray-200 dark:border-surface-border text-gray-600 dark:text-text-secondary hover:bg-gray-50 dark:hover:bg-surface-dark hover:border-gray-300 dark:hover:border-gray-600 transition-all">
+<span class="material-symbols-outlined text-[18px]">speaker</span>
+<span class="text-sm font-medium">Trap</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-transparent border border-gray-200 dark:border-surface-border text-gray-600 dark:text-text-secondary hover:bg-gray-50 dark:hover:bg-surface-dark hover:border-gray-300 dark:hover:border-gray-600 transition-all">
+<span class="material-symbols-outlined text-[18px]">cable</span>
+<span class="text-sm font-medium">Phonk</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-transparent border border-gray-200 dark:border-surface-border text-gray-600 dark:text-text-secondary hover:bg-gray-50 dark:hover:bg-surface-dark hover:border-gray-300 dark:hover:border-gray-600 transition-all">
+<span class="material-symbols-outlined text-[18px]">album</span>
+<span class="text-sm font-medium">Deep House</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-transparent border border-gray-200 dark:border-surface-border text-gray-600 dark:text-text-secondary hover:bg-gray-50 dark:hover:bg-surface-dark hover:border-gray-300 dark:hover:border-gray-600 transition-all">
+<span class="material-symbols-outlined text-[18px]">mic_external_on</span>
+<span class="text-sm font-medium">Acoustic</span>
+</button>
+</div>
+<div class="h-8"></div>
+</div>
+</main>
+<footer class="fixed bottom-0 left-0 w-full bg-background-light dark:bg-background-dark border-t border-gray-200 dark:border-surface-border p-4 z-20 pb-8">
+<button class="w-full bg-primary hover:bg-blue-600 active:bg-blue-700 text-white font-bold py-3.5 px-6 rounded-xl transition-colors shadow-lg shadow-primary/25 flex items-center justify-center gap-2">
+        Next Step
+        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</footer>
+</body></html>

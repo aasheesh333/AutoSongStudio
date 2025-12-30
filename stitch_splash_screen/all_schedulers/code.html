@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>All Schedulers - AutoSong Studio</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2565e4",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111621",
+                        "surface-dark": "#1c222e", 
+                        "surface-light": "#ffffff",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }.no-scrollbar {
+            -ms-overflow-style: none;scrollbar-width: none;}
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased min-h-screen relative flex flex-col">
+<header class="sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors duration-200">
+<div class="flex items-center justify-between px-4 py-3">
+<h1 class="text-xl font-extrabold tracking-tight">All Schedulers</h1>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-300">filter_list</span>
+</button>
+</div>
+<div class="px-4 pb-3 flex gap-3 overflow-x-auto no-scrollbar snap-x">
+<button class="snap-start shrink-0 h-9 px-4 rounded-full bg-primary text-white text-sm font-semibold shadow-md shadow-primary/20 flex items-center justify-center transition-transform active:scale-95">
+                All
+            </button>
+<button class="snap-start shrink-0 h-9 px-4 rounded-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-sm font-medium flex items-center justify-center whitespace-nowrap hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                Active
+            </button>
+<button class="snap-start shrink-0 h-9 px-4 rounded-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-sm font-medium flex items-center justify-center whitespace-nowrap hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                Inactive
+            </button>
+<button class="snap-start shrink-0 h-9 px-4 rounded-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-sm font-medium flex items-center justify-center whitespace-nowrap hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                Drafts
+            </button>
+<button class="snap-start shrink-0 h-9 px-4 rounded-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-sm font-medium flex items-center justify-center whitespace-nowrap hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                Errors
+            </button>
+</div>
+</header>
+<main class="flex-1 p-4 flex flex-col gap-4 pb-40">
+<article class="group relative bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-800 hover:border-primary/50 dark:hover:border-primary/50 transition-all duration-300">
+<div class="flex justify-between items-start mb-3">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+</span>
+<h2 class="text-base font-bold leading-tight">Lo-Fi Beats Daily</h2>
+</div>
+<div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+<span class="material-symbols-outlined text-[16px] align-middle">update</span>
+<span>Daily at 10:00 AM</span>
+</div>
+</div>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="mt-4">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-semibold text-slate-500 dark:text-slate-500 uppercase tracking-wider">Recently Generated</span>
+<span class="text-xs text-primary font-bold cursor-pointer hover:underline">View All</span>
+</div>
+<div class="flex gap-3 overflow-hidden">
+<div class="relative w-24 aspect-video rounded-lg bg-slate-200 dark:bg-slate-800 overflow-hidden flex-shrink-0 group/img">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover/img:scale-110" data-alt="Lo-fi anime style room with sunset" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCH3gZ9GkpHbaX9VUIX_nUc6QpBchFXEjwhJYGQTBKOIT43ioBndHZLe62gGOxaWx-ailHHwc8sMYMKZ-e4UPu3YUZpBFqxEaKrcmXXcM_71oNAy01WE0vRA8GeFTQHgM8gW9L3HN_2eF2FOZ7gU_PdrUmd9s0KkPmcEffcUjXuKL6hVCxwiBvapD0AdhmCORg3fWxlLNaS5tZVszC_-9Trh41pmK7AmIoV_uRnTVMHIIc9EuvH6zs7xSP2bReLoafxepFVohvEwJMc');"></div>
+<div class="absolute inset-0 bg-black/20 group-hover/img:bg-black/10 transition-colors"></div>
+<span class="material-symbols-outlined absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-80 text-[20px]">play_circle</span>
+</div>
+<div class="relative w-24 aspect-video rounded-lg bg-slate-200 dark:bg-slate-800 overflow-hidden flex-shrink-0 group/img">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover/img:scale-110" data-alt="Abstract neon gradient purple and blue" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA9E4WQrmsTAqs7VmPaSLQGQMJ7nT1dVXcezn59IeSyXwQWBKS2X6OLH1ri29-TrJ22czLJW5GI_mHD2sUOIpK9Sk8LFKS4TNsTM0fEwJht4mw6gRogVxj_w1EPxA9YygbeU7tN4jZZk9fszknX21c6gx4oImoos5ImFmd1jYtiuB-4W50n03fGgC_Zp_h0wBRpuQWlGphhFh5bEHDl5A_sCRHNvrRwb-sgxlqkjMusZW9Qy6jIrv-9_ZNv3ay_Lo-O-HKxQDpxVQJv');"></div>
+<span class="material-symbols-outlined absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-80 text-[20px]">play_circle</span>
+</div>
+<div class="relative w-24 aspect-video rounded-lg bg-slate-200 dark:bg-slate-800 overflow-hidden flex-shrink-0 group/img">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover/img:scale-110" data-alt="Night city lights with bokeh effect" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCM-5YVnEgbLqNo_agpSJI8D75OWq-46McIetg7SZL_7tiIlR67Lw0r2HG_lDr7S99tp71hjxhy5pvAy84cT0khJQzlCbkfi6-0l1ikHQ6DBDUFqoDwXmz9QtLcsyRou-0sidNSxZJuSiqtsOLI40rqrTsfRE4HoRnDwt9-omF2_kD30D61tRsZSwEq-OyciYP-E2NPq7lRif-0F-CDiVmWrgNJv1kPM-kwpRE41Fubg6qK3UxNcJyz-4VnzX9bZUvYYnTH00NmhqQw');"></div>
+<span class="material-symbols-outlined absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-80 text-[20px]">play_circle</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<p class="text-xs text-slate-500">Next run: <span class="text-slate-700 dark:text-slate-300 font-medium">Today, 10:00 AM</span></p>
+<div class="h-1.5 w-16 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full w-3/4 bg-primary rounded-full"></div>
+</div>
+</div>
+</article>
+<article class="group relative bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-800 hover:border-slate-400 transition-all duration-300">
+<div class="flex justify-between items-start mb-3">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+<h2 class="text-base font-bold leading-tight">Chill Hop 24/7</h2>
+</div>
+<div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+<span class="material-symbols-outlined text-[16px] align-middle">pause_circle</span>
+<span>Paused • Last run 2 days ago</span>
+</div>
+</div>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="mt-4 opacity-75">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-semibold text-slate-500 dark:text-slate-500 uppercase tracking-wider">Recently Generated</span>
+</div>
+<div class="flex gap-3 overflow-hidden">
+<div class="relative w-24 aspect-video rounded-lg bg-slate-200 dark:bg-slate-800 overflow-hidden flex-shrink-0 group/img">
+<div class="w-full h-full bg-cover bg-center grayscale" data-alt="Retro cassette tape on table" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB15N6uz1bFAmDFsIAxHVh-a7X9PqrOM5xwuDoyubZmk2LjfLwv9wGXglDyUAsy2P-uy-Uyip3G9qg3GGK45lkE5DC0tIG6-bTrGVixLiKdqeqo_qnC0qN9KLp10sSh6kE2idHYtvKHbRrbWU5syDE7uuJItBanLGD7R7J8QmSlv_ub29PlrMjxW318Ri5KCSqOvlTtrGII8Osn1u5CmQ6psLTXrpUh4yvw1d8hm8Hit62IQ2t7NE0tk4r36WBSCo7XQ5-5mHEBA1QF');"></div>
+<span class="material-symbols-outlined absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-80 text-[20px]">play_circle</span>
+</div>
+<div class="relative w-24 aspect-video rounded-lg bg-slate-200 dark:bg-slate-800 overflow-hidden flex-shrink-0 group/img">
+<div class="w-full h-full bg-cover bg-center grayscale" data-alt="Surfer looking at waves on beach" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuADKle7RZnEh_oa0Nvw_z9xfTFYls6SKq4cmq6DdKet-9LPZawVVEx0a-l2Q2SxwNXiZNytQNzEIIW0IcsEoT-N0VvWa_PjSQ9HN-jHna3a6R975MrQLD8o6v_xDgTnq6a_X31qa0ortKJGTCoeUGJQyE6Jfy-O8_n1eL8vstFNrUCTJE9uys2_N-LsFxcXy_5pS6ig6okLao0q3cknTNgw-SDfE7DN5g87Y1px-sbx1uJlwbODRIZPAlu2I-qoHPDrdxcUKhp9MWir');"></div>
+<span class="material-symbols-outlined absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-80 text-[20px]">play_circle</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<button class="text-xs font-bold text-primary hover:text-primary/80">Resume Scheduler</button>
+</div>
+</article>
+<article class="group relative bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-800 hover:border-primary/50 dark:hover:border-primary/50 transition-all duration-300">
+<div class="flex justify-between items-start mb-3">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="relative flex h-2.5 w-2.5">
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+</span>
+<h2 class="text-base font-bold leading-tight">Synthwave Mix</h2>
+</div>
+<div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+<span class="material-symbols-outlined text-[16px] align-middle">calendar_month</span>
+<span>Weekly • Fri 5:00 PM</span>
+</div>
+</div>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="mt-4">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-semibold text-slate-500 dark:text-slate-500 uppercase tracking-wider">Recently Generated</span>
+</div>
+<div class="flex gap-3 overflow-hidden">
+<div class="relative w-24 aspect-video rounded-lg bg-slate-200 dark:bg-slate-800 overflow-hidden flex-shrink-0 group/img">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover/img:scale-110" data-alt="Retro 80s computer grid graphics" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBFcG4jMXe_Gb_JXPoaxx2yA7wbbi6O4zmKnXNwC8z4niYM3Ct7pcwLrvATWw687aKFlNJr8Jhc5E4eZmUZ8L5SU7pj7jB5FuRGU7d28DNagQwrAjWxs4rCeRA_QwIr2wuzidtKhQRQXiZJ7XSFlr2CA1CetsUOqS8xOwvvTonyF1TRvFIb3j3fHzWPEBBPx2g7uxHt2mkwBaJ5xyGenQVgAdA9tpF5DQ_SdiUQ-kdbZ1Dphm6d8uZ131dgD0cjNjUUkiCLB_UEnA4j');"></div>
+<span class="material-symbols-outlined absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-80 text-[20px]">play_circle</span>
+</div>
+<div class="relative w-24 aspect-video rounded-lg bg-slate-200 dark:bg-slate-800 overflow-hidden flex-shrink-0 group/img">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover/img:scale-110" data-alt="Mountain landscape with river" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDoWUFTDsB6Zb__Tdxdw8Nv7S6Gp0cRimSAwxcDUZsqwNuc7zy3LZQPw38UuTKYmf3evA4d6-ae1Zh8rmR1UeLLvs6evQLmLXPXmY30z9fT-ilvUq8GWO20v0Z5M1NJBBCsydWamOuUXjOSYXWxGSNMHoRWrzduRbLgCeA8iEsQLsvND1P_8SocsXj4CctGu53xmJixMQN47OQx_R0mzIU3h_ffn5sgKbBQa9EyR1Qx5AXsTJNil6uPL1AgpRYFEAFu_N06n3zntuZ0');"></div>
+<span class="material-symbols-outlined absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-80 text-[20px]">play_circle</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<p class="text-xs text-slate-500">Next run: <span class="text-slate-700 dark:text-slate-300 font-medium">Fri, Oct 24</span></p>
+<div class="h-1.5 w-16 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full w-1/4 bg-primary rounded-full"></div>
+</div>
+</div>
+</article>
+</main>
+<button class="fixed bottom-24 right-6 h-14 w-14 bg-primary text-white rounded-2xl shadow-lg shadow-primary/40 flex items-center justify-center hover:bg-blue-600 active:scale-95 transition-all z-40">
+<span class="material-symbols-outlined text-[28px]">add</span>
+</button>
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-surface-dark/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<div class="flex items-center justify-around h-[84px] pb-6 px-2">
+<a class="flex flex-col items-center justify-center w-full h-full gap-1.5 text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined text-2xl group-hover:scale-105 transition-transform">home</span>
+<span class="text-[10px] font-semibold tracking-wide">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full gap-1.5 text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined text-2xl group-hover:scale-105 transition-transform">video_library</span>
+<span class="text-[10px] font-semibold tracking-wide">Library</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full gap-1.5 text-primary" href="#">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+<span class="text-[10px] font-bold tracking-wide">Schedulers</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full gap-1.5 text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined text-2xl group-hover:scale-105 transition-transform">settings</span>
+<span class="text-[10px] font-semibold tracking-wide">Settings</span>
+</a>
+</div>
+</nav>
+</body></html>

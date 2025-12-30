@@ -1,0 +1,453 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+import '../providers/app_state.dart';
+import '../theme/app_theme.dart';
+import '../models/video.dart';
+
+class SongDetailScreen extends StatefulWidget {
+  const SongDetailScreen({super.key});
+
+  @override
+  State<SongDetailScreen> createState() => _SongDetailScreenState();
+}
+
+class _SongDetailScreenState extends State<SongDetailScreen> {
+  Video? _video;
+  bool _isLoading = true;
+  bool _isUploading = false;
+  
+  final _titleController = TextEditingController();
+  final _descController = TextEditingController();
+  final _tagsController = TextEditingController();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final videoId = ModalRoute.of(context)!.settings.arguments as String;
+    _loadVideo(videoId);
+  }
+
+  Future<void> _loadVideo(String id) async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final appState = Provider.of<AppState>(context, listen: false);
+      _video = appState.videos.firstWhere((v) => v.id == id);
+      
+      _titleController.text = _video!.title;
+      _descController.text = _video!.description;
+      _tagsController.text = _video!.tags.join(', ');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading video: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _saveChanges() async {
+    if (!_video!.isEditable) return;
+    
+    try {
+      final appState = Provider.of<AppState>(context, listen: false);
+      
+      await appState.updateVideo(_video!.id, {
+        'title': _titleController.text,
+        'description': _descController.text,
+        'tags': _tagsController.text.split(',').map((t) => t.trim()).toList(),
+      });
+      
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Video updated successfully'),
+          backgroundColor: AppTheme.success,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update video: $e'),
+          backgroundColor: AppTheme.error,
+        ),
+      );
+    }
+  }
+
+  Future<void> _uploadNow() async {
+    if (!_video!.isReady) return;
+    
+    setState(() => _isUploading = true);
+    
+    try {
+      final appState = Provider.of<AppState>(context, listen: false);
+      await appState.uploadVideoNow(_video!.id);
+      
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Video uploaded successfully!'),
+          backgroundColor: AppTheme.success,
+        ),
+      );
+      
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Upload failed: $e'),
+          backgroundColor: AppTheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
+  }
+
+  Future<void> _deleteVideo() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Video?'),
+        content: const Text('This will trigger generation of a replacement video for this scheduler.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      final appState = Provider.of<AppState>(context, listen: false);
+      await appState.deleteVideo(_video!.id, _video!.schedulerId);
+      
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Video deleted. Replacement will be generated.'),
+          backgroundColor: AppTheme.info,
+        ),
+      );
+      
+      Navigator.pop(context);
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descController.dispose();
+    _tagsController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading || _video == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.arrow_back),
+                    style: IconButton.styleFrom(
+                      backgroundColor: AppTheme.surfaceDark,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _video!.locked ? 'Video Details' : 'Review Video',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  if (_video!.isEditable)
+                    PopupMenuButton(
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          onTap: _deleteVideo,
+                          child: const Row(
+                            children: [
+                              Icon(Icons.delete, color: AppTheme.error),
+                              SizedBox(width: 8),
+                              Text('Delete Video'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+            
+            // Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Thumbnail Preview
+                    Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceHighlight,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: _video!.thumbnailUrl != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Image.network(
+                                _video!.thumbnailUrl!,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : const Center(
+                              child: Icon(Icons.music_note, size: 64),
+                            ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Status
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(_video!.status).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _getStatusColor(_video!.status).withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _getStatusIcon(_video!.status),
+                            color: _getStatusColor(_video!.status),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _video!.statusDisplay,
+                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    color: _getStatusColor(_video!.status),
+                                  ),
+                                ),
+                                if (_video!.scheduledPublishAt != null)
+                                  Text(
+                                    'Scheduled: ${DateFormat('MMM d, h:mm a').format(_video!.scheduledPublishAt!)}',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: _getStatusColor(_video!.status),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          if (_video!.locked)
+                            const Icon(Icons.lock, color: AppTheme.warning),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Title
+                    Text(
+                      'Title',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _titleController,
+                      enabled: _video!.isEditable,
+                      maxLength: 100,
+                      decoration: InputDecoration(
+                        hintText: 'Video title',
+                        counterText: _video!.isEditable ? null : '',
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Description
+                    Text(
+                      'Description',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _descController,
+                      enabled: _video!.isEditable,
+                      maxLines: 5,
+                      maxLength: 5000,
+                      decoration: const InputDecoration(
+                        hintText: 'Video description',
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Tags
+                    Text(
+                      'Tags (comma-separated)',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _tagsController,
+                      enabled: _video!.isEditable,
+                      decoration: const InputDecoration(
+                        hintText: 'tag1, tag2, tag3',
+                        helperText: 'Maximum 15 tags',
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Genres (read-only)
+                    Text(
+                      'Genres',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: _video!.genres.map((genre) {
+                        return Chip(
+                          label: Text(genre),
+                          backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                        );
+                      }).toList(),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      
+      // Action buttons
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceDark,
+          border: Border(
+            top: BorderSide(
+              color: Colors.white.withOpacity(0.05),
+            ),
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_video!.isEditable) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _saveChanges,
+                    child: const Text('Save Changes'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (_video!.isReady)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isUploading ? null : _uploadNow,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.success,
+                    ),
+                    child: _isUploading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text('Upload to YouTube Now'),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'ready':
+        return AppTheme.success;
+      case 'processing':
+        return AppTheme.info;
+      case 'failed':
+        return AppTheme.error;
+      case 'uploaded':
+        return AppTheme.primaryColor;
+      default:
+        return AppTheme.textSecondary;
+    }
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'ready':
+        return Icons.check_circle;
+      case 'processing':
+        return Icons.hourglass_empty;
+      case 'failed':
+        return Icons.error;
+      case 'uploaded':
+        return Icons.cloud_done;
+      default:
+        return Icons.circle;
+    }
+  }
+}
