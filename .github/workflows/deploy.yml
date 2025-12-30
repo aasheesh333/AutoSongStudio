@@ -136,10 +136,6 @@ jobs:
         working-directory: ./android_app
         run: flutter analyze || echo "⚠️  Analysis issues found (non-blocking)"
 
-      - name: Make gradlew executable
-        working-directory: ./android_app/android
-        run: chmod +x gradlew
-
       - name: Build APK (Release)
         working-directory: ./android_app
         run: |
