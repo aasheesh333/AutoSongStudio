@@ -42,19 +42,32 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     
     if (!mounted) return;
     
-    final appState = Provider.of<AppState>(context, listen: false);
-    
-    if (appState.isAuthenticated) {
-      // Load user data
-      await appState.loadChannels();
-      await appState.loadSchedulers();
-      await appState.loadVideos();
-      await appState.loadSettings();
+    try {
+      final appState = Provider.of<AppState>(context, listen: false);
       
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
-      Navigator.pushReplacementNamed(context, '/sign-in');
+      if (appState.isAuthenticated) {
+        // Load user data with error handling
+        try {
+          await appState.loadChannels();
+          await appState.loadSchedulers();
+          await appState.loadVideos();
+          await appState.loadSettings();
+        } catch (e) {
+          debugPrint('⚠️ Error loading user data: $e');
+          // Continue anyway - user is authenticated but data may be incomplete
+        }
+        
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        Navigator.pushReplacementNamed(context, '/sign-in');
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error in splash screen: $e');
+      // On any error, navigate to sign-in
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/sign-in');
+      }
     }
   }
 

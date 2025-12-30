@@ -25,10 +25,12 @@ jobs:
           java-version: "17"
           distribution: "temurin"
 
-      - name: Setup Gradle
+      - name: Setup Gradle with Caching
         uses: gradle/gradle-build-action@v2
         with:
           gradle-version: 8.3
+          cache-read-only: false
+          gradle-home-cache-cleanup: true
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2

@@ -21,8 +21,14 @@ import 'screens/settings_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Firebase
-  await Firebase.initializeApp();
+  // Initialize Firebase with error handling
+  try {
+    await Firebase.initializeApp();
+    debugPrint('✅ Firebase initialized successfully');
+  } catch (e) {
+    debugPrint('⚠️ Firebase initialization failed: $e');
+    // App will continue without Firebase - features requiring Firebase won't work
+  }
   
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
