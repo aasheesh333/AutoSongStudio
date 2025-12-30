@@ -8,6 +8,10 @@ const config = require('./config');
 // Initialize Express app
 const app = express();
 
+// Trust proxy - required for Render.com and other reverse proxies
+// This fixes the X-Forwarded-For header validation error from express-rate-limit
+app.set('trust proxy', 1);
+
 // Initialize Firebase
 initializeFirebase();
 

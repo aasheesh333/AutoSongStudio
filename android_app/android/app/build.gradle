@@ -13,15 +13,20 @@ if (localPropertiesFile.exists()) {
     }
 }
 
-def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+// Version code: CI environment variable > local.properties > default
+def flutterVersionCode = System.getenv("VERSION_CODE") ?: localProperties.getProperty('flutter.versionCode')
 if (flutterVersionCode == null) {
     flutterVersionCode = '1'
 }
 
-def flutterVersionName = localProperties.getProperty('flutter.versionName')
+// Version name: CI environment variable > local.properties > default
+def flutterVersionName = System.getenv("VERSION_NAME") ?: localProperties.getProperty('flutter.versionName')
 if (flutterVersionName == null) {
     flutterVersionName = '1.0.0'
 }
+
+// Package name: CI environment variable > default
+def appPackageName = System.getenv("PACKAGE_NAME") ?: "com.autosong.autosong_studio"
 
 // Keystore properties
 def keystoreProperties = new Properties()
@@ -31,7 +36,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace "com.autosong.autosong_studio"
+    namespace appPackageName
     compileSdk 34
 
     compileOptions {
@@ -48,7 +53,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.autosong.autosong_studio"
+        applicationId appPackageName
         minSdk 21
         targetSdk 34
         versionCode flutterVersionCode.toInteger()

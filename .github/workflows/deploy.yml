@@ -143,13 +143,23 @@ jobs:
 
       - name: Build APK (Release)
         working-directory: ./android_app
+        env:
+          VERSION_CODE: ${{ secrets.VERSION_CODE || github.run_number }}
+          VERSION_NAME: ${{ secrets.VERSION_NAME || format('1.0.{0}', github.run_number) }}
+          PACKAGE_NAME: ${{ secrets.PACKAGE_NAME || 'com.autosong.autosong_studio' }}
+          WEB_GOOGLE_CLIENT_ID: ${{ secrets.WEB_GOOGLE_CLIENT_ID }}
         run: |
           rm -f android/gradlew android/gradlew.bat
+          echo "📦 Building with VERSION_CODE=$VERSION_CODE, VERSION_NAME=$VERSION_NAME"
           flutter build apk --release --verbose
           echo "✅ APK built successfully"
 
       - name: Build AAB (Release)
         working-directory: ./android_app
+        env:
+          VERSION_CODE: ${{ secrets.VERSION_CODE || github.run_number }}
+          VERSION_NAME: ${{ secrets.VERSION_NAME || format('1.0.{0}', github.run_number) }}
+          PACKAGE_NAME: ${{ secrets.PACKAGE_NAME || 'com.autosong.autosong_studio' }}
         run: |
           flutter build appbundle --release --verbose
           echo "✅ AAB built successfully"

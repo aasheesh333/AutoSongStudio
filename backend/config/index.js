@@ -4,7 +4,8 @@ module.exports = {
   // Server
   nodeEnv: process.env.NODE_ENV || 'development',
   port: process.env.PORT || 3000,
-  baseUrl: process.env.BASE_URL || 'http://localhost:3000',
+  baseUrl: process.env.BASE_URL || 'http://localhost:3000',  // Suno API base URL
+  backendUrl: process.env.BACKEND_URL || process.env.BASE_URL || 'http://localhost:3000',  // This server's URL
 
   // Firebase
   firebaseConfig: {
@@ -37,7 +38,7 @@ module.exports = {
 
   suno: {
     apiKey: process.env.SUNO_API_KEY,
-    baseUrl: process.env.SUNO_BASE_URL || 'https://api.sunoapi.org',
+    baseUrl: process.env.SUNO_BASE_URL || process.env.BASE_URL || 'https://api.sunoapi.org',
     // Rate limits from research: 20 requests per 10 seconds
     rateLimit: {
       requestsPer10Seconds: 20,
@@ -48,7 +49,9 @@ module.exports = {
   youtube: {
     clientId: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    redirectUri: `${process.env.BASE_URL || 'http://localhost:3000'}/api/auth/callback`,
+    webClientId: process.env.WEB_GOOGLE_CLIENT_ID,  // For Android app OAuth
+    // IMPORTANT: redirectUri must point to THIS server, not the Suno API
+    redirectUri: `${process.env.BACKEND_URL || 'http://localhost:3000'}/api/auth/callback`,
     scopes: [
       'https://www.googleapis.com/auth/youtube.upload',
       'https://www.googleapis.com/auth/youtube',
