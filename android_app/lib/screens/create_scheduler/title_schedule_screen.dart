@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
+import 'package:autosong_studio/theme/app_theme.dart';
 import 'genres_screen.dart';
 
 class TitleScheduleScreen extends StatefulWidget {
