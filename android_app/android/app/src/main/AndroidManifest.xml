@@ -5,7 +5,7 @@
     <application
         android:label="AutoSong Studio"
         android:name="${applicationName}"
-        android:icon="@drawable/ic_launcher_foreground"
+        android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">
         
         <activity
