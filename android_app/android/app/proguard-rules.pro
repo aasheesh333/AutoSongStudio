@@ -16,7 +16,12 @@
 # Explicitly keep the missing classes reported in R8 error
 -keep class com.google.android.play.core.splitcompat.SplitCompatApplication { *; }
 -keep class com.google.android.play.core.splitinstall.SplitInstallException { *; }
+-keep class com.google.android.play.core.tasks.** { *; }
+-keep class com.google.android.play.core.tasks.OnFailureListener { *; }
+-keep class com.google.android.play.core.tasks.OnSuccessListener { *; }
+-keep class com.google.android.play.core.tasks.Task { *; }
 
 # Prevent warnings for these classes
 -dontwarn com.google.android.play.core.splitcompat.**
 -dontwarn com.google.android.play.core.splitinstall.**
+-dontwarn com.google.android.play.core.tasks.**
