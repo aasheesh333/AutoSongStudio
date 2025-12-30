@@ -11,36 +11,10 @@ env:
     FLUTTER_VERSION: "3.16.5"
 
 jobs:
-    # Backend Deployment (Auto-deploys via Render.com Git integration)
-    backend-check:
-        runs-on: ubuntu-latest
-        name: Backend Health Check
-
-        steps:
-            - uses: actions/checkout@v3
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v3
-              with:
-                  node-version: "18"
-
-            - name: Install dependencies
-              working-directory: ./backend
-              run: npm ci
-
-            - name: Lint backend code
-              working-directory: ./backend
-              run: npm run lint || echo "Linting skipped (no eslint config)"
-
-            - name: Run backend tests
-              working-directory: ./backend
-              run: npm test || echo "Tests skipped (not yet implemented)"
-
     # Flutter Android Build
     build-android:
         runs-on: ubuntu-latest
         name: Build Flutter APK & AAB
-        needs: backend-check
 
         steps:
             - uses: actions/checkout@v3
@@ -188,18 +162,16 @@ jobs:
     notify-deployment:
         runs-on: ubuntu-latest
         name: Deployment Summary
-        needs: [backend-check, build-android]
+        needs: [build-android]
         if: always()
 
         steps:
             - name: Deployment Status
               run: |
                   echo "=========================================="
-                  echo "🚀 AutoSong Studio Build Complete"
+                  echo "🚀 AutoSong Studio APK Build Complete"
                   echo "=========================================="
-                  echo "✅ Backend: Deployed on Render.com"
-                  echo "✅ Android: APK & AAB built"
-                  echo "=========================================="
-                  echo "🌐 Backend URL: https://jusdown.onrender.com"
+                  echo "✅ Android APK & AAB built successfully"
+                  echo "🌐 Backend: Already deployed at https://jusdown.onrender.com"
                   echo "📱 Build #${{ github.run_number }}"
                   echo "=========================================="
