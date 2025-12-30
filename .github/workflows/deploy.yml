@@ -130,14 +130,14 @@ jobs:
                   echo "✅ Artifacts renamed with version number"
 
             - name: Upload APK Artifact
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: AutoSong-Studio-APK-v${{ github.run_number }}
                   path: android_app/build/app/outputs/flutter-apk/autosong-studio-v${{ github.run_number }}.apk
                   retention-days: 90
 
             - name: Upload AAB Artifact
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: AutoSong-Studio-AAB-v${{ github.run_number }}
                   path: android_app/build/app/outputs/bundle/release/autosong-studio-v${{ github.run_number }}.aab
