@@ -98,13 +98,13 @@ jobs:
               echo "⚠️ Generating temporary keystore..."
               keytool -genkey -v -keystore $KEYSTORE_PATH \
                   -keyalg RSA -keysize 2048 -validity 10000 \
-                  -alias upload -storepass android -keypass android \
+                  -alias mykey -storepass android -keypass android \
                   -dname "CN=Android Debug,O=Android,C=US" \
                   -noprompt
               
               echo "storePassword=android" > $PROPS_PATH
               echo "keyPassword=android" >> $PROPS_PATH
-              echo "keyAlias=upload" >> $PROPS_PATH
+              echo "keyAlias=mykey" >> $PROPS_PATH
               echo "storeFile=upload-keystore.jks" >> $PROPS_PATH
               echo "✅ Temporary keystore generated"
           }
@@ -119,7 +119,7 @@ jobs:
                   echo "✅ Keystore decoded successfully"
                   echo "storePassword=$KEYSTORE_PASSWORD" > $PROPS_PATH
                   echo "keyPassword=$KEY_PASSWORD" >> $PROPS_PATH
-                  echo "keyAlias=upload" >> $PROPS_PATH
+                  echo "keyAlias=mykey" >> $PROPS_PATH
                   echo "storeFile=upload-keystore.jks" >> $PROPS_PATH
               else
                   echo "❌ Keystore decode produced empty/invalid file. Falling back."
