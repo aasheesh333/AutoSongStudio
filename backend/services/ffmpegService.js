@@ -1,7 +1,14 @@
 const ffmpeg = require('fluent-ffmpeg');
 const config = require('../config');
 const fs = require('fs');
+const ffmpegStatic = require('ffmpeg-static');
 const path = require('path');
+
+// Set ffmpeg path from static binary
+if (ffmpegStatic) {
+    ffmpeg.setFfmpegPath(ffmpegStatic);
+    console.log(`FFmpeg path set to: ${ffmpegStatic}`);
+}
 
 /**
  * FFmpeg Service

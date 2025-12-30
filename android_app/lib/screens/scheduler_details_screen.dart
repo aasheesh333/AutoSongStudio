@@ -293,7 +293,7 @@ class _SchedulerDetailsScreenState extends State<SchedulerDetailsScreen> {
                       ),
                     )
                   else
-                    ..._ recentVideos.map((video) {
+                    ...recentVideos.map((video) {
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: AppTheme.cardDecoration(),

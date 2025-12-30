@@ -6,7 +6,7 @@ import '../theme/app_theme.dart';
 import '../models/video.dart';
 
 class LibraryScreen extends StatefulWidget {
-  const LibraryScreen({super.key};
+  const LibraryScreen({super.key});
 
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
