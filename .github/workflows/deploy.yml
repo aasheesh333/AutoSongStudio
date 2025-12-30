@@ -142,6 +142,7 @@ jobs:
         run: flutter analyze || echo "⚠️  Analysis issues found (non-blocking)"
 
       - name: Build APK (Release)
+        working-directory: ./android_app
         run: |
           rm -f android/gradlew android/gradlew.bat
           flutter build apk --release --verbose
