@@ -38,7 +38,21 @@ class AppState extends ChangeNotifier {
 
   Future<void> _checkAuthStatus() async {
     final accessToken = await _storage.read(key: 'access_token');
-    _isAuthenticated = accessToken != null;
+    if (accessToken != null) {
+      _isAuthenticated = true;
+      
+      // Restore user data from storage
+      final userData = await _storage.read(key: 'user_data');
+      if (userData != null) {
+        try {
+          _currentUser = User.fromJson(jsonDecode(userData));
+        } catch (e) {
+          print('Error restoring user data: $e');
+        }
+      }
+    } else {
+      _isAuthenticated = false;
+    }
     notifyListeners();
   }
 
@@ -134,6 +148,11 @@ class AppState extends ChangeNotifier {
         await _storage.write(key: 'refresh_token', value: data['refresh_token']);
       }
       
+      // Save User Data to storage for persistence across app restarts
+      if (_currentUser != null) {
+        await _storage.write(key: 'user_data', value: jsonEncode(_currentUser!.toJson()));
+      }
+      
       _isAuthenticated = true;
       notifyListeners();
   }
@@ -181,6 +200,11 @@ class AppState extends ChangeNotifier {
     _schedulers = [];
     _videos = [];
     _settings = null;
+    
+    // Clear persisted user data
+    await _storage.delete(key: 'user_data');
+    await _storage.delete(key: 'selected_channel_id');
+    
     notifyListeners();
   }
 
@@ -281,6 +305,9 @@ class AppState extends ChangeNotifier {
       // Update user from settings
       if (_settings != null && _settings!['user'] != null) {
         _currentUser = User.fromJson(_settings!['user']);
+        
+        // Re-persist updated user data (e.g., after Suno key save)
+        await _storage.write(key: 'user_data', value: jsonEncode(_currentUser!.toJson()));
       }
       
       notifyListeners();

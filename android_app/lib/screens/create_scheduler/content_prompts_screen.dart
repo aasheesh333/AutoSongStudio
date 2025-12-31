@@ -38,10 +38,21 @@ class _ContentPromptsScreenState extends State<ContentPromptsScreen> {
   }
 
   void _saveAndContinue() {
-    _data.titlePrompt = _titleController.text;
-    _data.descPrompt = _descController.text;
-    _data.tagsPrompt = _tagsController.text;
-    _data.lyricsPrompt = _lyricsController.text;
+    // Validate Lyrics Prompt (REQUIRED)
+    if (_lyricsController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Lyrics Prompt is required!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    _data.titlePrompt = _titleController.text.trim();
+    _data.descPrompt = _descController.text.trim();
+    _data.tagsPrompt = _tagsController.text.trim();
+    _data.lyricsPrompt = _lyricsController.text.trim();
     
     Navigator.pushNamed(
       context,
@@ -81,7 +92,7 @@ class _ContentPromptsScreenState extends State<ContentPromptsScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Customize AI-generated content (all optional)',
+                    'Lyrics Prompt is REQUIRED. Others are optional.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppTheme.textSecondary,
                     ),
@@ -107,9 +118,10 @@ class _ContentPromptsScreenState extends State<ContentPromptsScreen> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: _titleController,
+                      maxLength: 500,
                       decoration: const InputDecoration(
                         hintText: 'e.g., "Focus on chill vibes and relaxation"',
-                        helperText: 'Guide how video titles should be created',
+                        helperText: 'Guide how video titles should be created (Optional)',
                       ),
                       maxLines: 2,
                     ),
@@ -124,9 +136,10 @@ class _ContentPromptsScreenState extends State<ContentPromptsScreen> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: _descController,
+                      maxLength: 500,
                       decoration: const InputDecoration(
                         hintText: 'e.g., "Include study and focus keywords"',
-                        helperText: 'Guide how video descriptions should be written',
+                        helperText: 'Guide how video descriptions should be written (Optional)',
                       ),
                       maxLines: 3,
                     ),
@@ -141,28 +154,58 @@ class _ContentPromptsScreenState extends State<ContentPromptsScreen> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: _tagsController,
+                      maxLength: 500,
                       decoration: const InputDecoration(
                         hintText: 'e.g., "Focus on study, lofi, chill tags"',
-                        helperText: 'Guide what type of tags to generate',
+                        helperText: 'Guide what type of tags to generate (Optional)',
                       ),
                       maxLines: 2,
                     ),
                     
                     const SizedBox(height: 24),
                     
-                    // Lyrics Prompt
-                    Text(
-                      'Lyrics Style',
-                      style: Theme.of(context).textTheme.titleSmall,
+                    // Lyrics Prompt (REQUIRED)
+                    Row(
+                      children: [
+                        Text(
+                          'Lyrics Prompt',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'REQUIRED',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.red,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _lyricsController,
-                      decoration: const InputDecoration(
-                        hintText: 'e.g., "Instrumental only, no vocals"',
-                        helperText: 'Guide the style and theme of lyrics',
+                      maxLength: 500,
+                      decoration: InputDecoration(
+                        hintText: 'e.g., "A song about coding and late night debugging"',
+                        helperText: 'AI uses this to generate lyrics. Title, Tags, Desc are derived from this.',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppTheme.primaryColor),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+                        ),
                       ),
-                      maxLines: 3,
+                      maxLines: 4,
                     ),
                     
                     const SizedBox(height: 24),
@@ -187,7 +230,7 @@ class _ContentPromptsScreenState extends State<ContentPromptsScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'These prompts are optional. Leave blank to use smart defaults based on your selected genres.',
+                              'Lyrics Prompt is required. Title, Description, and Tags will be AI-generated from your lyrics if left blank.',
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: AppTheme.info,
                               ),

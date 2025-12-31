@@ -35,7 +35,8 @@ router.get('/', async (req, res) => {
                 email: user.email,
                 plan: user.plan,
                 videosThisMonth: user.videosThisMonth || 0,
-                schedulersCount: user.schedulersCount || 0
+                schedulersCount: user.schedulersCount || 0,
+                sunoApiKey: user.sunoApiKey || null
             },
             planLimits: {
                 maxSchedulers: planConfig.maxSchedulers,
