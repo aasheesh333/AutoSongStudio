@@ -31,7 +31,7 @@ dependencies:
 
   # OAuth & URL
   url_launcher: ^6.2.2
-  app_links: ^3.4.5 # Latest stable for simpler integration
+  app_links: ^6.3.0 # Upgrade to v6 for stability (getInitialUri)
   webview_flutter: ^4.4.4
 
   # UI Components
