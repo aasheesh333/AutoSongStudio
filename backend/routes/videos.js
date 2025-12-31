@@ -176,6 +176,12 @@ router.post('/:id/upload-now', async (req, res) => {
             url: result.url,
             message: 'Video uploaded successfully'
         });
+
+        // Trigger keep-ahead generation
+        const videoWorker = req.app.get('videoWorker');
+        if (videoWorker) {
+            videoWorker.triggerForScheduler(video.schedulerId);
+        }
     } catch (error) {
         // Mark as failed
         await VideoModel.updateStatus(id, 'failed', error.message);
@@ -201,10 +207,19 @@ router.delete('/:id', async (req, res) => {
             return res.status(403).json({ error: 'Cannot delete uploaded video' });
         }
 
+        // Capture schedulerId before deletion (wait, we have video object)
+        const schedulerId = video.schedulerId;
+
         await VideoModel.delete(id);
         console.log(`[Videos] ✅ Deleted video: ${id}`);
 
         res.json({ success: true, message: 'Video deleted' });
+
+        // Trigger keep-ahead generation
+        const videoWorker = req.app.get('videoWorker');
+        if (videoWorker) {
+            videoWorker.triggerForScheduler(schedulerId);
+        }
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

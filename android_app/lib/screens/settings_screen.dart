@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/gestures.dart';
 import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
 
@@ -243,12 +245,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             const SizedBox(height: 12),
                             TextField(
                               controller: _sunoKeyController,
-                              decoration: const InputDecoration(
-                                hintText: 'sk-...',
-                                helperText: 'Get your key from suno.com',
+                                decoration: const InputDecoration(
+                                  hintText: 'sk-...',
+                                ),
+                                obscureText: true,
                               ),
-                              obscureText: true,
-                            ),
+                              const SizedBox(height: 8),
+                              RichText(
+                                text: TextSpan(
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                  children: [
+                                    const TextSpan(text: 'Get your key from '),
+                                    TextSpan(
+                                      text: 'sunoapi.org',
+                                      style: const TextStyle(
+                                        color: AppTheme.primaryColor,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                      recognizer: TapGestureRecognizer()
+                                        ..onTap = () {
+                                          launchUrl(
+                                            Uri.parse('https://sunoapi.org/'),
+                                            mode: LaunchMode.externalApplication,
+                                          );
+                                        },
+                                    ),
+                                  ],
+                                ),
+                              ),
                             const SizedBox(height: 12),
                             SizedBox(
                               width: double.infinity,

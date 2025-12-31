@@ -26,6 +26,37 @@ class _ReviewScreenState extends State<ReviewScreen> {
     
     try {
       final appState = Provider.of<AppState>(context, listen: false);
+      
+      // Check for Free Plan API Key requirement
+      if (appState.currentUser?.requiresSunoKey == true) {
+        if (!mounted) return;
+        
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('API Key Required'),
+            content: const Text(
+              'Free plan users must provide their own Suno API key to create schedulers.\n\nPlease go to Settings to add your key.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close dialog
+                  Navigator.pushNamed(context, '/settings'); // Go to settings
+                },
+                child: const Text('Go to Settings'),
+              ),
+            ],
+          ),
+        );
+        setState(() => _isCreating = false);
+        return;
+      }
+
       final channelId = appState.selectedChannel?.id;
       
       if (channelId == null) {

@@ -5,6 +5,7 @@ import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
 import '../models/scheduler.dart';
 import '../models/video.dart';
+import 'edit_scheduler_screen.dart';
 
 class SchedulerDetailsScreen extends StatefulWidget {
   const SchedulerDetailsScreen({super.key});
@@ -17,12 +18,16 @@ class _SchedulerDetailsScreenState extends State<SchedulerDetailsScreen> {
   Scheduler? _scheduler;
   List<Video> _recentVideos = [];
   bool _isLoading = true;
+  String? _loadedSchedulerId;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final schedulerId = ModalRoute.of(context)!.settings.arguments as String;
-    _loadSchedulerDetails(schedulerId);
+    if (_loadedSchedulerId != schedulerId) {
+      _loadedSchedulerId = schedulerId;
+      _loadSchedulerDetails(schedulerId);
+    }
   }
 
   Future<void> _loadSchedulerDetails(String id) async {
@@ -362,21 +367,20 @@ class _SchedulerDetailsScreenState extends State<SchedulerDetailsScreen> {
     }
   }
 
-  void _showEditDialog() {
-    // TODO: Implement edit dialog for genres and prompts
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Scheduler'),
-        content: const Text('Editing functionality coming soon.\n\nYou can edit: Genres and Content Prompts\nYou cannot edit: Time, Frequency, Language'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
+  void _showEditDialog() async {
+    if (_scheduler == null) return;
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditSchedulerScreen(scheduler: _scheduler!),
       ),
     );
+
+    if (result == true) {
+      // Refresh details if updated
+      _loadSchedulerDetails(_scheduler!.id);
+    }
   }
 }
 

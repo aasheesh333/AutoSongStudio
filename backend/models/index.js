@@ -275,9 +275,53 @@ class QuotaTrackingModel extends FirestoreModel {
     }
 }
 
+/**
+ * Suno Key Usage Model
+ * Track usage per API Key
+ */
+class SunoKeyUsageModel extends FirestoreModel {
+    constructor() {
+        super('suno_key_usage');
+    }
+
+    async getUsage(apiKey) {
+        const db = getFirestore();
+        // Use hashed key or just query by key if secure enough for this valid MVP
+        // For simplicity, we query by key. In prod, hash it.
+        const snapshot = await db.collection(this.collection)
+            .where('apiKey', '==', apiKey)
+            .limit(1)
+            .get();
+
+        if (snapshot.empty) {
+            return { id: null, usageCount: 0 };
+        }
+        const doc = snapshot.docs[0];
+        return { id: doc.id, ...doc.data() };
+    }
+
+    async incrementUsage(apiKey) {
+        const usage = await this.getUsage(apiKey);
+
+        if (!usage.id) {
+            return this.create({
+                apiKey,
+                usageCount: 1,
+                firstUsedAt: new Date().toISOString()
+            });
+        }
+
+        return this.update(usage.id, {
+            usageCount: admin.firestore.FieldValue.increment(1),
+            lastUsedAt: new Date().toISOString()
+        });
+    }
+}
+
 module.exports = {
     UserModel: new UserModel(),
     SchedulerModel: new SchedulerModel(),
     VideoModel: new VideoModel(),
-    QuotaTrackingModel: new QuotaTrackingModel()
+    QuotaTrackingModel: new QuotaTrackingModel(),
+    SunoKeyUsageModel: new SunoKeyUsageModel()
 };

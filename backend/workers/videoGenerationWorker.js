@@ -1,4 +1,4 @@
-const { SchedulerModel, VideoModel, UserModel } = require('../models');
+const { SchedulerModel, VideoModel, UserModel, SunoKeyUsageModel } = require('../models');
 const groqService = require('../services/groqService');
 const sunoService = require('../services/sunoService');
 const huggingfaceService = require('../services/huggingfaceService');
@@ -108,6 +108,19 @@ class VideoGenerationWorker {
 
             console.log(`[Worker] Created video record: ${video.id}`);
 
+            // QUANTITY CHECK: Free Plan Limit (Max 4 songs per Key)
+            if (user.plan !== 'pro') {
+                if (!user.sunoApiKey) {
+                    throw new Error('Suno API key required for free plan');
+                }
+
+                // Check usage count
+                const usage = await SunoKeyUsageModel.getUsage(user.sunoApiKey);
+                if (usage.usageCount >= 4) {
+                    throw new Error('API Key Limit Reached (Max 4 songs). Please provide a new key in Settings.');
+                }
+            }
+
             // STEP 1: Generate content (lyrics + metadata)
             console.log('[Worker] Step 1/5: Generating content with Groq...');
             const content = await groqService.generateAllContent({
@@ -140,6 +153,12 @@ class VideoGenerationWorker {
                 user.plan,
                 user.sunoApiKey
             );
+
+            // Increment Usage Count (Free Plan)
+            if (user.plan !== 'pro') {
+                await SunoKeyUsageModel.incrementUsage(user.sunoApiKey);
+                console.log(`[Worker] Usage incremented for key. count: ${(await SunoKeyUsageModel.getUsage(user.sunoApiKey)).usageCount}`);
+            }
 
             console.log('[Worker] ✅ Audio generated');
 
@@ -219,6 +238,28 @@ class VideoGenerationWorker {
         });
 
         console.log(`[Worker] Updated scheduler next run: ${next.toISOString()}`);
+    }
+
+    async triggerForScheduler(schedulerId) {
+        console.log(`[Worker] Triggered immediate check for scheduler: ${schedulerId}`);
+        const { SchedulerModel } = require('../models');
+        const scheduler = await SchedulerModel.findById(schedulerId);
+        if (scheduler && scheduler.active) {
+            const db = require('../config/firebase').getFirestore();
+            const readyCount = (await db.collection(config.collections.videos)
+                .where('schedulerId', '==', schedulerId)
+                .where('status', '==', 'ready')
+                .get()).size;
+
+            if (readyCount === 0) {
+                console.log(`[Worker] Scheduler ${scheduler.name} needs video (Triggered)`);
+                this.generateVideo(scheduler).catch(err =>
+                    console.error(`[Worker] Triggered generation failed: ${err.message}`)
+                );
+            } else {
+                console.log(`[Worker] Scheduler ${scheduler.name} already has ${readyCount} videos.`);
+            }
+        }
     }
 
     /**
