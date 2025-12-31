@@ -62,6 +62,22 @@ router.get('/callback', async (req, res) => {
             });
         }
 
+        if (req.query.state === 'mobile_app') {
+            // Mobile App Redirect (Custom Scheme)
+            // Encode complex objects
+            const channelsJson = encodeURIComponent(JSON.stringify(channels));
+
+            const redirectUri = `autosongstudio://auth/callback?` +
+                `access_token=${tokens.accessToken}&` +
+                `refresh_token=${tokens.refreshToken}&` +
+                `user_id=${user.id}&` +
+                `email=${user.email}&` +
+                `plan=${user.plan}&` +
+                `channels=${channelsJson}`;
+
+            return res.redirect(redirectUri);
+        }
+
         // Return user data and channels to frontend
         // In production, you'd set secure cookies or return JWT tokens
         res.json({

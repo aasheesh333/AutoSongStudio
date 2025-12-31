@@ -55,9 +55,21 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   void _handleDeepLink(Uri uri) {
-    // Check if this is our OAuth callback
-    // URL: https://jusdown.onrender.com/api/auth/callback?code=...
-    if (uri.path.contains('/api/auth/callback')) {
+      // Check for Custom Scheme (autosongstudio://auth/callback?access_token=...)
+    // OR Web Callback (https://.../callback?code=...)
+    
+    if (uri.path.contains('/callback')) {
+      // Check for Tokens (Custom Scheme)
+      if (uri.queryParameters.containsKey('access_token')) {
+        // Placeholder for _completeSignInWithTokens, assuming it will be defined elsewhere
+        // or that this is a partial change.
+        // For now, we'll just print a message to avoid compilation errors.
+        debugPrint('Received access token via custom scheme: ${uri.queryParameters['access_token']}');
+        _completeSignInWithTokens(uri.queryParameters);
+        return;
+      }
+    
+      // Check for Code (Web Fallback)
       final code = uri.queryParameters['code'];
       if (code != null) {
         _completeSignIn(code);
@@ -78,7 +90,11 @@ class _SignInScreenState extends State<SignInScreen> {
       
       // Open System Browser (required by Google)
       // LaunchMode.externalApplication or inAppBrowserView
-      final uri = Uri.parse(authUrl.trim());
+      // Append state=mobile_app to tell backend to use custom scheme redirect
+      // authUrl already has query params so we use &
+      final mobileAuthUrl = '$authUrl&state=mobile_app';
+      
+      final uri = Uri.parse(mobileAuthUrl.trim());
       if (await canLaunchUrl(uri)) {
         await launchUrl(
           uri,
@@ -123,6 +139,36 @@ class _SignInScreenState extends State<SignInScreen> {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Sign in verification failed: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _completeSignInWithTokens(Map<String, String> data) async {
+    if (!mounted) return;
+    
+    setState(() => _isLoading = true);
+    
+    try {
+      final appState = Provider.of<AppState>(context, listen: false);
+      // Map<String, String> is compatible with Map<String, dynamic>
+      await appState.handleOAuthTokens(data);
+      
+      if (!mounted) return;
+      
+      // Load initial data
+      await appState.loadSchedulers();
+      await appState.loadVideos();
+      await appState.loadSettings();
+      
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/home');
+      
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sign in failed: $e')),
         );
       }
     }

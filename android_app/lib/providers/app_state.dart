@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user.dart';
@@ -56,22 +57,85 @@ class AppState extends ChangeNotifier {
     setLoading(true);
     try {
       final data = await _api.handleOAuthCallback(code);
+      await _processAuthData(data);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  Future<void> handleOAuthTokens(Map<String, dynamic> data) async {
+    setLoading(true);
+    try {
+      // Data is already in the format we expect (from URL params)
+      // but 'channels' might need decoding if passed as JSON string
+      if (data['channels'] is String) {
+        // Decode logic should happen in UI or here? 
+        // Ideally we expect parsed objects, but if we pass raw map:
+        // We will assume 'channels' is already parsed valid List/Object 
+        // OR we handle it in _processAuthData if generic.
+      }
       
-      _currentUser = User.fromJson(data['user']);
-      _channels = (data['channels'] as List)
-          .map((json) => YouTubeChannel.fromJson(json))
-          .toList();
+      // Since data structure from URL might differ slightly (flat params vs nested),
+      // we need to normalize it or ensure _processAuthData handles it.
+      // But to save time, let's write custom logic here or reuse.
+      
+      // Let's create a _processAuthData helper first to reuse logic
+      await _processAuthData(data);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  Future<void> _processAuthData(Map<String, dynamic> data) async {
+      // Normalize user data
+      if (data.containsKey('user')) {
+         _currentUser = User.fromJson(data['user']);
+      } else if (data.containsKey('user_id')) {
+         // Constructed from URL params
+         _currentUser = User(
+            id: data['user_id'],
+            email: data['email'],
+            plan: data['plan'] ?? 'free',
+            youtubeRefreshToken: '', // Not needed in frontend model usually
+         );
+      }
+
+      // Handle Channels
+      if (data['channels'] != null) {
+        var channelsData = data['channels'];
+        if (channelsData is String) {
+           try {
+             channelsData = jsonDecode(Uri.decodeComponent(channelsData));
+           } catch (e) {
+             print('Error decoding channels JSON: $e');
+             channelsData = [];
+           }
+        }
+        
+        if (channelsData is List) {
+           _channels = channelsData
+              .map((json) => YouTubeChannel.fromJson(json))
+              .toList();
+        }
+      }
       
       if (_channels.isNotEmpty) {
         _selectedChannel = _channels.first;
         await _storage.write(key: 'selected_channel_id', value: _selectedChannel!.id);
       }
       
+      // Save Tokens
+      if (data.containsKey('tokens')) {
+        final tokens = data['tokens'];
+        await _storage.write(key: 'access_token', value: tokens['accessToken']);
+        await _storage.write(key: 'refresh_token', value: tokens['refreshToken']);
+      } else if (data.containsKey('access_token')) {
+        await _storage.write(key: 'access_token', value: data['access_token']);
+        await _storage.write(key: 'refresh_token', value: data['refresh_token']);
+      }
+      
       _isAuthenticated = true;
       notifyListeners();
-    } finally {
-      setLoading(false);
-    }
   }
 
   Future<void> loadChannels() async {

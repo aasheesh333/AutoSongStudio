@@ -59,10 +59,18 @@
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
+                
+                <!-- App Links (HTTPS) -->
                 <data
                     android:scheme="https"
                     android:host="jusdown.onrender.com"
                     android:pathPrefix="/api/auth/callback"/>
+                    
+                <!-- Custom Scheme (Fallback/Mobile flow) -->
+                <data
+                    android:scheme="autosongstudio"
+                    android:host="auth"
+                    android:path="/callback"/>
             </intent-filter>
         </activity>
         
