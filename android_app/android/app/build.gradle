@@ -36,7 +36,10 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace appPackageName
+    // Namespace MUST match the package in MainActivity.kt ("com.autosong.autosong_studio")
+    // This allows the code to find R.java and the Activity class correctly.
+    // unrelated to the public applicationId.
+    namespace "com.autosong.autosong_studio"
     compileSdk 34
 
     compileOptions {
