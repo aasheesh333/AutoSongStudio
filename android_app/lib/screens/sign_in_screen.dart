@@ -59,12 +59,9 @@ class _SignInScreenState extends State<SignInScreen> {
     // OR Web Callback (https://.../callback?code=...)
     
     if (uri.path.contains('/callback')) {
-      // Check for Tokens (Custom Scheme)
+      // Check for Custom Scheme Tokens
       if (uri.queryParameters.containsKey('access_token')) {
-        // Placeholder for _completeSignInWithTokens, assuming it will be defined elsewhere
-        // or that this is a partial change.
-        // For now, we'll just print a message to avoid compilation errors.
-        debugPrint('Received access token via custom scheme: ${uri.queryParameters['access_token']}');
+        debugPrint('Received access token via custom scheme');
         _completeSignInWithTokens(uri.queryParameters);
         return;
       }
