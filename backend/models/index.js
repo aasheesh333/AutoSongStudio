@@ -14,11 +14,12 @@ class FirestoreModel {
 
     async create(data) {
         const db = getFirestore();
+        const now = new Date().toISOString();
         const docRef = await db.collection(this.collection).add({
             ...data,
-            createdAt: new Date().toISOString()
+            createdAt: now
         });
-        return { id: docRef.id, ...data };
+        return { id: docRef.id, ...data, createdAt: now };
     }
 
     async findById(id) {
