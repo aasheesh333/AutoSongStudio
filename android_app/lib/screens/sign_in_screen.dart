@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:app_links/app_links.dart';
+import 'dart:async';
 import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
 
@@ -14,6 +15,59 @@ class SignInScreen extends StatefulWidget {
 
 class _SignInScreenState extends State<SignInScreen> {
   bool _isLoading = false;
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initDeepLinks() async {
+    _appLinks = AppLinks();
+    
+    // Check initial link if app was opened via link
+    try {
+      final initialUri = await _appLinks.getInitialLink();
+      if (initialUri != null) {
+        _handleDeepLink(initialUri);
+      }
+    } catch (e) {
+      debugPrint('Error getting initial link: $e');
+    }
+
+    // Listen for incoming links while app is open
+    _linkSubscription = _appLinks.uriLinkStream.listen(
+      (uri) {
+        _handleDeepLink(uri);
+      },
+      onError: (err) {
+        debugPrint('Error processing link: $err');
+      },
+    );
+  }
+
+  void _handleDeepLink(Uri uri) {
+    // Check if this is our OAuth callback
+    // URL: https://jusdown.onrender.com/api/auth/callback?code=...
+    if (uri.path.contains('/api/auth/callback')) {
+      final code = uri.queryParameters['code'];
+      if (code != null) {
+        _completeSignIn(code);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sign in failed: No code received')),
+        );
+      }
+    }
+  }
 
   Future<void> _signInWithYouTube() async {
     setState(() => _isLoading = true);
@@ -22,39 +76,54 @@ class _SignInScreenState extends State<SignInScreen> {
       final appState = Provider.of<AppState>(context, listen: false);
       final authUrl = await appState.getYouTubeAuthUrl();
       
-      // Open OAuth in WebView
-      if (!mounted) return;
-      
-      final code = await Navigator.push<String>(
-        context,
-        MaterialPageRoute(
-          builder: (context) => OAuthWebView(authUrl: authUrl),
-        ),
-      );
-      
-      if (code != null && mounted) {
-        setState(() => _isLoading = true);
-        await appState.handleOAuthCallback(code);
-        
-        if (!mounted) return;
-        
-        // Load initial data
-        await appState.loadSchedulers();
-        await appState.loadVideos();
-        await appState.loadSettings();
-        
-        if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/home');
+      // Open System Browser (required by Google)
+      // LaunchMode.externalApplication or inAppBrowserView
+      final uri = Uri.parse(authUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication, // Opens Chrome/System Browser
+        );
+      } else {
+        throw 'Could not launch $authUrl';
       }
+      
+      // Wait for deep link callback...
     } catch (e) {
       if (mounted) {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to sign in: $e')),
+          SnackBar(content: Text('Failed to launch sign in: $e')),
         );
       }
-    } finally {
+    }
+  }
+
+  Future<void> _completeSignIn(String code) async {
+    if (!mounted) return;
+    
+    setState(() => _isLoading = true);
+    
+    try {
+      final appState = Provider.of<AppState>(context, listen: false);
+      await appState.handleOAuthCallback(code);
+      
+      if (!mounted) return;
+      
+      // Load initial data
+      await appState.loadSchedulers();
+      await appState.loadVideos();
+      await appState.loadSettings();
+      
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/home');
+      
+    } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sign in verification failed: $e')),
+        );
       }
     }
   }
@@ -189,56 +258,3 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 }
 
-// OAuth WebView
-class OAuthWebView extends StatefulWidget {
-  final String authUrl;
-  
-  const OAuthWebView({super.key, required this.authUrl});
-
-  @override
-  State<OAuthWebView> createState() => _OAuthWebViewState();
-}
-
-class _OAuthWebViewState extends State<OAuthWebView> {
-  late final WebViewController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onNavigationRequest: (request) {
-            // Check for OAuth callback
-            if (request.url.contains('jusdown.onrender.com/api/auth/callback')) {
-              final uri = Uri.parse(request.url);
-              final code = uri.queryParameters['code'];
-              
-              if (code != null) {
-                Navigator.pop(context, code);
-                return NavigationDecision.prevent;
-              }
-            }
-            return NavigationDecision.navigate;
-          },
-        ),
-      )
-      ..loadRequest(Uri.parse(widget.authUrl));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sign in with YouTube'),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: WebViewWidget(controller: _controller),
-    );
-  }
-}
