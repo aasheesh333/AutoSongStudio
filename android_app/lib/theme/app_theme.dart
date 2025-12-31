@@ -85,13 +85,13 @@ class AppTheme {
         ),
       ),
       
-      cardTheme: CardTheme(
+      cardTheme: const CardThemeData(
         color: surfaceDark,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.all(Radius.circular(16)),
           side: BorderSide(
-            color: Colors.white.withOpacity(0.05),
+            color: Color(0x0DFFFFFF), // Colors.white.withOpacity(0.05)
             width: 1,
           ),
         ),

@@ -40,7 +40,7 @@ android {
     // This allows the code to find R.java and the Activity class correctly.
     // unrelated to the public applicationId.
     namespace "com.autosong.autosong_studio"
-    compileSdk 34
+    compileSdk 36
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -57,7 +57,7 @@ android {
 
     defaultConfig {
         applicationId appPackageName
-        minSdk 21
+        minSdkVersion flutter.minSdkVersion
         targetSdk 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName

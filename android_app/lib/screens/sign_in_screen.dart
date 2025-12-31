@@ -35,7 +35,7 @@ class _SignInScreenState extends State<SignInScreen> {
     
     // Check initial link if app was opened via link
     try {
-      final initialUri = await _appLinks.getInitialUri();
+      final initialUri = await _appLinks.getInitialLink();
       if (initialUri != null) {
         _handleDeepLink(initialUri);
       }
