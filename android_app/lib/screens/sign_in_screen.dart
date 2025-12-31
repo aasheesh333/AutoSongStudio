@@ -78,7 +78,7 @@ class _SignInScreenState extends State<SignInScreen> {
       
       // Open System Browser (required by Google)
       // LaunchMode.externalApplication or inAppBrowserView
-      final uri = Uri.parse(authUrl);
+      final uri = Uri.parse(authUrl.trim());
       if (await canLaunchUrl(uri)) {
         await launchUrl(
           uri,
