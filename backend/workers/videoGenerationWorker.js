@@ -100,6 +100,29 @@ class VideoGenerationWorker {
             console.log(`[Worker] Starting video generation for scheduler: ${scheduler.name}`);
             console.log(`${'='.repeat(60)}\n`);
 
+            // DB-BASED LOCK: Prevent duplicate generation across multiple processes
+            const { SchedulerModel } = require('../models');
+            const freshScheduler = await SchedulerModel.findById(scheduler.id);
+
+            if (freshScheduler.lastGenerationStarted) {
+                const lastStart = new Date(freshScheduler.lastGenerationStarted);
+                const now = new Date();
+                const diffMs = now - lastStart;
+
+                // If started less than 5 minutes ago, assume another worker is handling it
+                if (diffMs < 5 * 60 * 1000) {
+                    console.log(`[Worker] ⚠️ Scheduler ${scheduler.name} recently started generation (${Math.round(diffMs / 1000)}s ago). Skipping to prevent duplicates.`);
+                    // Release local lock since we are aborting
+                    this.isGenerating = false;
+                    return;
+                }
+            }
+
+            // Claim the job
+            await SchedulerModel.update(scheduler.id, {
+                lastGenerationStarted: new Date().toISOString()
+            });
+
             // Get user info for Suno API key
             console.log(`[Worker] Fetching user: ${scheduler.userId}`);
             const user = await UserModel.findById(scheduler.userId);
@@ -304,4 +327,4 @@ class VideoGenerationWorker {
     }
 }
 
-module.exports = VideoGenerationWorker;
+module.exports = new VideoGenerationWorker();

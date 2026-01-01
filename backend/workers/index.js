@@ -17,7 +17,7 @@ console.log('='.repeat(60));
 initializeFirebase();
 
 // Start workers
-const generationWorker = new VideoGenerationWorker();
+const generationWorker = require('./videoGenerationWorker');
 const uploadWorker = new UploadWorker();
 
 generationWorker.run();

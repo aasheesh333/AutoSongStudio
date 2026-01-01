@@ -61,8 +61,8 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/webhooks', webhookRoutes);
 
 // Start Background Workers
-const VideoGenerationWorker = require('./workers/videoGenerationWorker');
-const videoWorker = new VideoGenerationWorker();
+const videoWorker = require('./workers/videoGenerationWorker');
+// videoWorker is now a singleton instance, no need to instantiate
 videoWorker.run();
 app.set('videoWorker', videoWorker);
 
