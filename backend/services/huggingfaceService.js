@@ -100,8 +100,20 @@ class HuggingFaceService {
                     continue;
                 }
 
-                console.error('[HuggingFace] API Error:', error.response?.data || error.message);
-                throw new Error(`HuggingFace API failed: ${error.message}`);
+                let errorMessage = error.message;
+                if (error.response?.data) {
+                    const data = error.response.data;
+                    if (Buffer.isBuffer(data)) {
+                        errorMessage = data.toString('utf8');
+                    } else if (typeof data === 'object') {
+                        errorMessage = JSON.stringify(data);
+                    } else {
+                        errorMessage = data;
+                    }
+                }
+
+                console.error(`[HuggingFace] API Error (${status}):`, errorMessage);
+                throw new Error(`HuggingFace API failed: ${errorMessage}`);
             }
         }
 
