@@ -135,6 +135,7 @@ class VideoGenerationWorker {
             });
 
             // Update video with generated content
+            console.log(`[Worker] Updating video metadata:`, JSON.stringify(content, null, 2));
             await VideoModel.update(video.id, {
                 title: content.title || 'Untitled Video',
                 description: content.description || 'No description available.',

@@ -39,7 +39,9 @@ function getFirestore() {
     if (!firebaseApp) {
         initializeFirebase();
     }
-    return admin.firestore();
+    const db = admin.firestore();
+    db.settings({ ignoreUndefinedProperties: true });
+    return db;
 }
 
 /**
