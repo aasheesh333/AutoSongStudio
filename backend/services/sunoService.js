@@ -106,7 +106,7 @@ class SunoService {
             customMode: true,  // Fixed: camelCase
             style: genres.join(', '),
             title: lyrics.substring(0, 50), // Title is required for customMode
-            model: 'V3_5',  // Fixed: Use V3_5 as standard
+            model: 'V4_5',  // Requested by user
             instrumental: false, // Fixed: camelCase 'instrumental' instead of 'make_instrumental'
             callBackUrl: `${config.backendUrl}/api/webhooks/suno` // Optional but good practice
         };
