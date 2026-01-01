@@ -51,6 +51,28 @@ class AppState extends ChangeNotifier {
           print('Error restoring user data: $e');
         }
       }
+      
+      // Restore channels from storage
+      final channelsData = await _storage.read(key: 'channels_data');
+      if (channelsData != null) {
+        try {
+          final channelsList = jsonDecode(channelsData) as List;
+          _channels = channelsList.map((json) => YouTubeChannel.fromJson(json)).toList();
+          
+          // Restore selected channel
+          final savedChannelId = await _storage.read(key: 'selected_channel_id');
+          if (savedChannelId != null && _channels.isNotEmpty) {
+            _selectedChannel = _channels.firstWhere(
+              (c) => c.id == savedChannelId,
+              orElse: () => _channels.first,
+            );
+          } else if (_channels.isNotEmpty) {
+            _selectedChannel = _channels.first;
+          }
+        } catch (e) {
+          print('Error restoring channels data: $e');
+        }
+      }
     } else {
       _isAuthenticated = false;
     }
@@ -152,6 +174,14 @@ class AppState extends ChangeNotifier {
       // Save User Data to storage for persistence across app restarts
       if (_currentUser != null) {
         await _storage.write(key: 'user_data', value: jsonEncode(_currentUser!.toJson()));
+      }
+      
+      // Save Channels to storage for persistence across app restarts
+      if (_channels.isNotEmpty) {
+        await _storage.write(
+          key: 'channels_data',
+          value: jsonEncode(_channels.map((c) => c.toJson()).toList()),
+        );
       }
       
       _isAuthenticated = true;

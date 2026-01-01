@@ -246,9 +246,19 @@ class VideoGenerationWorker {
                 await SchedulerModel.deactivateAllForUser(scheduler.userId);
 
                 // Update video status with clear error for Frontend Toast
-                await VideoModel.updateStatus(videoId, 'failed', 'Insufficient Suno credits. All schedulers paused.');
+                try {
+                    await VideoModel.updateStatus(videoId, 'failed', 'Insufficient Suno credits. All schedulers paused.');
+                } catch (updateError) {
+                    // Video might have been deleted already, ignore
+                    console.log(`[Worker] Could not update video status (may be deleted): ${updateError.message}`);
+                }
             } else {
-                await VideoModel.updateStatus(videoId, 'failed', error.message);
+                try {
+                    await VideoModel.updateStatus(videoId, 'failed', error.message);
+                } catch (updateError) {
+                    // Video might have been deleted already, ignore
+                    console.log(`[Worker] Could not update video status (may be deleted): ${updateError.message}`);
+                }
             }
 
             throw error;

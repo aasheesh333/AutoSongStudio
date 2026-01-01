@@ -54,6 +54,49 @@ class _HomeScreenState extends State<HomeScreen> {
     ]);
   }
 
+  void _showChannelPicker(BuildContext context, AppState appState) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surfaceDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Text(
+                'Switch Channel',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const Divider(),
+            ...appState.channels.map((channel) => ListTile(
+              leading: CircleAvatar(
+                backgroundImage: NetworkImage(channel.thumbnailUrl),
+              ),
+              title: Text(channel.title),
+              subtitle: Text('${channel.subscriberCount} subscribers'),
+              trailing: appState.selectedChannel?.id == channel.id
+                  ? const Icon(Icons.check_circle, color: AppTheme.primaryColor)
+                  : null,
+              onTap: () {
+                appState.selectChannel(channel);
+                Navigator.pop(context);
+                _refreshData(); // Reload data for new channel
+              },
+            )),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,24 +122,39 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           const SizedBox(width: 12),
                           
-                          // Channel info
+                          // Channel info (tappable if multiple channels)
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  channel?.title ?? 'My Channel',
-                                  style: Theme.of(context).textTheme.titleMedium,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  '${channel?.subscriberCount ?? '0'} subscribers',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppTheme.textSecondary,
+                            child: GestureDetector(
+                              onTap: () {
+                                if (appState.channels.length > 1) {
+                                  _showChannelPicker(context, appState);
+                                }
+                              },
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          channel?.title ?? 'My Channel',
+                                          style: Theme.of(context).textTheme.titleMedium,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          '${channel?.subscriberCount ?? '0'} subscribers',
+                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: AppTheme.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  if (appState.channels.length > 1)
+                                    const Icon(Icons.keyboard_arrow_down, color: AppTheme.textSecondary),
+                                ],
+                              ),
                             ),
                           ),
                           
