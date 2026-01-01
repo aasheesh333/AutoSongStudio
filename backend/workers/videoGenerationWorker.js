@@ -92,9 +92,11 @@ class VideoGenerationWorker {
             console.log(`${'='.repeat(60)}\n`);
 
             // Get user info for Suno API key
+            console.log(`[Worker] Fetching user: ${scheduler.userId}`);
             const user = await UserModel.findById(scheduler.userId);
             if (!user) {
-                throw new Error('User not found');
+                console.error(`[Worker] ❌ User not found for ID: ${scheduler.userId}`);
+                throw new Error(`User not found: ${scheduler.userId}`);
             }
 
             // Create video record

@@ -103,6 +103,13 @@ router.post('/', async (req, res) => {
         });
 
         console.log(`[Schedulers] ✅ Created scheduler: ${scheduler.name}`);
+
+        // Trigger immediate generation for the first video
+        const videoWorker = req.app.get('videoWorker');
+        if (videoWorker) {
+            videoWorker.triggerForScheduler(scheduler.id);
+        }
+
         res.status(201).json({ scheduler });
     } catch (error) {
         res.status(500).json({ error: error.message });
