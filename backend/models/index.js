@@ -1,5 +1,6 @@
 const { getFirestore } = require('../config/firebase');
 const config = require('../config');
+const admin = require('firebase-admin');
 
 /**
  * Firestore Data Models
