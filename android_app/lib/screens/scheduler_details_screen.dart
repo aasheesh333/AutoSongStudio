@@ -98,7 +98,7 @@ class _SchedulerDetailsScreenState extends State<SchedulerDetailsScreen> {
           // Check for failures and show Toast
           final failedVideo = _recentVideos.firstWhere(
             (v) => v.status == 'failed' && (v.error?.contains('credits') ?? false), 
-            orElse: () => Video(id: '', schedulerId: '', userId: '', channelId: '', playlists: [], title: '', description: '', tags: [], lyrics: '', genres: [], status: 'ok', createdAt: DateTime.now(), updatedAt: DateTime.now()), // Dummy
+            orElse: () => Video(id: '', schedulerId: '', userId: '', channelId: '', title: '', description: '', tags: [], lyrics: '', genres: [], status: 'ok', createdAt: DateTime.now()), // Dummy
           );
 
           if (failedVideo.id.isNotEmpty && !_scheduler!.active) {
