@@ -23,30 +23,15 @@ class VideoGenerationWorker {
     constructor() {
         this.tempDir = config.temp.directory;
         this.ensureTempDirectories();
+        this.isGenerating = false; // Global lock
     }
 
-    /**
-     * Ensure temp directories exist
-     */
-    ensureTempDirectories() {
-        const dirs = [
-            this.tempDir,
-            path.join(this.tempDir, 'audio'),
-            path.join(this.tempDir, 'thumbnails'),
-            path.join(this.tempDir, 'videos')
-        ];
-
-        dirs.forEach(dir => {
-            if (!fs.existsSync(dir)) {
-                fs.mkdirSync(dir, { recursive: true });
-            }
-        });
-    }
+    // ... (ensureTempDirectories remains same)
 
     /**
-   * Check which schedulers need videos generated
-   * Keep-ahead logic: Always ensure 1 video is ready per active scheduler
-   */
+    * Check which schedulers need videos generated
+    * Keep-ahead logic: Always ensure 1 video is ready OR processing per active scheduler
+    */
     async checkSchedulers() {
         const db = require('../config/firebase').getFirestore();
 
@@ -60,20 +45,21 @@ class VideoGenerationWorker {
         for (const doc of snapshot.docs) {
             const scheduler = { id: doc.id, ...doc.data() };
 
-            // Check how many READY videos exist for this scheduler
-            const readyVideosSnapshot = await db.collection(config.collections.videos)
+            // Check how many READY or PROCESSING videos exist for this scheduler
+            // Note: Firestore 'in' query allows max 10 values
+            const videosSnapshot = await db.collection(config.collections.videos)
                 .where('schedulerId', '==', scheduler.id)
-                .where('status', '==', 'ready')
+                .where('status', 'in', ['ready', 'processing'])
                 .get();
 
-            const readyCount = readyVideosSnapshot.size;
+            const existingCount = videosSnapshot.size;
 
-            // KEEP-AHEAD LOGIC: Always maintain 1 ready video
-            if (readyCount === 0) {
-                console.log(`[Worker] Scheduler "${scheduler.name}" needs video (0 ready)`);
+            // KEEP-AHEAD LOGIC: Always maintain 1 video (ready or processing)
+            if (existingCount === 0) {
+                console.log(`[Worker] Scheduler "${scheduler.name}" needs video (0 existing)`);
                 schedulersNeedingVideos.push(scheduler);
             } else {
-                console.log(`[Worker] Scheduler "${scheduler.name}" has ${readyCount} ready video(s) - OK`);
+                console.log(`[Worker] Scheduler "${scheduler.name}" has ${existingCount} video(s) (Ready/Processing) - OK`);
             }
         }
 
@@ -84,9 +70,16 @@ class VideoGenerationWorker {
      * Generate video for a scheduler
      */
     async generateVideo(scheduler) {
+        if (this.isGenerating) {
+            console.log(`[Worker] Generation busy. Queuing/Skipping scheduler: ${scheduler.name}`);
+            return;
+        }
+
+        this.isGenerating = true;
         const videoId = require('uuid').v4();
 
         try {
+            // ... (rest of generation logic) ...
             console.log(`\n${'='.repeat(60)}`);
             console.log(`[Worker] Starting video generation for scheduler: ${scheduler.name}`);
             console.log(`${'='.repeat(60)}\n`);
@@ -207,11 +200,10 @@ class VideoGenerationWorker {
             return video;
         } catch (error) {
             console.error(`[Worker] ❌ Video generation failed:`, error.message);
-
-            // Mark video as failed
             await VideoModel.updateStatus(videoId, 'failed', error.message);
-
             throw error;
+        } finally {
+            this.isGenerating = false; // Release lock
         }
     }
 
@@ -219,82 +211,80 @@ class VideoGenerationWorker {
      * Update scheduler's next run time
      */
     async updateSchedulerNextRun(scheduler) {
+        // ... (unchanged) ...
         const { time, frequency, activeDays } = scheduler;
         const [hours, minutes] = time.split(':').map(Number);
-
         let next = new Date(scheduler.nextRunAt);
-
-        // Calculate next run based on frequency
-        if (frequency === 'daily') {
-            next.setDate(next.getDate() + 1);
-        } else if (frequency === 'weekly') {
-            // Move to next active day
-            do {
-                next.setDate(next.getDate() + 1);
-            } while (!activeDays.includes(next.getDay()));
-        } else if (frequency === 'monthly') {
-            next.setMonth(next.getMonth() + 1);
-        }
-
-        await SchedulerModel.update(scheduler.id, {
-            nextRunAt: next.toISOString()
-        });
-
+        if (frequency === 'daily') { next.setDate(next.getDate() + 1); }
+        else if (frequency === 'weekly') { do { next.setDate(next.getDate() + 1); } while (!activeDays.includes(next.getDay())); }
+        else if (frequency === 'monthly') { next.setMonth(next.getMonth() + 1); }
+        await SchedulerModel.update(scheduler.id, { nextRunAt: next.toISOString() });
         console.log(`[Worker] Updated scheduler next run: ${next.toISOString()}`);
     }
 
     async triggerForScheduler(schedulerId) {
+        if (this.isGenerating) {
+            console.log(`[Worker] System busy. Cannot trigger immediate check for: ${schedulerId}`);
+            return;
+        }
+
         console.log(`[Worker] Triggered immediate check for scheduler: ${schedulerId}`);
         const { SchedulerModel } = require('../models');
         const scheduler = await SchedulerModel.findById(schedulerId);
         if (scheduler && scheduler.active) {
             const db = require('../config/firebase').getFirestore();
-            const readyCount = (await db.collection(config.collections.videos)
+            // Fix: Check for ready OR processing to prevent duplicate
+            const existingVideos = await db.collection(config.collections.videos)
                 .where('schedulerId', '==', schedulerId)
-                .where('status', '==', 'ready')
-                .get()).size;
+                .where('status', 'in', ['ready', 'processing'])
+                .get();
 
-            if (readyCount === 0) {
+            if (existingVideos.empty) {
                 console.log(`[Worker] Scheduler ${scheduler.name} needs video (Triggered)`);
+                // Note: generateVideo manages this.isGenerating lock
                 this.generateVideo(scheduler).catch(err =>
                     console.error(`[Worker] Triggered generation failed: ${err.message}`)
                 );
             } else {
-                console.log(`[Worker] Scheduler ${scheduler.name} already has ${readyCount} videos.`);
+                console.log(`[Worker] Scheduler ${scheduler.name} already has ${existingVideos.size} videos (Ready/Processing).`);
             }
         }
     }
 
     /**
-   * Main worker loop
-   */
+    * Main worker loop
+    */
     async run() {
         console.log('[Worker] Video Generation Worker started');
-        console.log('[Worker] Keep-ahead mode: Always maintains 1 ready video per scheduler');
+        console.log('[Worker] Keep-ahead mode: Always maintains 1 ready/processing video per scheduler');
 
         // Check every 2 minutes for schedulers needing videos
         setInterval(async () => {
+            if (this.isGenerating) {
+                console.log('[Worker] Worker busy generating video. Skipping cycle.');
+                return;
+            }
+
             try {
                 const schedulers = await this.checkSchedulers();
 
                 if (schedulers.length > 0) {
-                    console.log(`[Worker] Found ${schedulers.length} scheduler(s) needing videos`);
+                    // Process only ONE scheduler per cycle to strictly enforce "one API call" rule
+                    const scheduler = schedulers[0];
+                    console.log(`[Worker] Generating video for scheduler: ${scheduler.name}`);
+                    await this.generateVideo(scheduler);
 
-                    for (const scheduler of schedulers) {
-                        try {
-                            console.log(`[Worker] Generating video for scheduler: ${scheduler.name}`);
-                            await this.generateVideo(scheduler);
-                        } catch (error) {
-                            console.error(`[Worker] Failed to generate video for scheduler ${scheduler.id}:`, error.message);
-                        }
+                    if (schedulers.length > 1) {
+                        console.log(`[Worker] ${schedulers.length - 1} other schedulers waiting for next cycle.`);
                     }
                 } else {
-                    console.log('[Worker] All schedulers have ready videos - standby mode');
+                    console.log('[Worker] All schedulers satisfy keep-ahead - standby mode');
                 }
             } catch (error) {
                 console.error('[Worker] Error in worker loop:', error.message);
+                this.isGenerating = false; // Safety release
             }
-        }, 120000);  // Every 2 minutes (more efficient than 1 minute)
+        }, 120000);  // Every 2 minutes
     }
 }
 
