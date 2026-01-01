@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'dart:async';
 import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
 import '../models/video.dart';
@@ -13,43 +14,82 @@ class SongDetailScreen extends StatefulWidget {
 }
 
 class _SongDetailScreenState extends State<SongDetailScreen> {
-  Video? _video;
-  bool _isLoading = true;
-  bool _isUploading = false;
-  
-  final _titleController = TextEditingController();
-  final _descController = TextEditingController();
-  final _tagsController = TextEditingController();
+  Timer? _pollingTimer;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final videoId = ModalRoute.of(context)!.settings.arguments as String;
-    _loadVideo(videoId);
+    if (_video == null) {
+      _loadVideo(videoId);
+    }
   }
 
   Future<void> _loadVideo(String id) async {
-    setState(() => _isLoading = true);
+    // Only show loader initially, not on poll updates
+    if (_video == null) {
+      setState(() => _isLoading = true);
+    }
     
     try {
       final appState = Provider.of<AppState>(context, listen: false);
-      _video = appState.videos.firstWhere((v) => v.id == id);
       
-      _titleController.text = _video!.title;
-      _descController.text = _video!.description;
-      _tagsController.text = _video!.tags.join(', ');
-    } catch (e) {
+      // Force refresh data from API if polling
+      if (_video != null) {
+        await appState.loadVideos(schedulerId: _video!.schedulerId);
+      }
+      
+      final updatedVideo = appState.videos.firstWhere((v) => v.id == id);
+      
       if (mounted) {
+        setState(() {
+          _video = updatedVideo;
+          // Update fields only if they are empty or unedited to avoid overwriting user input
+          if (_titleController.text.isEmpty && updatedVideo.title != 'Untitled Video') {
+             _titleController.text = updatedVideo.title;
+          }
+          if (_descController.text.isEmpty && updatedVideo.description != 'No description available.') {
+             _descController.text = updatedVideo.description;
+          }
+          if (_tagsController.text.isEmpty && updatedVideo.tags.isNotEmpty) {
+             _tagsController.text = updatedVideo.tags.join(', ');
+          }
+        });
+
+        // Start polling if processing
+        if (_video!.status == 'processing') {
+          _startPolling(id);
+        } else {
+          _stopPolling();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading video: $e');
+      if (mounted && _video == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading video: $e')),
         );
       }
     } finally {
-      if (mounted) {
+      if (mounted && _isLoading) {
         setState(() => _isLoading = false);
       }
     }
   }
+
+  void _startPolling(String id) {
+    if (_pollingTimer != null && _pollingTimer!.isActive) return;
+    
+    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      _loadVideo(id);
+    });
+  }
+
+  void _stopPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
+  }
+
 
   Future<void> _saveChanges() async {
     if (!_video!.isEditable) return;

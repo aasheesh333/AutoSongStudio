@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'dart:async';
 import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
 import '../models/scheduler.dart';
@@ -30,25 +31,79 @@ class _SchedulerDetailsScreenState extends State<SchedulerDetailsScreen> {
     }
   }
 
+  Timer? _pollingTimer;
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
+  }
+
   Future<void> _loadSchedulerDetails(String id) async {
-    setState(() => _isLoading = true);
+    // Show loading only on initial load
+    if (_scheduler == null) {
+      setState(() => _isLoading = true);
+    }
     
     try {
       final appState = Provider.of<AppState>(context, listen: false);
       _scheduler = appState.schedulers.firstWhere((s) => s.id == id);
       await appState.loadVideos(schedulerId: id);
-      _recentVideos = appState.videos;
-    } catch (e) {
+      
       if (mounted) {
+        setState(() {
+           _recentVideos = appState.videos;
+        });
+
+        // Poll if scheduler is active or passing videos are processing
+        bool hasProcessing = _recentVideos.any((v) => v.status == 'processing');
+        if (_scheduler!.active || hasProcessing) {
+          _startPolling(id);
+        } else {
+          _stopPolling();
+        }
+      }
+    } catch (e) {
+      if (mounted && _scheduler == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading scheduler: $e')),
         );
       }
     } finally {
-      if (mounted) {
+      if (mounted && _isLoading) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _startPolling(String id) {
+    if (_pollingTimer != null && _pollingTimer!.isActive) return;
+    
+    _pollingTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
+      final appState = Provider.of<AppState>(context, listen: false);
+      
+      try {
+        await appState.loadVideos(schedulerId: id);
+        if (mounted) {
+          setState(() {
+            _recentVideos = appState.videos;
+          });
+          
+          // Stop polling if inactive and no processing videos
+          bool hasProcessing = _recentVideos.any((v) => v.status == 'processing');
+          if (!_scheduler!.active && !hasProcessing) {
+            _stopPolling();
+          }
+        }
+      } catch (e) {
+        debugPrint('Polling error: $e');
+      }
+    });
+  }
+
+  void _stopPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
   }
 
   Future<void> _deleteScheduler() async {
