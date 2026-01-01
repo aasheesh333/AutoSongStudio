@@ -26,7 +26,23 @@ class VideoGenerationWorker {
         this.isGenerating = false; // Global lock
     }
 
-    // ... (ensureTempDirectories remains same)
+    /**
+     * Ensure temp directories exist
+     */
+    ensureTempDirectories() {
+        const dirs = [
+            this.tempDir,
+            path.join(this.tempDir, 'audio'),
+            path.join(this.tempDir, 'thumbnails'),
+            path.join(this.tempDir, 'videos')
+        ];
+
+        dirs.forEach(dir => {
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
+        });
+    }
 
     /**
     * Check which schedulers need videos generated
