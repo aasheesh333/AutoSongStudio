@@ -13,10 +13,35 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  Timer? _pollingTimer;
+
   @override
   void initState() {
     super.initState();
     _refreshData();
+    _startPolling();
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startPolling() {
+    if (_pollingTimer != null && _pollingTimer!.isActive) return;
+    
+    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      if (!mounted) return;
+      
+      final appState = Provider.of<AppState>(context, listen: false);
+      // Check if we need to poll (if recent videos are processing)
+      bool hasActive = appState.videos.any((v) => v.isProcessing || v.isQueued);
+      
+      if (hasActive || appState.schedulers.any((s) => s.active)) {
+         await appState.loadVideos();
+      }
+    });
   }
 
   Future<void> _refreshData() async {
@@ -136,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Upcoming Releases',
+                        'Recent Activity',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       TextButton(
@@ -153,12 +178,22 @@ class _HomeScreenState extends State<HomeScreen> {
               // Videos list
               Consumer<AppState>(
                 builder: (context, appState, _) {
-                  final upcomingVideos = appState.videos
-                      .where((v) => v.isReady && v.scheduledPublishAt != null)
+                  // Show Ready videos + Processing/Queued ones
+                  final activeVideos = appState.videos
+                      .where((v) => v.isReady || v.isProcessing || v.isQueued)
                       .toList()
-                    ..sort((a, b) => a.scheduledPublishAt!.compareTo(b.scheduledPublishAt!));
+                    ..sort((a, b) {
+                         // Sort by Created At descending (newest first) for processing
+                         // Or scheduled time for ready ones
+                         final aTime = a.scheduledPublishAt ?? a.createdAt;
+                         final bTime = b.scheduledPublishAt ?? b.createdAt;
+                         return bTime.compareTo(aTime); // Newest first
+                    });
                   
-                  if (upcomingVideos.isEmpty) {
+                  // Take top 5
+                  final displayVideos = activeVideos.take(5).toList();
+                  
+                  if (displayVideos.isEmpty) {
                     return SliverFillRemaining(
                       child: Center(
                         child: Column(
@@ -192,10 +227,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
-                          final video = upcomingVideos[index];
+                          final video = displayVideos[index];
                           return _VideoCard(video: video);
                         },
-                        childCount: upcomingVideos.length,
+                        childCount: displayVideos.length,
                       ),
                     ),
                   );
@@ -208,7 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       
-      // FAB - Start Automation
+      // Fab and Bottom Nav remain same...
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.pushNamed(context, '/schedulers'),
         backgroundColor: AppTheme.primaryColor,
@@ -216,7 +251,6 @@ class _HomeScreenState extends State<HomeScreen> {
         label: const Text('Start Automation'),
       ),
       
-      // Bottom Navigation
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppTheme.surfaceDark,
@@ -263,57 +297,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Stat Card Widget
-class _StatCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String value;
-  final String subtitle;
-  final Color color;
+// ... StatCard remains same ...
 
-  const _StatCard({
-    required this.icon,
-    required this.title,
-    required this.value,
-    required this.subtitle,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: AppTheme.cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.displayMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          Text(
-            subtitle,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppTheme.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Video Card Widget
 class _VideoCard extends StatelessWidget {
   final Video video;
 
@@ -321,11 +306,30 @@ class _VideoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheduledTime = video.scheduledPublishAt!;
-    final now = DateTime.now();
-    final isToday = scheduledTime.year == now.year &&
-        scheduledTime.month == now.month &&
-        scheduledTime.day == now.day;
+    // Determine info based on status
+    String statusText = 'Ready';
+    Color statusColor = AppTheme.success;
+    String timeText = '';
+    
+    if (video.isProcessing || video.isQueued) {
+        statusText = video.isProcessing ? 'Processing...' : 'Queued';
+        statusColor = AppTheme.info; // Blue/Info color
+        timeText = 'Generating now...';
+    } else if (video.isFailed) {
+        statusText = 'Failed';
+        statusColor = AppTheme.error;
+        timeText = 'Error generating';
+    } else {
+        // Ready or Uploaded
+        final scheduledTime = video.scheduledPublishAt ?? video.createdAt;
+        final now = DateTime.now();
+        final isToday = scheduledTime.year == now.year &&
+            scheduledTime.month == now.month &&
+            scheduledTime.day == now.day;
+        timeText = isToday
+             ? 'Today at ${DateFormat.jm().format(scheduledTime)}'
+             : DateFormat('MMM d, h:mm a').format(scheduledTime);
+    }
     
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -359,7 +363,9 @@ class _VideoCard extends StatelessWidget {
                           fit: BoxFit.cover,
                         ),
                       )
-                    : const Icon(Icons.music_note, size: 32),
+                    : (video.isProcessing 
+                        ? const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))) 
+                        : const Icon(Icons.music_note, size: 32)),
               ),
               
               const SizedBox(width: 12),
@@ -370,14 +376,14 @@ class _VideoCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      video.title,
+                      video.title.isEmpty ? 'Generating Title...' : video.title,
                       style: Theme.of(context).textTheme.titleMedium,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      video.genres.join(' · '),
+                      video.genres.isEmpty ? 'Generating music...' : video.genres.join(' · '),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppTheme.textSecondary,
                       ),
@@ -394,9 +400,7 @@ class _VideoCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          isToday
-                              ? 'Today at ${DateFormat.jm().format(scheduledTime)}'
-                              : DateFormat('MMM d, h:mm a').format(scheduledTime),
+                          timeText,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AppTheme.textSecondary,
                           ),
@@ -407,20 +411,20 @@ class _VideoCard extends StatelessWidget {
                 ),
               ),
               
-              // Status
+              // Status Badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.success.withOpacity(0.1),
+                  color: statusColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: AppTheme.success.withOpacity(0.3),
+                    color: statusColor.withOpacity(0.3),
                   ),
                 ),
                 child: Text(
-                  'Ready',
+                  statusText,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppTheme.success,
+                    color: statusColor,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
