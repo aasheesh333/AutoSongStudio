@@ -103,21 +103,23 @@ class SunoService {
 
         const payload = {
             prompt: lyrics,
-            custom_mode: true,
+            customMode: true,  // Fixed: camelCase
             style: genres.join(', '),
-            model: 'v4.5',  // Latest model
-            make_instrumental: false,
-            wait_audio: false  // We'll poll for completion
+            title: lyrics.substring(0, 50), // Title is required for customMode
+            model: 'V3_5',  // Fixed: Use V3_5 as standard
+            instrumental: false, // Fixed: camelCase 'instrumental' instead of 'make_instrumental'
+            callBackUrl: `${config.backendUrl}/api/webhooks/suno` // Optional but good practice
         };
 
         const result = await this.makeRequest('/api/v1/generate', 'POST', payload, apiKey);
 
-        if (!result || !result.data || !result.data.task_id) {
+        // API returns { code: 200, msg: "success", data: { taskId: "..." } }
+        if (!result || !result.data || !result.data.taskId) {
             console.error('[Suno] Generation failed. Response:', JSON.stringify(result, null, 2));
-            throw new Error('Invalid response from Suno API: Missing task_id');
+            throw new Error('Invalid response from Suno API: Missing taskId');
         }
 
-        const taskId = result.data.task_id;
+        const taskId = result.data.taskId; // Fixed: taskId instead of task_id
         console.log(`[Suno] Generation started, task ID: ${taskId}`);
 
         return taskId;
@@ -132,28 +134,33 @@ class SunoService {
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
             await new Promise(resolve => setTimeout(resolve, 5000));  // Wait 5 seconds
 
-            const status = await this.makeRequest(`/api/v1/query/${taskId}`, 'GET', null, apiKey);
+            // API uses GET variables (query params) for taskId
+            const status = await this.makeRequest(`/api/v1/generate/record-info?taskId=${taskId}`, 'GET', null, apiKey);
 
             if (!status || !status.data) {
                 console.warn(`[Suno] Invalid status response, attempt ${attempt + 1}`);
                 continue;
             }
 
-            const progress = status.data.progress || 0;
+            // Status is now uppercase string (e.g. 'SUCCESS', 'PENDING')
             const state = status.data.status || 'unknown';
+            console.log(`[Suno] Status: ${state}`);
 
-            console.log(`[Suno] Progress: ${progress}% - Status: ${state}`);
-
-            if (state === 'complete' && status.data.audio_url) {
-                console.log(`[Suno] ✅ Generation complete!`);
-                return {
-                    audioUrl: status.data.audio_url,
-                    duration: status.data.duration || 0
-                };
+            if (state === 'SUCCESS') {
+                const sunoData = status.data.response?.sunoData?.[0];
+                if (sunoData && sunoData.audioUrl) {
+                    console.log(`[Suno] ✅ Generation complete!`);
+                    return {
+                        audioUrl: sunoData.audioUrl,
+                        duration: sunoData.duration || 0,
+                        imageUrl: sunoData.imageUrl,
+                        title: sunoData.title
+                    };
+                }
             }
 
-            if (state === 'failed' || state === 'error') {
-                throw new Error('Suno generation failed');
+            if (state === 'GENERATE_AUDIO_FAILED' || state === 'CREATE_TASK_FAILED' || state === 'SENSITIVE_WORD_ERROR') {
+                throw new Error(`Suno generation failed with status: ${state}`);
             }
         }
 
