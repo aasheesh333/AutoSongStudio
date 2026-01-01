@@ -113,7 +113,8 @@ class SunoService {
         const result = await this.makeRequest('/api/v1/generate', 'POST', payload, apiKey);
 
         if (!result || !result.data || !result.data.task_id) {
-            throw new Error('Invalid response from Suno API');
+            console.error('[Suno] Generation failed. Response:', JSON.stringify(result, null, 2));
+            throw new Error('Invalid response from Suno API: Missing task_id');
         }
 
         const taskId = result.data.task_id;
@@ -193,6 +194,11 @@ class SunoService {
             const result = await this.makeRequest('/api/v1/account/credits', 'GET', null, apiKey);
             return result.data?.credits || 0;
         } catch (error) {
+            // If 404, endpoint might be changed/unavailable, assume unlimited or let generation fail naturally
+            if (error.message.includes('404')) {
+                console.warn('[Suno] Credits endpoint not found (404), skipping check.');
+                return null;
+            }
             console.warn('[Suno] Could not fetch credits:', error.message);
             return null;
         }
