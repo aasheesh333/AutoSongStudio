@@ -15,6 +15,13 @@ class SongDetailScreen extends StatefulWidget {
 
 class _SongDetailScreenState extends State<SongDetailScreen> {
   Timer? _pollingTimer;
+  Video? _video;
+  bool _isLoading = true;
+  bool _isUploading = false;
+  
+  final _titleController = TextEditingController();
+  final _descController = TextEditingController();
+  final _tagsController = TextEditingController();
 
   @override
   void didChangeDependencies() {
