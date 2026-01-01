@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user.dart';
@@ -11,6 +13,10 @@ class ApiService {
 
   late Dio _dio;
   final _storage = const FlutterSecureStorage();
+
+  // Expose baseUrl for video streaming URL construction
+  static String get baseUrl => _baseUrl;
+  static const String _baseUrl = 'https://autosongstudio.onrender.com';
 
   ApiService._internal() {
     _dio = Dio(BaseOptions(
@@ -223,6 +229,18 @@ class ApiService {
         'videoId': id,
         'schedulerId': schedulerId,
       },
+    );
+  }
+
+  Future<void> uploadThumbnail(String id, String imagePath) async {
+    // Send the image as base64 data URL
+    final bytes = await File(imagePath).readAsBytes();
+    final base64Image = base64Encode(bytes);
+    final thumbnailUrl = 'data:image/png;base64,$base64Image';
+    
+    await _dio.post(
+      '${ApiConstants.videoById(id)}/thumbnail',
+      data: {'thumbnailUrl': thumbnailUrl},
     );
   }
 

@@ -117,6 +117,60 @@ router.post('/:id/thumbnail', async (req, res) => {
 });
 
 /**
+ * GET /api/videos/:id/stream
+ * Stream video file for preview in app
+ */
+router.get('/:id/stream', async (req, res) => {
+    const { id } = req.params;
+    const path = require('path');
+
+    try {
+        const video = await VideoModel.findById(id);
+
+        if (!video) {
+            return res.status(404).json({ error: 'Video not found' });
+        }
+
+        const videoPath = path.join('./temp/videos', `${id}.mp4`);
+
+        if (!fs.existsSync(videoPath)) {
+            return res.status(404).json({ error: 'Video file not found. Still processing or cleaned up.' });
+        }
+
+        const stat = fs.statSync(videoPath);
+        const fileSize = stat.size;
+        const range = req.headers.range;
+
+        if (range) {
+            // Handle range requests for video seeking
+            const parts = range.replace(/bytes=/, '').split('-');
+            const start = parseInt(parts[0], 10);
+            const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+            const chunkSize = (end - start) + 1;
+            const file = fs.createReadStream(videoPath, { start, end });
+
+            res.writeHead(206, {
+                'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+                'Accept-Ranges': 'bytes',
+                'Content-Length': chunkSize,
+                'Content-Type': 'video/mp4',
+            });
+
+            file.pipe(res);
+        } else {
+            res.writeHead(200, {
+                'Content-Length': fileSize,
+                'Content-Type': 'video/mp4',
+            });
+
+            fs.createReadStream(videoPath).pipe(res);
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
  * POST /api/videos/:id/upload-now
  * Trigger immediate upload to YouTube
  */

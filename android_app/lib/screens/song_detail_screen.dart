@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
+import 'package:image_picker/image_picker.dart';
+import 'package:video_player/video_player.dart';
 import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
 import '../models/video.dart';
+import '../services/api_service.dart';
 
 class SongDetailScreen extends StatefulWidget {
   const SongDetailScreen({super.key});
@@ -18,6 +21,17 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
   Video? _video;
   bool _isLoading = true;
   bool _isUploading = false;
+  bool _isUploadingThumbnail = false;
+  
+  // Video Player
+  VideoPlayerController? _videoController;
+  bool _isVideoInitialized = false;
+  bool _isPlaying = false;
+  
+  // Validation
+  bool _titleError = false;
+  bool _descError = false;
+  bool _tagsError = false;
   
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
@@ -63,11 +77,15 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
           }
         });
 
-        // Start polling if processing
+        // Start polling if processing, init video player if ready
         if (_video!.status == 'processing') {
           _startPolling(id);
         } else {
           _stopPolling();
+          // Initialize video player if ready
+          if (_video!.status == 'ready' && _videoController == null) {
+            _initVideoPlayer();
+          }
         }
       }
     } catch (e) {
@@ -132,6 +150,9 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
 
   Future<void> _uploadNow() async {
     if (!_video!.isReady) return;
+    
+    // Validate fields before upload
+    if (!_validateFields()) return;
     
     setState(() => _isUploading = true);
     
@@ -206,10 +227,95 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
 
   @override
   void dispose() {
+    _pollingTimer?.cancel();
+    _videoController?.dispose();
     _titleController.dispose();
     _descController.dispose();
     _tagsController.dispose();
     super.dispose();
+  }
+
+  void _initVideoPlayer() {
+    if (_video == null || _video!.status != 'ready') return;
+    
+    // Get the video stream URL
+    final baseUrl = ApiService.baseUrl;
+    final videoUrl = '$baseUrl/api/videos/${_video!.id}/stream';
+    
+    _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl))
+      ..initialize().then((_) {
+        if (mounted) {
+          setState(() => _isVideoInitialized = true);
+        }
+      }).catchError((e) {
+        debugPrint('Error initializing video player: $e');
+      });
+    
+    _videoController!.addListener(() {
+      if (mounted) {
+        setState(() => _isPlaying = _videoController!.value.isPlaying);
+      }
+    });
+  }
+
+  Future<void> _togglePlayPause() async {
+    if (_videoController == null || !_isVideoInitialized) return;
+    
+    if (_isPlaying) {
+      await _videoController!.pause();
+    } else {
+      await _videoController!.play();
+    }
+  }
+
+  Future<void> _pickAndUploadThumbnail() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 1280, maxHeight: 720);
+    
+    if (image == null) return;
+    
+    setState(() => _isUploadingThumbnail = true);
+    
+    try {
+      final appState = Provider.of<AppState>(context, listen: false);
+      await appState.uploadThumbnail(_video!.id, image.path);
+      
+      // Reload video to get new thumbnail URL
+      await _loadVideo(_video!.id);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Thumbnail updated!'), backgroundColor: AppTheme.success),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload thumbnail: $e'), backgroundColor: AppTheme.error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingThumbnail = false);
+    }
+  }
+
+  bool _validateFields() {
+    setState(() {
+      _titleError = _titleController.text.trim().isEmpty;
+      _descError = _descController.text.trim().isEmpty;
+      _tagsError = _tagsController.text.trim().isEmpty;
+    });
+    
+    if (_titleError || _descError || _tagsError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⚠️ Please fill in all required fields'),
+          backgroundColor: AppTheme.error,
+        ),
+      );
+      return false;
+    }
+    return true;
   }
 
   @override
@@ -269,26 +375,183 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Thumbnail Preview
-                    Container(
-                      height: 200,
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceHighlight,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: _video!.thumbnailUrl != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: Image.network(
-                                _video!.thumbnailUrl!,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
+                    // Thumbnail Preview with Edit Button
+                    Stack(
+                      children: [
+                        Container(
+                          height: 200,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: AppTheme.surfaceHighlight,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: _video!.thumbnailUrl != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Image.network(
+                                    _video!.thumbnailUrl!,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Center(
+                                  child: _video!.status == 'processing'
+                                      ? const Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            CircularProgressIndicator(),
+                                            SizedBox(height: 12),
+                                            Text('Generating thumbnail...'),
+                                          ],
+                                        )
+                                      : const Icon(Icons.image, size: 64),
+                                ),
+                        ),
+                        // Edit Button Overlay
+                        if (_video!.isEditable && _video!.status == 'ready')
+                          Positioned(
+                            bottom: 12,
+                            right: 12,
+                            child: GestureDetector(
+                              onTap: _isUploadingThumbnail ? null : _pickAndUploadThumbnail,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.7),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _isUploadingThumbnail
+                                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                        : const Icon(Icons.edit, size: 16, color: Colors.white),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      _isUploadingThumbnail ? 'Uploading...' : 'Change',
+                                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            )
-                          : const Center(
-                              child: Icon(Icons.music_note, size: 64),
                             ),
+                          ),
+                      ],
                     ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Video Player
+                    if (_video!.status == 'ready')
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceDark,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            // Video Preview
+                            ClipRRect(
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                              child: AspectRatio(
+                                aspectRatio: 16 / 9,
+                                child: _isVideoInitialized && _videoController != null
+                                    ? Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          VideoPlayer(_videoController!),
+                                          // Play/Pause Overlay
+                                          GestureDetector(
+                                            onTap: _togglePlayPause,
+                                            child: Container(
+                                              color: Colors.transparent,
+                                              child: AnimatedOpacity(
+                                                opacity: _isPlaying ? 0.0 : 1.0,
+                                                duration: const Duration(milliseconds: 300),
+                                                child: Container(
+                                                  padding: const EdgeInsets.all(16),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black.withOpacity(0.5),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: const Icon(Icons.play_arrow, size: 48, color: Colors.white),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : const Center(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            CircularProgressIndicator(),
+                                            SizedBox(height: 12),
+                                            Text('Loading video...'),
+                                          ],
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            // Video Controls
+                            if (_isVideoInitialized && _videoController != null)
+                              Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Row(
+                                  children: [
+                                    IconButton(
+                                      onPressed: _togglePlayPause,
+                                      icon: Icon(
+                                        _isPlaying ? Icons.pause : Icons.play_arrow,
+                                        color: AppTheme.primaryColor,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: VideoProgressIndicator(
+                                        _videoController!,
+                                        allowScrubbing: true,
+                                        colors: VideoProgressColors(
+                                          playedColor: AppTheme.primaryColor,
+                                          bufferedColor: AppTheme.primaryColor.withOpacity(0.3),
+                                          backgroundColor: AppTheme.surfaceHighlight,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ValueListenableBuilder(
+                                      valueListenable: _videoController!,
+                                      builder: (context, VideoPlayerValue value, child) {
+                                        final position = value.position;
+                                        final duration = value.duration;
+                                        return Text(
+                                          '${position.inMinutes}:${(position.inSeconds % 60).toString().padLeft(2, '0')} / ${duration.inMinutes}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}',
+                                          style: Theme.of(context).textTheme.bodySmall,
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      )
+                    else if (_video!.status == 'processing')
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceDark,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Column(
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 16),
+                            Text('Generating video...', style: TextStyle(fontWeight: FontWeight.w500)),
+                            SizedBox(height: 4),
+                            Text('Creating audio, thumbnail, and merging...', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                          ],
+                        ),
+                      ),
                     
                     const SizedBox(height: 20),
                     
@@ -339,17 +602,29 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                     
                     // Title
                     Text(
-                      'Title',
-                      style: Theme.of(context).textTheme.titleSmall,
+                      'Title *',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: _titleError ? AppTheme.error : null,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _titleController,
                       enabled: _video!.isEditable,
                       maxLength: 100,
+                      onChanged: (_) => setState(() => _titleError = false),
                       decoration: InputDecoration(
                         hintText: 'Video title',
                         counterText: _video!.isEditable ? null : '',
+                        errorText: _titleError ? 'Title is required' : null,
+                        enabledBorder: _titleError ? OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppTheme.error, width: 2),
+                        ) : null,
+                        focusedBorder: _titleError ? OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppTheme.error, width: 2),
+                        ) : null,
                       ),
                     ),
                     
@@ -357,8 +632,10 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                     
                     // Description
                     Text(
-                      'Description',
-                      style: Theme.of(context).textTheme.titleSmall,
+                      'Description *',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: _descError ? AppTheme.error : null,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     TextField(
@@ -366,8 +643,18 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                       enabled: _video!.isEditable,
                       maxLines: 5,
                       maxLength: 5000,
-                      decoration: const InputDecoration(
+                      onChanged: (_) => setState(() => _descError = false),
+                      decoration: InputDecoration(
                         hintText: 'Video description',
+                        errorText: _descError ? 'Description is required' : null,
+                        enabledBorder: _descError ? OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppTheme.error, width: 2),
+                        ) : null,
+                        focusedBorder: _descError ? OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppTheme.error, width: 2),
+                        ) : null,
                       ),
                     ),
                     
@@ -375,16 +662,28 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                     
                     // Tags
                     Text(
-                      'Tags (comma-separated)',
-                      style: Theme.of(context).textTheme.titleSmall,
+                      'Tags (comma-separated) *',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: _tagsError ? AppTheme.error : null,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _tagsController,
                       enabled: _video!.isEditable,
-                      decoration: const InputDecoration(
+                      onChanged: (_) => setState(() => _tagsError = false),
+                      decoration: InputDecoration(
                         hintText: 'tag1, tag2, tag3',
                         helperText: 'Maximum 15 tags',
+                        errorText: _tagsError ? 'At least one tag is required' : null,
+                        enabledBorder: _tagsError ? OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppTheme.error, width: 2),
+                        ) : null,
+                        focusedBorder: _tagsError ? OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppTheme.error, width: 2),
+                        ) : null,
                       ),
                     ),
                     

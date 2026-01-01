@@ -295,6 +295,12 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> uploadThumbnail(String id, String imagePath) async {
+    await _api.uploadThumbnail(id, imagePath);
+    // Reload videos to get updated thumbnail URL
+    await loadVideos();
+  }
+
   // ==================== SETTINGS ====================
 
   Future<void> loadSettings() async {
