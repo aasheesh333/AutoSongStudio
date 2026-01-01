@@ -154,9 +154,9 @@ Return ONLY a JSON object with this exact structure:
             console.error('[Groq] Failed to parse metadata:', error.message);
             // Fallback metadata
             return {
-                title: `${genres[0]} Music - ${new Date().toISOString().split('T')[0]}`,
-                description: 'Enjoy this original music composition.',
-                tags: genres.slice(0, 5)
+                title: metadata?.title || `${genres[0]} Music - ${new Date().toISOString().split('T')[0]}`,
+                description: metadata?.description || 'Enjoy this original music composition.',
+                tags: Array.isArray(metadata?.tags) ? metadata.tags : genres.slice(0, 5)
             };
         }
     }

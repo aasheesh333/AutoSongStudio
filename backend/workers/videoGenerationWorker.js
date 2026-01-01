@@ -134,10 +134,10 @@ class VideoGenerationWorker {
 
             // Update video with generated content
             await VideoModel.update(video.id, {
-                title: content.title,
-                description: content.description,
-                tags: content.tags,
-                lyrics: content.lyrics
+                title: content.title || 'Untitled Video',
+                description: content.description || 'No description available.',
+                tags: content.tags || [],
+                lyrics: content.lyrics || ''
             });
 
             console.log(`[Worker] ✅ Content generated - Title: "${content.title}"`);
