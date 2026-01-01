@@ -32,16 +32,23 @@ function initializeFirebase() {
     }
 }
 
+let dbInstance;
+
 /**
  * Get Firestore database instance
  */
 function getFirestore() {
+    if (dbInstance) {
+        return dbInstance;
+    }
+
     if (!firebaseApp) {
         initializeFirebase();
     }
-    const db = admin.firestore();
-    db.settings({ ignoreUndefinedProperties: true });
-    return db;
+
+    dbInstance = admin.firestore();
+    dbInstance.settings({ ignoreUndefinedProperties: true });
+    return dbInstance;
 }
 
 /**
