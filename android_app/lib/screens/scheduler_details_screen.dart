@@ -84,11 +84,35 @@ class _SchedulerDetailsScreenState extends State<SchedulerDetailsScreen> {
       
       try {
         await appState.loadVideos(schedulerId: id);
+        
+        // Refresh scheduler status (to catch auto-deactivation)
+        // We need to fetch the scheduler again from the list as loadVideos only updates videos
+        final updatedScheduler = appState.schedulers.firstWhere((s) => s.id == id, orElse: () => _scheduler!);
+
         if (mounted) {
           setState(() {
             _recentVideos = appState.videos;
+            _scheduler = updatedScheduler; // Update local scheduler reference
           });
           
+          // Check for failures and show Toast
+          final failedVideo = _recentVideos.firstWhere(
+            (v) => v.status == 'failed' && (v.error?.contains('credits') ?? false), 
+            orElse: () => Video(id: '', schedulerId: '', userId: '', channelId: '', playlists: [], title: '', description: '', tags: [], lyrics: '', genres: [], status: 'ok', createdAt: DateTime.now(), updatedAt: DateTime.now()), // Dummy
+          );
+
+          if (failedVideo.id.isNotEmpty && !_scheduler!.active) {
+             ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Paused: ${failedVideo.error}'),
+                backgroundColor: AppTheme.error,
+                duration: const Duration(seconds: 5),
+              ),
+            );
+            _stopPolling(); // Stop polling since it's paused
+            return;
+          }
+
           // Stop polling if inactive and no processing videos
           bool hasProcessing = _recentVideos.any((v) => v.status == 'processing');
           if (!_scheduler!.active && !hasProcessing) {

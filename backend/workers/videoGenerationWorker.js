@@ -239,7 +239,18 @@ class VideoGenerationWorker {
             return video;
         } catch (error) {
             console.error(`[Worker] ❌ Video generation failed:`, error.message);
-            await VideoModel.updateStatus(videoId, 'failed', error.message);
+
+            // Check for Insufficient Credits Error
+            if (error.message.includes('Insufficient Suno credits') || error.message.includes('429')) {
+                console.log(`[Worker] 🛑 Insufficient credits detected. Deactivating all schedulers for user: ${scheduler.userId}`);
+                await SchedulerModel.deactivateAllForUser(scheduler.userId);
+
+                // Update video status with clear error for Frontend Toast
+                await VideoModel.updateStatus(videoId, 'failed', 'Insufficient Suno credits. All schedulers paused.');
+            } else {
+                await VideoModel.updateStatus(videoId, 'failed', error.message);
+            }
+
             throw error;
         } finally {
             this.isGenerating = false; // Release lock
