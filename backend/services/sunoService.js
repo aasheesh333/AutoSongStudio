@@ -83,7 +83,10 @@ class SunoService {
 
             return response.data;
         } catch (error) {
-            console.error('[Suno] API Error:', error.response?.data || error.message);
+            // Don't log 404s here, let the caller handle them (e.g. checkCredits)
+            if (error.response?.status !== 404) {
+                console.error('[Suno] API Error:', error.response?.data || error.message);
+            }
 
             if (error.response?.status === 429) {
                 throw new Error('Insufficient Suno credits. Please check your account.');
