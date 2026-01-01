@@ -33,10 +33,11 @@ class AppState extends ChangeNotifier {
   Map<String, dynamic>? get settings => _settings;
 
   AppState() {
-    _checkAuthStatus();
+    // Don't call async method in constructor without awaiting
+    // We will call checkAuthStatus explicitly from SplashScreen
   }
 
-  Future<void> _checkAuthStatus() async {
+  Future<void> checkAuthStatus() async {
     final accessToken = await _storage.read(key: 'access_token');
     if (accessToken != null) {
       _isAuthenticated = true;

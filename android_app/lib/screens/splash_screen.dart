@@ -38,12 +38,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   Future<void> _checkAuthAndNavigate() async {
-    await Future.delayed(const Duration(seconds: 2));
+    // Keep minimum splash duration for aesthetics
+    final minSplashDuration = Future.delayed(const Duration(seconds: 2));
     
     if (!mounted) return;
     
     try {
       final appState = Provider.of<AppState>(context, listen: false);
+      
+      // Run auth check and minimum timer in parallel
+      await Future.wait([
+        appState.checkAuthStatus(),
+        minSplashDuration,
+      ]);
+      
+      if (!mounted) return;
       
       if (appState.isAuthenticated) {
         // Load user data with error handling
@@ -54,7 +63,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           await appState.loadSettings();
         } catch (e) {
           debugPrint('⚠️ Error loading user data: $e');
-          // Continue anyway - user is authenticated but data may be incomplete
         }
         
         if (!mounted) return;
