@@ -1,7 +1,7 @@
 const { SchedulerModel, VideoModel, UserModel, SunoKeyUsageModel } = require('../models');
 const groqService = require('../services/groqService');
 const sunoService = require('../services/sunoService');
-const huggingfaceService = require('../services/huggingfaceService');
+const imageService = require('../services/imageGenerationService');
 const ffmpegService = require('../services/ffmpegService');
 const config = require('../config');
 const fs = require('fs');
@@ -14,7 +14,7 @@ const path = require('path');
  * 1. Generate lyrics (Groq)
  * 2. Generate metadata (Groq)
  * 3. Generate audio (Suno)
- * 4. Generate thumbnail (HuggingFace)
+ * 4. Generate thumbnail (Pollinations.ai)
  * 5. Create video (FFmpeg)
  * 6. Mark as READY
  */
@@ -198,10 +198,10 @@ class VideoGenerationWorker {
             console.log('[Worker] ✅ Audio generated');
 
             // STEP 3: Generate thumbnail
-            console.log('[Worker] Step 3/5: Generating thumbnail with HuggingFace...');
+            console.log('[Worker] Step 3/5: Generating thumbnail with Pollinations.ai...');
             const thumbnailPath = path.join(this.tempDir, 'thumbnails', `${video.id}.png`);
 
-            await huggingfaceService.generateAndSave(
+            await imageService.generateAndSave(
                 scheduler.genres,
                 content.lyrics,
                 content.title,
