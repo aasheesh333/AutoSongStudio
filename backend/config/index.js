@@ -29,7 +29,7 @@ module.exports = {
   huggingface: {
     token: process.env.HF_TOKEN,
     apiUrl: 'https://api-inference.huggingface.co/models',
-    model: 'stabilityai/stable-diffusion-2-1',
+    model: 'stabilityai/stable-diffusion-xl-base-1.0',
     // Free tier limits
     rateLimit: {
       requestsPerDay: 1000
