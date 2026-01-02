@@ -73,4 +73,15 @@ class YouTubeChannel {
       videoCount: json['videoCount'] as String? ?? '0',
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'thumbnailUrl': thumbnailUrl,
+      'subscriberCount': subscriberCount,
+      'videoCount': videoCount,
+    };
+  }
 }
