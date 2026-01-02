@@ -75,7 +75,9 @@ class VideoGenerationWorker {
                 console.log(`[Worker] Scheduler "${scheduler.name}" needs video (0 existing)`);
                 schedulersNeedingVideos.push(scheduler);
             } else {
-                console.log(`[Worker] Scheduler "${scheduler.name}" has ${existingCount} video(s) (Ready/Processing) - OK`);
+                // Debug: Log which videos are found
+                const videoIds = videosSnapshot.docs.map(d => `${d.id}(${d.data().status})`).join(', ');
+                console.log(`[Worker] Scheduler "${scheduler.name}" has ${existingCount} video(s): [${videoIds}] - skipping`);
             }
         }
 
@@ -355,11 +357,11 @@ class VideoGenerationWorker {
     }
 
     /**
-     * Recover stale videos stuck in 'processing' status
+     * Recover stale videos stuck in 'processing' or 'queued' status
      * This handles cases where the server was restarted mid-generation
      */
     async recoverStaleVideos() {
-        console.log('[Worker] Checking for stale processing videos...');
+        console.log('[Worker] Checking for stale videos...');
         const db = require('../config/firebase').getFirestore();
 
         try {
@@ -368,29 +370,73 @@ class VideoGenerationWorker {
                 .where('status', '==', 'processing')
                 .get();
 
-            if (processingSnapshot.empty) {
+            // Also check for stuck 'queued' videos
+            const queuedSnapshot = await db.collection(config.collections.videos)
+                .where('status', '==', 'queued')
+                .get();
+
+            const allStuckDocs = [...processingSnapshot.docs, ...queuedSnapshot.docs];
+
+            if (allStuckDocs.length === 0) {
                 console.log('[Worker] ✅ No stale videos found');
                 return;
             }
 
+            console.log(`[Worker] Found ${allStuckDocs.length} video(s) in processing/queued state`);
+
             const now = new Date();
             const staleThresholdMs = 10 * 60 * 1000; // 10 minutes
+            const schedulerIdsToTrigger = new Set();
 
-            for (const doc of processingSnapshot.docs) {
+            for (const doc of allStuckDocs) {
                 const video = { id: doc.id, ...doc.data() };
                 const createdAt = new Date(video.createdAt);
                 const ageMs = now - createdAt;
 
                 if (ageMs > staleThresholdMs) {
-                    console.log(`[Worker] ⚠️ Found stale video: ${video.id} (age: ${Math.round(ageMs / 60000)}min)`);
+                    console.log(`[Worker] ⚠️ Found stale video: ${video.id} (status: ${video.status}, age: ${Math.round(ageMs / 60000)}min)`);
 
-                    // Mark as failed so it can be regenerated
-                    await VideoModel.updateStatus(video.id, 'failed', 'Generation interrupted by server restart. Will be regenerated.');
-                    console.log(`[Worker] Marked stale video ${video.id} as failed for regeneration`);
+                    // Mark as failed using DIRECT Firestore update for reliability
+                    try {
+                        await db.collection(config.collections.videos).doc(video.id).update({
+                            status: 'failed',
+                            error: 'Generation interrupted by server restart. Will be regenerated.',
+                            updatedAt: new Date().toISOString()
+                        });
+
+                        // Verify the update worked
+                        const verifyDoc = await db.collection(config.collections.videos).doc(video.id).get();
+                        if (verifyDoc.exists && verifyDoc.data().status === 'failed') {
+                            console.log(`[Worker] ✅ Verified: Video ${video.id} status is now 'failed'`);
+                            schedulerIdsToTrigger.add(video.schedulerId);
+                        } else {
+                            console.error(`[Worker] ❌ VERIFICATION FAILED: Video ${video.id} status is still ${verifyDoc.data()?.status}`);
+                        }
+                    } catch (updateErr) {
+                        console.error(`[Worker] ❌ Failed to update video ${video.id}: ${updateErr.message}`);
+                    }
                 }
             }
 
             console.log('[Worker] ✅ Stale video recovery complete');
+
+            // Immediately trigger check for affected schedulers
+            if (schedulerIdsToTrigger.size > 0) {
+                console.log(`[Worker] Triggering immediate generation for ${schedulerIdsToTrigger.size} scheduler(s)...`);
+
+                // Small delay to ensure Firestore consistency
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Run a check cycle immediately
+                const schedulers = await this.checkSchedulers();
+                if (schedulers.length > 0 && !this.isGenerating) {
+                    const scheduler = schedulers[0];
+                    console.log(`[Worker] Starting immediate generation for: ${scheduler.name}`);
+                    this.generateVideo(scheduler).catch(err =>
+                        console.error(`[Worker] Immediate generation failed: ${err.message}`)
+                    );
+                }
+            }
         } catch (error) {
             console.error('[Worker] Error recovering stale videos:', error.message);
         }
