@@ -69,18 +69,24 @@ class FFmpegService {
         console.log(`[FFmpeg] Audio duration: ${duration.toFixed(2)}s`);
 
         return new Promise((resolve, reject) => {
-            console.log('[FFmpeg] Starting video creation...');
+            console.log('[FFmpeg] Starting video creation (optimized for static image)...');
+
+            // Timeout after 120 seconds to prevent hanging forever
+            const timeout = setTimeout(() => {
+                console.error('[FFmpeg] ❌ Timeout after 120 seconds!');
+                reject(new Error('FFmpeg timeout - encoding took too long'));
+            }, 120000);
 
             ffmpeg()
-                // Input: static image (loop it)
+                // Input: static image (loop it) - use low framerate for input
                 .input(thumbnailPath)
                 .inputOptions([
                     '-loop 1',
-                    '-framerate 30'
+                    '-framerate 1'  // Very low input framerate for single image
                 ])
                 // Input: audio
                 .input(audioPath)
-                // Output options (memory-optimized)
+                // Output options (SPEED OPTIMIZED for static image + audio)
                 .outputOptions([
                     `-c:v ${this.config.videoCodec}`,
                     `-c:a ${this.config.audioCodec}`,
@@ -90,9 +96,9 @@ class FFmpegService {
                     `-r ${this.config.fps}`,
                     `-preset ${this.config.preset}`,
                     `-crf ${this.config.crf}`,
-                    '-pix_fmt yuv420p',  // Compatibility
-                    '-movflags +faststart',  // Web optimization
-                    '-shortest'  // End when audio ends
+                    '-tune stillimage',   // Optimize for static image content
+                    '-pix_fmt yuv420p',   // Compatibility
+                    '-shortest'           // End when audio ends (REMOVED faststart - causes hang)
                 ])
                 // Output file
                 .output(outputPath)
@@ -101,14 +107,18 @@ class FFmpegService {
                     console.log('[FFmpeg] Command:', commandLine);
                 })
                 .on('progress', (progress) => {
-                    const percent = progress.percent ? progress.percent.toFixed(1) : '0.0';
-                    console.log(`[FFmpeg] Progress: ${percent}%`);
+                    // Only log every ~10% to reduce log spam
+                    if (progress.frames && progress.frames % 100 === 0) {
+                        console.log(`[FFmpeg] Frames: ${progress.frames}`);
+                    }
                 })
                 .on('end', () => {
+                    clearTimeout(timeout);
                     console.log('[FFmpeg] ✅ Video created successfully!');
                     resolve(outputPath);
                 })
                 .on('error', (error, stdout, stderr) => {
+                    clearTimeout(timeout);
                     console.error('[FFmpeg] Error:', error.message);
                     console.error('[FFmpeg] stderr:', stderr);
                     reject(new Error(`FFmpeg failed: ${error.message}`));
