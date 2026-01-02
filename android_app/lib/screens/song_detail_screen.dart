@@ -239,8 +239,8 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
     if (_video == null || _video!.status != 'ready') return;
     
     // Get the video stream URL
-    final baseUrl = ApiService.baseUrl;
-    final videoUrl = '$baseUrl/api/videos/${_video!.id}/stream';
+    final baseUrl = ApiService.apiBaseUrl;  // https://jusdown.onrender.com/api
+    final videoUrl = '$baseUrl/videos/${_video!.id}/stream';  // No duplicate /api
     
     _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl))
       ..initialize().then((_) {

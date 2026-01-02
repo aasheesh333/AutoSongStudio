@@ -14,13 +14,12 @@ class ApiService {
   late Dio _dio;
   final _storage = const FlutterSecureStorage();
 
-  // Expose baseUrl for video streaming URL construction
-  static String get baseUrl => _baseUrl;
-  static const String _baseUrl = 'https://autosongstudio.onrender.com';
+  // Expose baseUrl for video streaming URL construction (uses api_constants.dart)
+  static String get apiBaseUrl => baseUrl;
 
   ApiService._internal() {
     _dio = Dio(BaseOptions(
-      baseUrl: baseUrl,
+      baseUrl: baseUrl,  // From api_constants.dart: https://jusdown.onrender.com/api
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
       headers: {
