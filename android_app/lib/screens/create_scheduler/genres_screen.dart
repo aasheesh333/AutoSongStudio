@@ -81,153 +81,151 @@ class _GenresScreenState extends State<GenresScreen> {
         ),
       ),
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Progress indicator
-            LinearProgressIndicator(
-              value: 0.25,
-              backgroundColor: AppTheme.surfaceDark,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
-            ),
-            
-            const SizedBox(height: 24),
-            
-            // Title
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Select Genres',
-                    style: Theme.of(context).textTheme.displayMedium,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Progress indicator
+              LinearProgressIndicator(
+                value: 0.25,
+                backgroundColor: AppTheme.surfaceDark,
+                valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Title
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Select Genres',
+                      style: Theme.of(context).textTheme.displayMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Choose genres in priority order. First genre will be primary.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 20),
+              
+              // Search bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search genres...',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Choose genres in priority order. First genre will be primary.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  onChanged: (value) => setState(() => _searchQuery = value),
+                ),
+              ),
+              
+              const SizedBox(height: 20),
+              
+              // Selected genres (priority queue)
+              if (_data.genres.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'Priority Order (${_data.genres.length} selected)',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       color: AppTheme.textSecondary,
                     ),
                   ),
-                ],
-              ),
-            ),
-            
-            const SizedBox(height: 20),
-            
-            // Search bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search genres...',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() => _searchQuery = '');
-                          },
-                        )
-                      : null,
                 ),
-                onChanged: (value) => setState(() => _searchQuery = value),
-              ),
-            ),
-            
-            const SizedBox(height: 20),
-            
-            // Selected genres (priority queue)
-            if (_data.genres.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.all(12),
+                  decoration: AppTheme.cardDecoration(),
+                  child: Column(
+                    children: List.generate(_data.genres.length, (index) {
+                      final genre = _data.genres[index];
+                      return Container(
+                        key: ValueKey(genre),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceHighlight,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              '${index + 1}.',
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                color: AppTheme.primaryColor,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                genre,
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ),
+                            if (index > 0)
+                              IconButton(
+                                icon: const Icon(Icons.arrow_upward, size: 18),
+                                onPressed: () => _moveGenreUp(index),
+                                color: AppTheme.textSecondary,
+                              ),
+                            if (index < _data.genres.length - 1)
+                              IconButton(
+                                icon: const Icon(Icons.arrow_downward, size: 18),
+                                onPressed: () => _moveGenreDown(index),
+                                color: AppTheme.textSecondary,
+                              ),
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 18),
+                              onPressed: () => _toggleGenre(genre),
+                              color: AppTheme.textSecondary,
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+              
+              // Available genres
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
-                  'Priority Order (${_data.genres.length} selected)',
+                  'Available Genres',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: AppTheme.textSecondary,
                   ),
                 ),
               ),
+              
               const SizedBox(height: 12),
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                padding: const EdgeInsets.all(12),
-                decoration: AppTheme.cardDecoration(),
-                child: ReorderableListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _data.genres.length,
-                  onReorder: (oldIndex, newIndex) {
-                    setState(() {
-                      if (newIndex > oldIndex) newIndex--;
-                      final genre = _data.genres.removeAt(oldIndex);
-                      _data.genres.insert(newIndex, genre);
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    final genre = _data.genres[index];
-                    return Container(
-                      key: ValueKey(genre),
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceHighlight,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.drag_handle,
-                            size: 20,
-                            color: AppTheme.textSecondary,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            '${index + 1}.',
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              color: AppTheme.primaryColor,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              genre,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close, size: 18),
-                            onPressed: () => _toggleGenre(genre),
-                            color: AppTheme.textSecondary,
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-            
-            // Available genres
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                'Available Genres',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppTheme.textSecondary,
-                ),
-              ),
-            ),
-            
-            const SizedBox(height: 12),
-            
-            Expanded(
-              child: SingleChildScrollView(
+              
+              // Genre chips
+              Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Wrap(
                   spacing: 8,
@@ -248,8 +246,8 @@ class _GenresScreenState extends State<GenresScreen> {
                   }).toList(),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       

@@ -237,20 +237,15 @@ class _HomeScreenState extends State<HomeScreen> {
               // Videos list
               Consumer<AppState>(
                 builder: (context, appState, _) {
-                  // Show Ready videos + Processing/Queued ones
-                  final activeVideos = appState.videos
-                      .where((v) => v.isReady || v.isProcessing || v.isQueued)
-                      .toList()
+                  // Show ALL videos - failed, processing, ready, uploaded
+                  final allVideos = appState.videos.toList()
                     ..sort((a, b) {
-                         // Sort by Created At descending (newest first) for processing
-                         // Or scheduled time for ready ones
-                         final aTime = a.scheduledPublishAt ?? a.createdAt;
-                         final bTime = b.scheduledPublishAt ?? b.createdAt;
-                         return bTime.compareTo(aTime); // Newest first
+                         // Sort by Created At descending (newest first)
+                         return b.createdAt.compareTo(a.createdAt);
                     });
                   
                   // Take top 5
-                  final displayVideos = activeVideos.take(5).toList();
+                  final displayVideos = allVideos.take(5).toList();
                   
                   if (displayVideos.isEmpty) {
                     return SliverFillRemaining(

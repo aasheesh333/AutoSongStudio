@@ -215,7 +215,15 @@ class ApiService {
   }
 
   Future<void> uploadVideoNow(String id) async {
-    await _dio.post(ApiConstants.videoUploadNow(id));
+    // Get access token from storage and send in request body
+    final accessToken = await _storage.read(key: 'access_token');
+    if (accessToken == null) {
+      throw Exception('Access token not found. Please sign in again.');
+    }
+    await _dio.post(
+      ApiConstants.videoUploadNow(id),
+      data: {'accessToken': accessToken},
+    );
   }
 
   Future<void> deleteVideo(String id, String schedulerId) async {

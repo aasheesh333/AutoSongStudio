@@ -375,73 +375,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Thumbnail Preview with Edit Button
-                    Stack(
-                      children: [
-                        Container(
-                          height: 200,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: AppTheme.surfaceHighlight,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: _video!.thumbnailUrl != null
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Image.network(
-                                    _video!.thumbnailUrl!,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : Center(
-                                  child: _video!.status == 'processing'
-                                      ? const Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            CircularProgressIndicator(),
-                                            SizedBox(height: 12),
-                                            Text('Generating thumbnail...'),
-                                          ],
-                                        )
-                                      : const Icon(Icons.image, size: 64),
-                                ),
-                        ),
-                        // Edit Button Overlay
-                        if (_video!.isEditable && _video!.status == 'ready')
-                          Positioned(
-                            bottom: 12,
-                            right: 12,
-                            child: GestureDetector(
-                              onTap: _isUploadingThumbnail ? null : _pickAndUploadThumbnail,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.7),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    _isUploadingThumbnail
-                                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                        : const Icon(Icons.edit, size: 16, color: Colors.white),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      _isUploadingThumbnail ? 'Uploading...' : 'Change',
-                                      style: const TextStyle(color: Colors.white, fontSize: 12),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // Video Player
+                    // Video Player with Thumbnail Edit Button (no separate thumbnail preview)
                     if (_video!.status == 'ready')
                       Container(
                         decoration: BoxDecoration(
@@ -479,6 +413,29 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                                               ),
                                             ),
                                           ),
+                                          // Thumbnail Edit Icon (top right)
+                                          if (_video!.isEditable)
+                                            Positioned(
+                                              top: 8,
+                                              right: 8,
+                                              child: GestureDetector(
+                                                onTap: _isUploadingThumbnail ? null : _pickAndUploadThumbnail,
+                                                child: Container(
+                                                  padding: const EdgeInsets.all(8),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black.withOpacity(0.6),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: _isUploadingThumbnail
+                                                      ? const SizedBox(
+                                                          width: 16,
+                                                          height: 16,
+                                                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                                        )
+                                                      : const Icon(Icons.edit, size: 16, color: Colors.white),
+                                                ),
+                                              ),
+                                            ),
                                         ],
                                       )
                                     : const Center(

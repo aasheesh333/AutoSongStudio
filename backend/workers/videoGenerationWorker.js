@@ -157,6 +157,22 @@ class VideoGenerationWorker {
                 }
             }
 
+            // Fetch previous video titles for this scheduler to avoid repetition
+            const db = require('../config/firebase').getFirestore();
+            const previousVideosSnapshot = await db.collection(config.collections.videos)
+                .where('schedulerId', '==', scheduler.id)
+                .where('title', '!=', null)
+                .orderBy('title')
+                .orderBy('createdAt', 'desc')
+                .limit(10)  // Last 10 titles to avoid
+                .get();
+
+            const previousTitles = previousVideosSnapshot.docs
+                .map(doc => doc.data().title)
+                .filter(title => title && title.length > 0);
+
+            console.log(`[Worker] Found ${previousTitles.length} previous titles to avoid repetition`);
+
             // STEP 1: Generate content (lyrics + metadata)
             console.log('[Worker] Step 1/5: Generating content with Groq...');
             const content = await groqService.generateAllContent({
@@ -165,7 +181,8 @@ class VideoGenerationWorker {
                 titlePrompt: scheduler.titlePrompt,
                 descPrompt: scheduler.descPrompt,
                 tagsPrompt: scheduler.tagsPrompt,
-                lyricsPrompt: scheduler.lyricsPrompt
+                lyricsPrompt: scheduler.lyricsPrompt,
+                previousTitles  // Pass previous titles to avoid repetition
             });
 
             // Update video with generated content
