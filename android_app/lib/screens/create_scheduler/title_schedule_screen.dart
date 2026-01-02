@@ -13,8 +13,8 @@ class _TitleScheduleScreenState extends State<TitleScheduleScreen> {
   late CreateSchedulerData _data;
   
   final List<String> _languages = [
-    'English', 'Spanish', 'French', 'German', 'Italian',
-    'Portuguese', 'Japanese', 'Korean', 'Chinese', 'Hindi'
+    'English', 'Hindi', 'Spanish', 'French', 'German', 'Italian',
+    'Portuguese', 'Japanese', 'Korean', 'Chinese'
   ];
   
   final List<String> _frequencies = ['daily', 'weekly', 'monthly'];
