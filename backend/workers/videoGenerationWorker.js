@@ -385,7 +385,7 @@ class VideoGenerationWorker {
             console.log(`[Worker] Found ${allStuckDocs.length} video(s) in processing/queued state`);
 
             const now = new Date();
-            const staleThresholdMs = 10 * 60 * 1000; // 10 minutes
+            const staleThresholdMs = 5 * 60 * 1000; // 5 minutes (aggressive due to Render restarts)
             const schedulerIdsToTrigger = new Set();
 
             for (const doc of allStuckDocs) {

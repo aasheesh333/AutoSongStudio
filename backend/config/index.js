@@ -79,16 +79,17 @@ module.exports = {
     maxGenerationPerDay: parseInt(process.env.MAX_GENERATION_PER_DAY) || 6
   },
 
-  // FFmpeg settings (optimized for 512MB RAM)
+  // FFmpeg settings (ULTRA-FAST for Render.com free tier - must complete before restart)
+  // Render free tier can restart at any time, so encoding MUST be fast (<30 seconds)
   ffmpeg: {
     videoCodec: 'libx264',
     audioCodec: 'aac',
-    videoBitrate: '1000k',
+    videoBitrate: '500k',      // Lower bitrate for faster encoding
     audioBitrate: '128k',
     resolution: '1280x720',
-    fps: 30,
-    preset: 'medium',  // Balance between quality and encoding speed
-    crf: 23  // Constant Rate Factor (quality: 0=lossless, 51=worst)
+    fps: 24,                   // Slightly lower FPS for speed
+    preset: 'ultrafast',       // CRITICAL: ultrafast preset for speed
+    crf: 28                    // Higher CRF = lower quality but faster encoding
   },
 
   // Temporary file settings
