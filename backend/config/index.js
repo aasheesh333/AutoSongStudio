@@ -84,12 +84,12 @@ module.exports = {
   ffmpeg: {
     videoCodec: 'libx264',
     audioCodec: 'aac',
-    videoBitrate: '500k',      // Lower bitrate for faster encoding
+    videoBitrate: '100k',      // Minimal bitrate for static image
     audioBitrate: '128k',
     resolution: '1280x720',
-    fps: 24,                   // Slightly lower FPS for speed
-    preset: 'ultrafast',       // CRITICAL: ultrafast preset for speed
-    crf: 28                    // Higher CRF = lower quality but faster encoding
+    fps: 1,                    // CRITICAL: Only 1 FPS for static image! (225 frames for 225s)
+    preset: 'ultrafast',       // Fastest encoding
+    crf: 30                    // Lower quality = faster encoding
   },
 
   // Temporary file settings
