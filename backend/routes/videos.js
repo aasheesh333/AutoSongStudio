@@ -117,6 +117,29 @@ router.post('/:id/thumbnail', async (req, res) => {
 });
 
 /**
+ * GET /api/videos/:id/thumbnail-stream
+ * Stream thumbnail image for preview in app
+ */
+router.get('/:id/thumbnail-stream', async (req, res) => {
+    const { id } = req.params;
+    const path = require('path');
+
+    try {
+        const thumbnailPath = path.join('./temp/thumbnails', `${id}.png`);
+
+        if (!fs.existsSync(thumbnailPath)) {
+            return res.status(404).json({ error: 'Thumbnail not found. Still processing or cleaned up.' });
+        }
+
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+        fs.createReadStream(thumbnailPath).pipe(res);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
  * GET /api/videos/:id/stream
  * Stream video file for preview in app
  */

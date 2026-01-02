@@ -208,7 +208,11 @@ class VideoGenerationWorker {
                 thumbnailPath
             );
 
-            console.log('[Worker] ✅ Thumbnail generated');
+            // Save thumbnail URL to database (streaming endpoint)
+            const thumbnailUrl = `${config.backendUrl}/api/videos/${video.id}/thumbnail-stream`;
+            await VideoModel.update(video.id, { thumbnailUrl });
+
+            console.log('[Worker] ✅ Thumbnail generated and URL saved');
 
             // STEP 4: Create video
             console.log('[Worker] Step 4/5: Creating video with FFmpeg...');
@@ -318,6 +322,9 @@ class VideoGenerationWorker {
         console.log('[Worker] Video Generation Worker started');
         console.log('[Worker] Keep-ahead mode: Always maintains 1 ready/processing video per scheduler');
 
+        // Recover any stale videos from previous crashes/restarts
+        await this.recoverStaleVideos();
+
         // Check every 2 minutes for schedulers needing videos
         setInterval(async () => {
             if (this.isGenerating) {
@@ -345,6 +352,48 @@ class VideoGenerationWorker {
                 this.isGenerating = false; // Safety release
             }
         }, 120000);  // Every 2 minutes
+    }
+
+    /**
+     * Recover stale videos stuck in 'processing' status
+     * This handles cases where the server was restarted mid-generation
+     */
+    async recoverStaleVideos() {
+        console.log('[Worker] Checking for stale processing videos...');
+        const db = require('../config/firebase').getFirestore();
+
+        try {
+            // Find videos stuck in 'processing' status
+            const processingSnapshot = await db.collection(config.collections.videos)
+                .where('status', '==', 'processing')
+                .get();
+
+            if (processingSnapshot.empty) {
+                console.log('[Worker] ✅ No stale videos found');
+                return;
+            }
+
+            const now = new Date();
+            const staleThresholdMs = 10 * 60 * 1000; // 10 minutes
+
+            for (const doc of processingSnapshot.docs) {
+                const video = { id: doc.id, ...doc.data() };
+                const createdAt = new Date(video.createdAt);
+                const ageMs = now - createdAt;
+
+                if (ageMs > staleThresholdMs) {
+                    console.log(`[Worker] ⚠️ Found stale video: ${video.id} (age: ${Math.round(ageMs / 60000)}min)`);
+
+                    // Mark as failed so it can be regenerated
+                    await VideoModel.updateStatus(video.id, 'failed', 'Generation interrupted by server restart. Will be regenerated.');
+                    console.log(`[Worker] Marked stale video ${video.id} as failed for regeneration`);
+                }
+            }
+
+            console.log('[Worker] ✅ Stale video recovery complete');
+        } catch (error) {
+            console.error('[Worker] Error recovering stale videos:', error.message);
+        }
     }
 }
 
