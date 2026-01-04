@@ -1,17 +1,23 @@
-name: Build and Deploy AutoSong Studio
+name: Build Android App
 
 on:
   push:
     branches: ["**"]
+    # Only build when changes occur in android_app or this workflow file
+    paths:
+      - 'android_app/**'
+      - '.github/workflows/android_build.yml'
   pull_request:
     branches: ["**"]
+    paths:
+      - 'android_app/**'
+      - '.github/workflows/android_build.yml'
   workflow_dispatch:
 
 env:
   FLUTTER_VERSION: "3.22.2"
 
 jobs:
-  # Flutter Android Build
   build-android:
     runs-on: ubuntu-latest
     name: Build Flutter APK & AAB
@@ -149,7 +155,6 @@ jobs:
           VERSION_CODE: ${{ secrets.VERSION_CODE || github.run_number }}
           VERSION_NAME: ${{ secrets.VERSION_NAME || format('1.0.{0}', github.run_number) }}
           PACKAGE_NAME: ${{ secrets.PACKAGE_NAME || 'com.autosong.autosong_studio' }}
-          WEB_GOOGLE_CLIENT_ID: ${{ secrets.WEB_GOOGLE_CLIENT_ID }}
         run: |
           rm -f android/gradlew android/gradlew.bat
           echo "📦 Building with VERSION_CODE=$VERSION_CODE, VERSION_NAME=$VERSION_NAME"
@@ -204,21 +209,3 @@ jobs:
           rm -f android_app/android/key.properties
           rm -f android_app/android/app/google-services.json
           echo "🧹 Sensitive files cleaned up"
-
-  # Deployment notification
-  notify-deployment:
-    runs-on: ubuntu-latest
-    name: Deployment Summary
-    needs: [build-android]
-    if: always()
-
-    steps:
-      - name: Deployment Status
-        run: |
-          echo "=========================================="
-          echo "🚀 AutoSong Studio APK Build Complete"
-          echo "=========================================="
-          echo "✅ Android APK & AAB built successfully"
-          echo "🌐 Backend: Already deployed at https://jusdown.onrender.com"
-          echo "📱 Build #${{ github.run_number }}"
-          echo "=========================================="
