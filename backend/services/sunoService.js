@@ -118,6 +118,14 @@ class SunoService {
 
         // API returns { code: 200, msg: "success", data: { taskId: "..." } }
         if (!result || !result.data || !result.data.taskId) {
+            // Check if it's a "soft" error (successful HTTP 200 but error code in body)
+            if (result.code === 429) {
+                throw new Error('Insufficient Suno credits. Please check your account.');
+            }
+            if (result.code && result.code !== 200) {
+                throw new Error(`Suno API Error: ${result.msg || 'Unknown error'}`);
+            }
+
             console.error('[Suno] Generation failed. Response:', JSON.stringify(result, null, 2));
             throw new Error('Invalid response from Suno API: Missing taskId');
         }

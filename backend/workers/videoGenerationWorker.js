@@ -249,8 +249,9 @@ class VideoGenerationWorker {
 
             // Check for Insufficient Credits Error
             if (error.message.includes('Insufficient Suno credits') || error.message.includes('429')) {
+                const errorMsg = 'Insufficient Suno credits';
                 console.log(`[Worker] 🛑 Insufficient credits detected. Deactivating all schedulers for user: ${scheduler.userId}`);
-                await SchedulerModel.deactivateAllForUser(scheduler.userId);
+                await SchedulerModel.deactivateAllForUser(scheduler.userId, errorMsg);
 
                 // Update video status with clear error for Frontend Toast
                 try {

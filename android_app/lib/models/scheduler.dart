@@ -18,6 +18,7 @@ class Scheduler {
   final String lyricsPrompt;
   
   final bool active;
+  final String? error;
   final DateTime? nextRunAt;
   final DateTime createdAt;
 
@@ -36,6 +37,7 @@ class Scheduler {
     this.tagsPrompt = '',
     this.lyricsPrompt = '',
     this.active = true,
+    this.error,
     this.nextRunAt,
     required this.createdAt,
   });
@@ -56,6 +58,7 @@ class Scheduler {
       tagsPrompt: json['tagsPrompt'] as String? ?? '',
       lyricsPrompt: json['lyricsPrompt'] as String? ?? '',
       active: json['active'] as bool? ?? true,
+      error: json['error'] as String?,
       nextRunAt: json['nextRunAt'] != null 
           ? DateTime.parse(json['nextRunAt'] as String)
           : null,

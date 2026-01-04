@@ -147,13 +147,18 @@ class SchedulerModel extends FirestoreModel {
         return this.update(schedulerId, { active: !scheduler.active });
     }
 
-    async deactivateAllForUser(userId) {
+    async deactivateAllForUser(userId, reason = null) {
         const schedulers = await this.findByUser(userId);
+        const updateData = { active: false };
+        if (reason) {
+            updateData.error = reason;
+        }
+
         const promises = schedulers.map(scheduler =>
-            this.update(scheduler.id, { active: false })
+            this.update(scheduler.id, updateData)
         );
         await Promise.all(promises);
-        console.log(`[SchedulerModel] Deactivated ${schedulers.length} schedulers for user ${userId}`);
+        console.log(`[SchedulerModel] Deactivated ${schedulers.length} schedulers for user ${userId}. Reason: ${reason || 'None'}`);
     }
 }
 
