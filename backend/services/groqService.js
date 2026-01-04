@@ -80,6 +80,9 @@ class GroqService {
      * @param {string} [options.tagsPrompt] - User direction for tags
      * @param {string} [options.lyricsPrompt] - User direction for lyrics
      */
+    /**
+     * Generate All Content with improved prompt engineering
+     */
     async generateAllContent(options) {
         const {
             genres,
@@ -92,113 +95,126 @@ class GroqService {
 
         const genresText = genres.join(', ');
 
-        console.log(`[Groq] Generating ALL content in single request for genres: ${genresText}`);
-        console.log(`[Groq] Lyrics language: ${language}, Metadata: English`);
+        console.log(`[Groq] Generating content for genres: ${genresText}`);
 
-        const systemPrompt = `You are a professional songwriter and YouTube SEO expert.
+        // 1. Construct the System Prompt (The "Expert Persona")
+        // We define strict rules here that apply globally
+        const systemPrompt = `You are an elite Songwriter and YouTube SEO Expert.
+Your goal is to generate high-quality, creative, and human-like content for a music video based on provided genres.
 
-Generate a complete song package with lyrics and YouTube metadata.
+CRITICAL INSTRUCTION HIERARCHY:
+1. USER PROMPTS (Highest Priority): If a specific direction is given (e.g., "Title Direction"), you MUST follow it exactly.
+2. GENRE MATCHING: If no user direction is given, the content MUST match the vibe/mood of the '${genresText}' genres.
+3. CONTENT CONSISTENCY: The Title, Description, and Tags must be relevant to the Lyrics you generate.
 
-IMPORTANT RULES:
-1. LYRICS: Write in ${language} language. Create complete, ready-to-sing lyrics with verses, chorus, and bridge (50-100 lines).
-2. TITLE: Write in ENGLISH only. Under 100 characters, catchy and SEO-friendly.
-3. DESCRIPTION: Write in ENGLISH only. 200-500 characters, engaging with relevant keywords.
-4. TAGS: Write in ENGLISH only. Maximum 15 tags, relevant to the music.
-5. Never mention "AI generated" or similar terms anywhere.
-6. Optimize metadata for YouTube discovery.
-7. Each song must be unique and creative.`;
+OUTPUT REQUIREMENTS:
+- JSON Only: valid JSON object.
+- Language: Lyrics in ${language}, Metadata (Title/Desc/Tags) in English.
+- No AI filler: Do not use phrases like "Here is the song" or "AI generated".
 
-        // Build user prompt with all user directions
-        let userPrompt = `Create a complete song package for these genres: ${genresText}
+LYRICS GUIDELINES:
+- Structure: Standard Verse-Chorus-Verse-Chorus-Bridge-Chorus format.
+- Quality: Use near rhymes, internal rhymes, and strong imagery. Avoid cliché, robotic, or simple AABB rhymes constantly. 
+- Style: Match the '${genresText}' style (e.g., if Rap -> complex flow; if Ballad -> emotional).
 
-`;
+METADATA GUIDELINES (If no specific User Prompt):
+- Title: Catchy, under 80 chars. Not just "Genre Music". Use a creative name based on the song's theme.
+- Description: 2-3 sentences convincing a viewer to listen. Include the mood and theme.
+- Tags: 10-15 high-volume search terms related to the genre and mood.`;
 
-        // Add user-specific directions if provided
-        if (lyricsPrompt) {
-            userPrompt += `LYRICS DIRECTION: ${lyricsPrompt}\n`;
+        // 2. Construct the User Prompt (The "Specific Task")
+        let userPrompt = `TASK: Create a new song package for genres: ${genresText}.\n\n`;
+
+        // --- SECTION A: LYRICS ---
+        if (lyricsPrompt && lyricsPrompt.trim()) {
+            userPrompt += `[LYRICS INSTRUCTION]: ${lyricsPrompt}\n(Follow this instruction STRICTLY)\n`;
+        } else {
+            userPrompt += `[LYRICS INSTRUCTION]: Write a creative song about a theme suitable for ${genresText} music. Make it emotional and catchy.\n`;
         }
-        if (titlePrompt) {
-            userPrompt += `TITLE DIRECTION: ${titlePrompt}\n`;
+
+        userPrompt += `\nGenerate the Lyrics first. Then, based on those lyrics and the genres, generate the Metadata.\n\n`;
+
+        // --- SECTION B: METADATA ---
+
+        // Title
+        if (titlePrompt && titlePrompt.trim()) {
+            userPrompt += `[TITLE INSTRUCTION]: ${titlePrompt}\n(Follow this instruction STRICTLY)\n`;
+        } else {
+            userPrompt += `[TITLE INSTRUCTION]: Generate a creative title based on the lyrics' hook or theme. Do NOT use generic titles like "${genres[0]} Song".\n`;
         }
-        if (descPrompt) {
-            userPrompt += `DESCRIPTION DIRECTION: ${descPrompt}\n`;
+
+        // Description
+        if (descPrompt && descPrompt.trim()) {
+            userPrompt += `[DESCRIPTION INSTRUCTION]: ${descPrompt}\n(Follow this instruction STRICTLY)\n`;
+        } else {
+            userPrompt += `[DESCRIPTION INSTRUCTION]: Write an engaging YouTube description summarizing the song's story/mood. Mention the genres. Include the first 2 lines of lyrics in quotes.\n`;
         }
-        if (tagsPrompt) {
-            userPrompt += `TAGS DIRECTION: ${tagsPrompt}\n`;
+
+        // Tags
+        if (tagsPrompt && tagsPrompt.trim()) {
+            userPrompt += `[TAGS INSTRUCTION]: ${tagsPrompt}\n(Follow this instruction STRICTLY)\n`;
+        } else {
+            userPrompt += `[TAGS INSTRUCTION]: Generate 15 relevant tags covering genre, mood, instruments, and vibes.\n`;
         }
 
         userPrompt += `
-Return a JSON object with this EXACT structure:
+\nReturn ONLY this JSON structure:
 {
-  "lyrics": "complete song lyrics here in ${language}",
-  "title": "video title here in English",
-  "description": "video description here in English",
+  "lyrics": "full lyrics string with \\n for line breaks",
+  "title": "final title string",
+  "description": "final description string",
   "tags": ["tag1", "tag2", "tag3"]
-}
-
-REMEMBER: 
-- Lyrics MUST be in ${language}
-- Title, description, tags MUST be in English
-- Follow all user directions above`;
+}`;
 
         const response = await this.makeRequest([
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
-        ], 2500);
+        ], 3000); // Increased token limit slightly for longer lyrics
 
         try {
-            // Extract JSON from response (handles markdown code blocks)
+            // Robust JSON extraction
+            let jsonString = response;
             const jsonMatch = response.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) {
-                throw new Error('Invalid JSON response from Groq');
+            if (jsonMatch) {
+                jsonString = jsonMatch[0];
             }
 
-            const content = JSON.parse(jsonMatch[0]);
+            const content = JSON.parse(jsonString);
 
-            // Validate required fields
-            if (!content.lyrics || !content.title) {
-                throw new Error('Missing required fields in response');
+            // Validation and Fallbacks
+            if (!content.lyrics) content.lyrics = "[Instrumental]";
+
+            if (!content.title) {
+                // Critical Fallback if AI fails to generate title
+                content.title = `${genres[0]} Vibes - ${new Date().toLocaleDateString()}`;
             }
 
-            // Enforce limits
-            if (content.title.length > 100) {
-                content.title = content.title.substring(0, 97) + '...';
+            if (!content.tags || !Array.isArray(content.tags)) {
+                content.tags = genres;
             }
 
-            if (content.description && content.description.length > 5000) {
-                content.description = content.description.substring(0, 4997) + '...';
-            }
-
-            if (content.tags && content.tags.length > 15) {
-                content.tags = content.tags.slice(0, 15);
-            }
-
-            // Ensure tags array is strings
-            if (content.tags) {
-                content.tags = content.tags.map(tag => String(tag).trim());
-            } else {
-                content.tags = genres.slice(0, 5);
-            }
-
-            // Default description if missing
             if (!content.description) {
-                content.description = `Enjoy this original ${genresText} music composition.`;
+                content.description = `Listen to this new ${genresText} track!`;
             }
 
-            console.log(`[Groq] ✅ Generated all content - Title: "${content.title}"`);
-            console.log(`[Groq] ✅ Lyrics: ${content.lyrics.length} chars, Tags: ${content.tags.length}`);
+            // Sanitization
+            if (content.tags) {
+                content.tags = content.tags.slice(0, 20).map(t => String(t).trim());
+            }
 
+            console.log(`[Groq] ✅ Generated: "${content.title}" (${content.lyrics.length} chars)`);
             return content;
-        } catch (error) {
-            console.error('[Groq] Failed to parse response:', error.message);
-            console.error('[Groq] Raw response:', response.substring(0, 500));
 
-            // Fallback - try to extract what we can
+        } catch (error) {
+            console.error('[Groq] JSON Parsing Failed:', error.message);
+            console.log('Raw Response:', response);
+
+            // Emergency fallback to prevent worker crash
             return {
-                lyrics: response.includes('"lyrics"') ? '' : response, // Might be plain lyrics
-                title: `${genres[0]} Music - ${new Date().toISOString().split('T')[0]}`,
-                description: `Enjoy this original ${genresText} music composition.`,
-                tags: genres.slice(0, 5)
+                lyrics: response.substring(0, 2000), // Return raw text as lyrics if it's not JSON
+                title: `New ${genres[0]} Track`,
+                description: `A new ${genresText} song.`,
+                tags: genres
             };
         }
     }
