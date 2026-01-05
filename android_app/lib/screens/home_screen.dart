@@ -32,16 +32,13 @@ class _HomeScreenState extends State<HomeScreen> {
   void _startPolling() {
     if (_pollingTimer != null && _pollingTimer!.isActive) return;
     
-    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+    // Poll every 5 seconds for real-time updates
+    _pollingTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
       if (!mounted) return;
       
       final appState = Provider.of<AppState>(context, listen: false);
-      // Check if we need to poll (if recent videos are processing)
-      bool hasActive = appState.videos.any((v) => v.isProcessing || v.isQueued);
-      
-      if (hasActive || appState.schedulers.any((s) => s.active)) {
-         await appState.loadVideos();
-      }
+      // Always poll to get live updates
+      await appState.loadVideos();
     });
   }
 
@@ -412,17 +409,31 @@ class _VideoCard extends StatelessWidget {
     String statusText = 'Ready';
     Color statusColor = AppTheme.success;
     String timeText = '';
+    IconData statusIcon = Icons.check_circle;
     
     if (video.isProcessing || video.isQueued) {
-        statusText = video.isProcessing ? 'Processing...' : 'Queued';
+        statusText = video.isProcessing ? 'Processing' : 'Queued';
         statusColor = AppTheme.info; // Blue/Info color
         timeText = 'Generating now...';
+        statusIcon = Icons.hourglass_top;
     } else if (video.isFailed) {
         statusText = 'Failed';
         statusColor = AppTheme.error;
-        timeText = 'Error generating';
+        // Show actual error message if available
+        timeText = video.error?.isNotEmpty == true 
+            ? video.error!.length > 40 ? '${video.error!.substring(0, 40)}...' : video.error!
+            : 'Error generating video';
+        statusIcon = Icons.error_outline;
+    } else if (video.isUploaded) {
+        statusText = 'Uploaded';
+        statusColor = AppTheme.success;
+        timeText = 'On YouTube';
+        statusIcon = Icons.cloud_done;
     } else {
-        // Ready or Uploaded
+        // Ready
+        statusText = 'Ready';
+        statusColor = AppTheme.warning;
+        statusIcon = Icons.play_circle_outline;
         final scheduledTime = video.scheduledPublishAt ?? video.createdAt;
         final now = DateTime.now();
         final isToday = scheduledTime.year == now.year &&
