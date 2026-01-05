@@ -83,16 +83,22 @@ router.post('/:id/upload-now', async (req, res) => {
     const { accessToken } = req.body;
     if (!accessToken) return res.status(400).json({ error: 'Token required' });
 
+    console.log(`[Upload] Starting upload for video: ${req.params.id}`);
+
     try {
         const video = await VideoModel.findById(req.params.id);
         if (!video) return res.status(404).json({ error: 'Not found' });
 
         let videoPath = video.videoPath;
+        console.log(`[Upload] Video path: ${videoPath}`);
+
         if (!videoPath || !fs.existsSync(videoPath)) {
+            console.error(`[Upload] Video file not found at path: ${videoPath}`);
             return res.status(404).json({ error: 'Video file not found via path' });
         }
 
         await VideoModel.updateStatus(video.id, 'uploading');
+        console.log(`[Upload] Status updated to uploading. Starting YouTube upload...`);
 
         const result = await youtubeService.uploadVideo(
             videoPath,
@@ -101,6 +107,7 @@ router.post('/:id/upload-now', async (req, res) => {
             video.userId
         );
 
+        console.log(`[Upload] YouTube upload successful! Video ID: ${result.videoId}`);
         await VideoModel.markAsUploaded(video.id, result.videoId);
 
         // CLEANUP FILES (Retention Policy)
@@ -112,6 +119,8 @@ router.post('/:id/upload-now', async (req, res) => {
         if (videoWorker) videoWorker.triggerForScheduler(video.schedulerId);
 
     } catch (error) {
+        console.error(`[Upload] FAILED:`, error.message);
+        console.error(`[Upload] Full error:`, error);
         await VideoModel.updateStatus(req.params.id, 'failed', error.message);
         res.status(500).json({ error: error.message });
     }
