@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
+const config = require('../config');
 
 // NOTE: Do NOT override _id - existing users have ObjectId format
 const UserSchema = new mongoose.Schema({
