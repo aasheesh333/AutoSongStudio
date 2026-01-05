@@ -1,4 +1,4 @@
-const String baseUrl = 'https://jusdown.onrender.com/api';
+const String baseUrl = 'https://51.222.156.30.sslip.io/api';
 
 class ApiConstants {
   // Auth endpoints

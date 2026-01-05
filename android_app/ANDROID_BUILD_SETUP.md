@@ -52,7 +52,7 @@ With your real Firebase configuration.
 
 In your backend's YouTube OAuth configuration, ensure redirect URI includes:
 ```
-https://jusdown.onrender.com/api/auth/callback
+https://51.222.156.30.sslip.io/api/auth/callback
 ```
 
 And configure Android app deep linking to handle this redirect.
@@ -110,7 +110,7 @@ Download from: **Actions** tab → **Workflow run** → **Artifacts**
 - Already configured in GitHub Actions ✅
 
 ### OAuth Deep Linking
-- Configured for: `https://jusdown.onrender.com/api/auth/callback`
+- Configured for: `https://51.222.156.30.sslip.io/api/auth/callback`
 - Make sure your backend redirects properly
 
 ## 🎯 Next Steps

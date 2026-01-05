@@ -63,7 +63,7 @@
                 <!-- App Links (HTTPS) -->
                 <data
                     android:scheme="https"
-                    android:host="jusdown.onrender.com"
+                    android:host="51.222.156.30.sslip.io"
                     android:pathPrefix="/api/auth/callback"/>
                     
                 <!-- Custom Scheme (Fallback/Mobile flow) -->

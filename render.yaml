@@ -15,9 +15,9 @@ services:
       - key: NODE_ENV
         value: production
       - key: BASE_URL
-        value: https://jusdown.onrender.com
+        value: https://51.222.156.30.sslip.io
       - key: BACKEND_URL
-        value: https://jusdown.onrender.com
+        value: https://51.222.156.30.sslip.io
       - key: FIREBASE_JSON_BASE64
         sync: false
       - key: LLAMA_API_KEY
@@ -49,9 +49,9 @@ services:
       - key: NODE_ENV
         value: production
       - key: BASE_URL
-        value: https://jusdown.onrender.com
+        value: https://51.222.156.30.sslip.io
       - key: BACKEND_URL
-        value: https://jusdown.onrender.com
+        value: https://51.222.156.30.sslip.io
       - key: FIREBASE_JSON_BASE64
         sync: false
       - key: LLAMA_API_KEY

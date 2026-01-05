@@ -243,7 +243,7 @@ git push
 # 4. Download APK and test!
 ```
 
-**Backend URL:** https://jusdown.onrender.com  
+**Backend URL:** https://51.222.156.30.sslip.io  
 **Package Name:** com.autosong.autosong_studio  
 
 🎉 **You're ready to launch!**
