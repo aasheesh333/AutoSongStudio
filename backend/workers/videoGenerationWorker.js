@@ -90,7 +90,14 @@ class VideoGenerationWorker {
             // or assuming single instance. User has 1 VPS.
 
             const user = await UserModel.findById(scheduler.userId);
-            if (!user) throw new Error('User not found');
+            if (!user) {
+                console.error(`[Worker] User NOT found for ID: ${scheduler.userId}`);
+                // Try finding by email if userId looks like a channelId (legacy)
+                if (scheduler.userId.includes('@') || scheduler.userId.length > 20) {
+                    // Potential fallback if we had email, but we only have userId here.
+                }
+                throw new Error(`User not found: ${scheduler.userId}`);
+            }
 
             // Create Video Record first
             const videoData = await VideoModel.createVideo({
