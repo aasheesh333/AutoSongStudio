@@ -86,6 +86,15 @@ router.post('/', async (req, res) => {
     }
 
     try {
+        const { UserModel } = require('../models'); // Lazy import to avoid circular dependency
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            console.error(`[Schedulers] Creation rejected: User not found for ID: ${userId}`);
+            // Return 401/403 to trigger app logout? 400 is safer.
+            return res.status(400).json({
+                error: 'User session invalid (User not found). Please Sign Out and Sign In again.'
+            });
+        }
         const scheduler = await SchedulerModel.createScheduler({
             name: generateSchedulerName(),
             userId,
