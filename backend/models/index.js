@@ -108,9 +108,25 @@ class UserModel {
         return this._transform(user);
     }
     async findById(id) {
-        if (!mongoose.Types.ObjectId.isValid(id)) return null;
-        const user = await User.findById(id);
-        return this._transform(user);
+        // Try to find regardless of validation first, or log if invalid
+        // If it's a valid ObjectId, strict check passes. 
+        // If we switched to String IDs, it might fail isValid but still be in DB? 
+        // Actually, if we use Mongoose, findById expects ObjectId or castable string.
+        // If we pass an invalid string, Mongoose throws CastError. 
+        // We should try/catch it.
+        try {
+            const user = await User.findById(id);
+            if (!user) {
+                // Try searching by string _id if possible? No, User uses ObjectId _id.
+                // If id passed is NOT ObjectId, it won't find anything.
+                // Log strictly for debug
+                // console.log(`[UserModel] User not found for ID: ${id}`);
+            }
+            return this._transform(user);
+        } catch (e) {
+            console.error(`[UserModel] findById CastError for ID: ${id}`, e.message);
+            return null;
+        }
     }
     async update(id, data) {
         const user = await User.findByIdAndUpdate(id, data, { new: true });
