@@ -73,6 +73,8 @@ class VideoGenerationWorker {
         if (this.isGenerating) return;
         this.isGenerating = true;
 
+        let videoId = null; // Declare outside try for catch block access
+
         try {
             console.log(`\n[Worker] Starting generation for: ${scheduler.name}`);
 
@@ -107,7 +109,7 @@ class VideoGenerationWorker {
                 genres: scheduler.genres,
                 status: 'processing'
             });
-            const videoId = videoData.id;
+            videoId = videoData.id;
             console.log(`[Worker] Created video: ${videoId}`);
 
             // Usage Check
@@ -169,13 +171,25 @@ class VideoGenerationWorker {
             console.log(`[Worker] ✅ Complete: ${videoId}`);
 
         } catch (error) {
-            console.error(`[Worker] Failed: ${error.message}`);
-            if (error.message.includes('Insufficient Suno credits') || error.message.includes('429')) {
-                await SchedulerModel.deactivateAllForUser(scheduler.userId, 'Insufficient Suno credits');
+            console.error(`[Worker] ❌ Failed: ${error.message}`);
+
+            // Check for Suno credits exhaustion
+            const isCreditsExhausted =
+                error.message.toLowerCase().includes('insufficient') ||
+                error.message.includes('429') ||
+                error.message.toLowerCase().includes('credit') ||
+                error.message.toLowerCase().includes('quota');
+
+            if (isCreditsExhausted) {
+                console.error(`[Worker] ⚠️ Suno credits exhausted for user ${scheduler.userId}. Pausing ALL schedulers.`);
+                await SchedulerModel.deactivateAllForUser(scheduler.userId, 'Suno API credits exhausted. Please add more credits or update your API key.');
             }
-            // Update video status to failed
-            // Note: videoId might be undefined if failure before creation. 
-            // In a better impl we'd handle that. Here we catch generally.
+
+            // Mark the video as failed if we have a videoId
+            if (videoId) {
+                await VideoModel.updateStatus(videoId, 'failed', error.message);
+                console.log(`[Worker] Video ${videoId} marked as failed`);
+            }
         } finally {
             this.isGenerating = false;
         }
