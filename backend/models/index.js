@@ -176,6 +176,9 @@ class SchedulerModel {
         await scheduler.save();
         return this._transform(scheduler);
     }
+    async delete(id) {
+        await Scheduler.findByIdAndDelete(id);
+    }
     _transform(doc) {
         if (!doc) return null;
         return { ...doc.toObject(), id: doc._id.toString() };
