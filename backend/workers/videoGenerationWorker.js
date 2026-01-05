@@ -174,6 +174,23 @@ class VideoGenerationWorker {
         }
     }
 
+    async triggerForScheduler(schedulerId) {
+        try {
+            const mongoose = require('mongoose');
+            const Scheduler = mongoose.model('Scheduler');
+            const schedulerDoc = await Scheduler.findById(schedulerId);
+
+            if (schedulerDoc) {
+                const scheduler = { id: schedulerDoc._id.toString(), ...schedulerDoc.toObject() };
+                console.log(`[Worker] Manual trigger for scheduler: ${scheduler.name}`);
+                // Don't await generation to avoid blocking the API response
+                this.generateVideo(scheduler).catch(e => console.error(`[Worker] Trigger generation failed: ${e.message}`));
+            }
+        } catch (e) {
+            console.error(`[Worker] triggerForScheduler error: ${e.message}`);
+        }
+    }
+
     // RETENTION LOGIC: Clean up files
     async deleteVideoFiles(video) {
         try {
