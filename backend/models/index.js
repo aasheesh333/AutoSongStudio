@@ -1,8 +1,7 @@
-const mongoose = require('mongoose');
-
-// ==================== SCHEMAS ====================
+const { v4: uuidv4 } = require('uuid');
 
 const UserSchema = new mongoose.Schema({
+    _id: { type: String, default: uuidv4 }, // Explicitly use String IDs
     email: { type: String, required: true, unique: true },
     plan: { type: String, default: 'free', enum: ['free', 'pro'] },
     youtubeRefreshToken: { type: String, default: null },
