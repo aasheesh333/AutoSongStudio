@@ -14,7 +14,7 @@ const UserSchema = new mongoose.Schema({
 
 const SchedulerSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: { type: String, required: true, index: true }, // Changed to String for flexibility
     channelId: { type: String, required: true },
 
     // Immutable
@@ -38,8 +38,8 @@ const SchedulerSchema = new mongoose.Schema({
 });
 
 const VideoSchema = new mongoose.Schema({
-    schedulerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Scheduler' },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    schedulerId: { type: String, index: true }, // Changed to String
+    userId: { type: String, index: true },      // Changed to String
     channelId: String,
 
     // Content
@@ -75,7 +75,7 @@ const VideoSchema = new mongoose.Schema({
 });
 
 const QuotaTrackingSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    userId: { type: String, index: true }, // Changed to String
     date: String, // YYYY-MM-DD
     quotaUsed: { type: Number, default: 0 },
     videosUploaded: { type: Number, default: 0 }
