@@ -105,22 +105,40 @@ class SunoService {
         console.log(`[Suno] Starting audio generation for genres: ${genres.join(', ')}`);
         console.log(`[Suno] Lyrics length: ${lyrics.length} chars`);
 
-        // Clean and format lyrics properly
-        const cleanLyrics = lyrics
-            .replace(/\\n/g, '\n')  // Ensure proper line breaks
+        // Clean and format lyrics properly - remove any JSON formatting artifacts
+        let cleanLyrics = lyrics
+            .replace(/```json/g, '')     // Remove markdown code blocks
+            .replace(/```/g, '')          // Remove any remaining backticks
+            .replace(/\\n/g, '\n')        // Ensure proper line breaks
+            .replace(/\r\n/g, '\n')       // Normalize Windows line endings
             .trim();
+
+        // If lyrics look like JSON (starts with {), extract just the lyrics field
+        if (cleanLyrics.startsWith('{')) {
+            try {
+                const parsed = JSON.parse(cleanLyrics);
+                if (parsed.lyrics) {
+                    cleanLyrics = parsed.lyrics;
+                }
+            } catch (e) {
+                // Not valid JSON, use as-is
+            }
+        }
+
+        console.log(`[Suno] Clean lyrics (first 100 chars): ${cleanLyrics.substring(0, 100)}...`);
 
         // Build payload according to Suno API docs
         const payload = {
-            prompt: cleanLyrics,        // Lyrics text (used as lyrics in customMode)
-            customMode: true,           // Enable custom lyrics mode
-            style: genres.join(', '),   // Music style/genre
-            title: cleanLyrics.split('\n')[0].substring(0, 50) || 'Generated Song', // First line as title
-            model: 'V4_5',              // Using V4.5 model
-            instrumental: false,        // IMPORTANT: false = include vocals
+            prompt: cleanLyrics,                    // Lyrics text (used as lyrics in customMode)
+            customMode: true,                       // Enable custom lyrics mode
+            style: genres.join(', '),               // Music style/genre
+            title: cleanLyrics.split('\n')[0].substring(0, 50) || 'Generated Song',
+            model: 'V4_5',                          // Using V4.5 model
+            instrumental: false,                    // IMPORTANT: false = include vocals
+            callBackUrl: `${config.backendUrl}/api/webhooks/suno`  // Required by Suno API
         };
 
-        console.log(`[Suno] Payload:`, JSON.stringify(payload, null, 2));
+        console.log(`[Suno] Payload title: ${payload.title}`);
 
         const result = await this.makeRequest('/api/v1/generate', 'POST', payload, apiKey);
 
