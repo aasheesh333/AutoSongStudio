@@ -103,16 +103,24 @@ class SunoService {
         const apiKey = this.getApiKey(userPlan, userSunoKey);
 
         console.log(`[Suno] Starting audio generation for genres: ${genres.join(', ')}`);
+        console.log(`[Suno] Lyrics length: ${lyrics.length} chars`);
 
+        // Clean and format lyrics properly
+        const cleanLyrics = lyrics
+            .replace(/\\n/g, '\n')  // Ensure proper line breaks
+            .trim();
+
+        // Build payload according to Suno API docs
         const payload = {
-            prompt: lyrics,
-            customMode: true,  // Fixed: camelCase
-            style: genres.join(', '),
-            title: lyrics.substring(0, 50), // Title is required for customMode
-            model: 'V4_5',  // Requested by user
-            instrumental: false, // Fixed: camelCase 'instrumental' instead of 'make_instrumental'
-            callBackUrl: `${config.backendUrl}/api/webhooks/suno` // Optional but good practice
+            prompt: cleanLyrics,        // Lyrics text (used as lyrics in customMode)
+            customMode: true,           // Enable custom lyrics mode
+            style: genres.join(', '),   // Music style/genre
+            title: cleanLyrics.split('\n')[0].substring(0, 50) || 'Generated Song', // First line as title
+            model: 'V4_5',              // Using V4.5 model
+            instrumental: false,        // IMPORTANT: false = include vocals
         };
+
+        console.log(`[Suno] Payload:`, JSON.stringify(payload, null, 2));
 
         const result = await this.makeRequest('/api/v1/generate', 'POST', payload, apiKey);
 
@@ -130,7 +138,7 @@ class SunoService {
             throw new Error('Invalid response from Suno API: Missing taskId');
         }
 
-        const taskId = result.data.taskId; // Fixed: taskId instead of task_id
+        const taskId = result.data.taskId;
         console.log(`[Suno] Generation started, task ID: ${taskId}`);
 
         return taskId;
