@@ -74,6 +74,9 @@ class ImageGenerationService {
         // Extract emotion from lyrics
         const emotionalContext = this.extractEmotion(lyrics);
 
+        // Extract key words from title for more relevance
+        const titleWords = title.split(' ').slice(0, 3).join(' ');
+
         // Genre-specific visuals (including Indian/Bollywood)
         const genreVisuals = {
             'lofi': 'cozy anime room, warm sunset through window, vinyl records, indoor plants, soft lo-fi aesthetic',
@@ -96,6 +99,22 @@ class ImageGenerationService {
             'hiphop': 'urban street culture, graffiti art, bold typography, authentic vibe'
         };
 
+        // Random visual elements for variety
+        const randomElements = [
+            'golden hour lighting',
+            'blue hour mood',
+            'dramatic silhouette',
+            'soft pastel palette',
+            'vibrant neon accents',
+            'misty atmosphere',
+            'cinematic depth of field',
+            'ethereal glow',
+            'moody shadows',
+            'dreamy bokeh effect',
+            'abstract geometric patterns',
+            'flowing fabric texture'
+        ];
+
         // Find matching genre visual
         let genreVisual = 'abstract artistic music visualization, vibrant professional colors';
         for (const [genre, visual] of Object.entries(genreVisuals)) {
@@ -105,8 +124,11 @@ class ImageGenerationService {
             }
         }
 
-        // Construct high-quality emotional prompt
-        const prompt = `masterpiece, best quality, highly detailed digital art, ${genreVisual}, ${emotionalContext}, professional music album cover art, cinematic composition, dramatic lighting, 8k resolution, trending on artstation, emotional and evocative, no text, no watermark`;
+        // Pick random element for variety
+        const randomElement = randomElements[Math.floor(Math.random() * randomElements.length)];
+
+        // Construct highly varied prompt based on lyrics theme
+        const prompt = `masterpiece, best quality, highly detailed digital art, ${genreVisual}, ${emotionalContext}, ${randomElement}, professional music album cover art, cinematic composition, dramatic lighting, 8k resolution, trending on artstation, emotional and evocative, absolutely no text, no words, no letters, no watermark, no signature`;
 
         console.log(`[ImageGen] Generated prompt: ${prompt.substring(0, 100)}...`);
         return prompt;
@@ -121,9 +143,12 @@ class ImageGenerationService {
         // URL encode the prompt
         const encodedPrompt = encodeURIComponent(prompt);
 
+        // Add random seed for variety (different image each time)
+        const seed = Math.floor(Math.random() * 1000000);
+
         // Pollinations.ai image URL with parameters for quality
         // width=1280, height=720 for 16:9 aspect ratio (YouTube thumbnail)
-        const imageUrl = `${this.baseUrl}/${encodedPrompt}?width=1280&height=720&nologo=true`;
+        const imageUrl = `${this.baseUrl}/${encodedPrompt}?width=1280&height=720&nologo=true&seed=${seed}`;
 
         console.log(`[ImageGen] Requesting image from Pollinations.ai...`);
 

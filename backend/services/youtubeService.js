@@ -142,11 +142,23 @@ class YouTubeService {
 
         const { title, description, tags, scheduledPublishAt } = metadata;
 
-        // Determine privacy status
-        const privacyStatus = scheduledPublishAt ? 'private' : 'public';
+        // ALWAYS use delayed publishing (5 minutes from now or scheduled time)
+        // This gives YouTube time to process the video before it goes public
+        let publishAt;
+        if (scheduledPublishAt) {
+            // User scheduled a specific time
+            publishAt = new Date(scheduledPublishAt);
+        } else {
+            // Instant upload: delay by 5 minutes
+            publishAt = new Date(Date.now() + 5 * 60 * 1000);
+        }
+
+        // Privacy status is always private initially (YouTube makes it public at publishAt)
+        const privacyStatus = 'private';
 
         try {
             console.log(`[YouTube] Uploading video: "${title}"`);
+            console.log(`[YouTube] Will go public at: ${publishAt.toISOString()}`);
 
             const response = await this.youtube.videos.insert({
                 part: ['snippet', 'status'],
@@ -154,13 +166,16 @@ class YouTubeService {
                     snippet: {
                         title: title.substring(0, 100),  // YouTube limit
                         description: description.substring(0, 5000),  // YouTube limit
-                        tags: tags.slice(0, 15),  // Max 15 tags
+                        tags: tags.slice(0, 15),  // Max 15 tags (YouTube might allow more but 15 is safe)
                         categoryId: '10'  // Music category
                     },
                     status: {
                         privacyStatus,
-                        publishAt: scheduledPublishAt || undefined,
-                        selfDeclaredMadeForKids: false
+                        publishAt: publishAt.toISOString(),
+                        selfDeclaredMadeForKids: false,
+                        license: 'youtube',  // Standard YouTube license
+                        embeddable: true,
+                        publicStatsViewable: true
                     }
                 },
                 media: {
@@ -177,7 +192,7 @@ class YouTubeService {
             return {
                 videoId,
                 url: `https://www.youtube.com/watch?v=${videoId}`,
-                publishAt: scheduledPublishAt
+                publishAt: publishAt.toISOString()
             };
         } catch (error) {
             console.error('[YouTube] Upload failed:', error.message);
