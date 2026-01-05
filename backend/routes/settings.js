@@ -58,15 +58,25 @@ router.get('/', async (req, res) => {
 router.put('/suno-key', async (req, res) => {
     const { userId, sunoApiKey } = req.body;
 
+    console.log(`[Settings] Received suno-key update request for userId: ${userId}`);
+
     if (!userId || !sunoApiKey) {
         return res.status(400).json({ error: 'userId and sunoApiKey required' });
     }
 
     try {
-        const user = await UserModel.findById(userId);
+        // Try to find user by ID first
+        let user = await UserModel.findById(userId);
+
+        // If not found by ID, try by email (userId might be email/channelId in some cases)
+        if (!user) {
+            console.log(`[Settings] User not found by ID, trying by email: ${userId}`);
+            user = await UserModel.findByEmail(userId);
+        }
 
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            console.error(`[Settings] ❌ User NOT found for ID/email: ${userId}`);
+            return res.status(404).json({ error: 'User not found. Please sign out and sign in again.' });
         }
 
         if (user.plan !== 'free') {
@@ -74,11 +84,12 @@ router.put('/suno-key', async (req, res) => {
         }
 
         // In production, encrypt before storing
-        await UserModel.update(userId, { sunoApiKey });
+        await UserModel.update(user.id, { sunoApiKey });
 
-        console.log(`[Settings] ✅ Updated Suno API key for user: ${userId}`);
+        console.log(`[Settings] ✅ Updated Suno API key for user: ${user.id} (${user.email})`);
         res.json({ success: true, message: 'Suno API key updated successfully' });
     } catch (error) {
+        console.error(`[Settings] Error updating suno key:`, error);
         res.status(500).json({ error: error.message });
     }
 });
