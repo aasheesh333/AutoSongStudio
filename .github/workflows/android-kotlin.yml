@@ -1,0 +1,42 @@
+name: Build Android APK (Kotlin)
+
+on:
+  push:
+    branches: [ default2 ]
+    paths:
+      - 'android_app/**'
+  pull_request:
+    branches: [ default2 ]
+    paths:
+      - 'android_app/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x android_app/gradlew
+      
+    - name: Build Release APK
+      run: |
+        cd android_app
+        ./gradlew assembleRelease --no-daemon
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: autosong-studio-release
+        path: android_app/app/build/outputs/apk/release/*.apk
+        retention-days: 30
