@@ -7,51 +7,40 @@ const path = require('path');
 /**
  * Upload Worker
  * 
- * Checks for videos ready to upload and uploads them to YouTube
- * at their scheduled time
+ * Checks for videos ready to upload to YouTube
  */
 
 class UploadWorker {
     constructor() {
-        this.tempDir = config.temp.directory;
+        this.storageDir = config.storage.path;
     }
 
-    /**
-     * Find videos ready for upload
-     */
     async findReadyVideos() {
         return await VideoModel.findReadyForUpload();
     }
 
-    /**
-     * Upload video to YouTube
-     */
     async uploadVideo(video) {
         try {
-            console.log(`\n${'='.repeat(60)}`);
-            console.log(`[Upload] Starting upload for video: ${video.title}`);
-            console.log(`${'='.repeat(60)}\n`);
+            console.log(`\n[Upload] Starting: ${video.title}`);
 
-            // Get user to fetch refresh token
             const user = await UserModel.findById(video.userId);
             if (!user || !user.youtubeRefreshToken) {
-                throw new Error('User not found or YouTube not connected');
+                throw new Error('No YouTube connection');
             }
 
-            // Refresh access token
             const tokens = await youtubeService.refreshAccessToken(user.youtubeRefreshToken);
 
-            // Video path
-            const videoPath = path.join(this.tempDir, 'videos', `${video.id}.mp4`);
-
-            if (!fs.existsSync(videoPath)) {
-                throw new Error('Video file not found. It may have been cleaned up.');
+            // Use the stored videoPath, or fallback (for legacy/temp)
+            let videoPath = video.videoPath;
+            if (!videoPath || !fs.existsSync(videoPath)) {
+                // Fallback for older videos in temp?
+                const tempPath = path.join(config.temp.directory, 'videos', `${video.id}.mp4`);
+                if (fs.existsSync(tempPath)) videoPath = tempPath;
+                else throw new Error('Video file not found on disk');
             }
 
-            // Mark as uploading
             await VideoModel.updateStatus(video.id, 'uploading');
 
-            // Upload to YouTube
             const result = await youtubeService.uploadVideo(
                 videoPath,
                 {
@@ -64,106 +53,57 @@ class UploadWorker {
                 video.userId
             );
 
-            // Mark as uploaded and lock
             await VideoModel.markAsUploaded(video.id, result.videoId);
 
-            // Cleanup video file
+            // CLEANUP (Retention Policy)
             try {
-                fs.unlinkSync(videoPath);
-                console.log('[Upload] Video file cleaned up');
-            } catch (cleanupError) {
-                console.warn('[Upload] Failed to cleanup video file:', cleanupError.message);
+                this.cleanupVideoFiles(video);
+                console.log('[Upload] Local files deleted (Retention Policy)');
+            } catch (e) {
+                console.warn(`[Upload] Cleanup failed: ${e.message}`);
             }
 
-            console.log(`\n${'='.repeat(60)}`);
-            console.log(`[Upload] ✅ UPLOAD COMPLETE!`);
-            console.log(`Video: ${video.title}`);
-            console.log(`YouTube ID: ${result.videoId}`);
-            console.log(`URL: ${result.url}`);
-            console.log(`${'='.repeat(60)}\n`);
-
+            console.log(`[Upload] ✅ Complete: ${result.videoId}`);
             return result;
         } catch (error) {
-            console.error(`[Upload] ❌ Upload failed:`, error.message);
-
-            // Mark as failed
+            console.error(`[Upload] Failed: ${error.message}`);
             await VideoModel.updateStatus(video.id, 'failed', error.message);
-
             throw error;
         }
     }
 
-    /**
-     * Cleanup old temporary files
-     */
-    async cleanupOldFiles() {
-        const maxAgeMs = config.temp.maxAgeHours * 60 * 60 * 1000;
-        const now = Date.now();
+    cleanupVideoFiles(video) {
+        // We need to look up the DB again to get paths if they weren't in the object?
+        // The `video` passed into uploadVideo comes from `findReadyForUpload` which returns the doc.
+        // It SHOULD have audioPath, thumbnailPath, videoPath.
 
-        const dirs = [
-            path.join(this.tempDir, 'audio'),
-            path.join(this.tempDir, 'thumbnails'),
-            path.join(this.tempDir, 'videos')
-        ];
+        const deleteFile = (p) => {
+            if (p && fs.existsSync(p)) fs.unlinkSync(p);
+        };
 
-        for (const dir of dirs) {
-            if (!fs.existsSync(dir)) continue;
+        deleteFile(video.videoPath);
+        deleteFile(video.audioPath);
+        deleteFile(video.thumbnailPath);
 
-            const files = fs.readdirSync(dir);
-
-            for (const file of files) {
-                const filePath = path.join(dir, file);
-                const stats = fs.statSync(filePath);
-                const age = now - stats.mtimeMs;
-
-                if (age > maxAgeMs) {
-                    try {
-                        fs.unlinkSync(filePath);
-                        console.log(`[Upload] Cleaned up old file: ${file}`);
-                    } catch (error) {
-                        console.warn(`[Upload] Failed to cleanup ${file}:`, error.message);
-                    }
-                }
-            }
-        }
+        // Also try temp paths if not set, just in case
+        if (!video.videoPath) deleteFile(path.join(config.temp.directory, 'videos', `${video.id}.mp4`));
     }
 
-    /**
-     * Main worker loop
-     */
     async run() {
-        console.log('[Upload] Upload Worker started');
-
-        // Check for uploads every minute
+        console.log('[Upload] Worker Started');
         setInterval(async () => {
             try {
-                const readyVideos = await this.findReadyVideos();
-
-                if (readyVideos.length > 0) {
-                    console.log(`[Upload] Found ${readyVideos.length} video(s) ready for upload`);
-
-                    for (const video of readyVideos) {
-                        try {
-                            await this.uploadVideo(video);
-                        } catch (error) {
-                            console.error(`[Upload] Failed to upload video ${video.id}:`, error.message);
-                        }
+                const videos = await this.findReadyVideos();
+                if (videos.length > 0) {
+                    for (const v of videos) {
+                        await this.uploadVideo(v);
                     }
                 }
-            } catch (error) {
-                console.error('[Upload] Error in worker loop:', error.message);
+            } catch (e) {
+                console.error('[Upload] Loop error:', e.message);
             }
-        }, 60000);  // Every 1 minute
-
-        // Cleanup old files every hour
-        setInterval(async () => {
-            try {
-                await this.cleanupOldFiles();
-            } catch (error) {
-                console.error('[Upload] Error in cleanup:', error.message);
-            }
-        }, config.temp.cleanupIntervalHours * 60 * 60 * 1000);
+        }, 60000); // 1 min
     }
 }
 
-module.exports = UploadWorker;
+module.exports = new UploadWorker();

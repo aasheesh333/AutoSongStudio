@@ -7,9 +7,13 @@ module.exports = {
   baseUrl: process.env.BASE_URL || 'http://localhost:3000',  // Suno API base URL
   backendUrl: process.env.BACKEND_URL || process.env.BASE_URL || 'http://localhost:3000',  // This server's URL
 
-  // Firebase
-  firebaseConfig: {
-    jsonBase64: process.env.FIREBASE_JSON_BASE64
+  // Database & Storage
+  mongo: {
+    url: process.env.MONGO_URL || 'mongodb://localhost:27017/autosong'
+  },
+  storage: {
+    path: process.env.STORAGE_PATH || '/home/ubuntu/autosong_storage',
+    publicUrl: '/files'
   },
 
   // API Keys

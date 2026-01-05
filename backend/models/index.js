@@ -1,335 +1,292 @@
-const { getFirestore } = require('../config/firebase');
-const config = require('../config');
-const admin = require('firebase-admin');
+const mongoose = require('mongoose');
 
-/**
- * Firestore Data Models
- * 
- * Optimized for minimal storage - only essential fields
- */
+// ==================== SCHEMAS ====================
 
-class FirestoreModel {
-    constructor(collectionName) {
-        this.collection = collectionName;
-    }
+const UserSchema = new mongoose.Schema({
+    email: { type: String, required: true, unique: true },
+    plan: { type: String, default: 'free', enum: ['free', 'pro'] },
+    youtubeRefreshToken: { type: String, default: null },
+    sunoApiKey: { type: String, default: null },
+    videosThisMonth: { type: Number, default: 0 },
+    lastResetDate: { type: Date, default: Date.now },
+    createdAt: { type: Date, default: Date.now }
+});
 
-    async create(data) {
-        const db = getFirestore();
-        const now = new Date().toISOString();
-        const docRef = await db.collection(this.collection).add({
-            ...data,
-            createdAt: now
-        });
-        return { id: docRef.id, ...data, createdAt: now };
-    }
+const SchedulerSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    channelId: { type: String, required: true },
 
-    async findById(id) {
-        const db = getFirestore();
-        const doc = await db.collection(this.collection).doc(id).get();
-        if (!doc.exists) return null;
-        return { id: doc.id, ...doc.data() };
-    }
+    // Immutable
+    time: String,
+    frequency: { type: String, enum: ['daily', 'weekly', 'monthly'] },
+    activeDays: [Number],
+    language: String,
 
-    async update(id, data) {
-        const db = getFirestore();
-        await db.collection(this.collection).doc(id).update({
-            ...data,
-            updatedAt: new Date().toISOString()
-        });
-        return this.findById(id);
-    }
+    // Editable
+    genres: [String],
+    titlePrompt: String,
+    descPrompt: String,
+    tagsPrompt: String,
+    lyricsPrompt: String,
 
-    async delete(id) {
-        const db = getFirestore();
-        await db.collection(this.collection).doc(id).delete();
-    }
+    active: { type: Boolean, default: true },
+    error: { type: String, default: null },
+    nextRunAt: Date,
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: Date
+});
 
-    async findMany(filters = {}, limit = 100) {
-        const db = getFirestore();
-        let query = db.collection(this.collection);
+const VideoSchema = new mongoose.Schema({
+    schedulerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Scheduler' },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    channelId: String,
 
-        // Apply filters
-        Object.entries(filters).forEach(([key, value]) => {
-            query = query.where(key, '==', value);
-        });
+    // Content
+    title: String,
+    description: String,
+    tags: [String],
+    lyrics: String,
+    genres: [String],
 
-        const snapshot = await query.limit(limit).get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    }
-}
+    // Local Storage Paths
+    audioPath: String,     // Internal disk path
+    thumbnailPath: String, // Internal disk path
+    videoPath: String,     // Internal disk path
 
-/**
- * User Model
- * Minimal fields to reduce storage
- */
-class UserModel extends FirestoreModel {
-    constructor() {
-        super(config.collections.users);
-    }
+    // Public URLs (Served by Express)
+    audioUrl: String,
+    thumbnailUrl: String,
+    videoUrl: String,
 
+    youtubeId: String,
+    scheduledPublishAt: Date,
+
+    status: {
+        type: String,
+        default: 'queued',
+        enum: ['queued', 'processing', 'ready', 'uploading', 'uploaded', 'failed']
+    },
+    error: String,
+    locked: { type: Boolean, default: false },
+    uploadedAt: Date,
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: Date
+});
+
+const QuotaTrackingSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    date: String, // YYYY-MM-DD
+    quotaUsed: { type: Number, default: 0 },
+    videosUploaded: { type: Number, default: 0 }
+});
+
+const SunoKeyUsageSchema = new mongoose.Schema({
+    apiKey: { type: String, required: true, index: true },
+    usageCount: { type: Number, default: 0 },
+    firstUsedAt: { type: Date, default: Date.now },
+    lastUsedAt: Date
+});
+
+// ==================== MODELS ====================
+
+const User = mongoose.model('User', UserSchema);
+const Scheduler = mongoose.model('Scheduler', SchedulerSchema);
+const Video = mongoose.model('Video', VideoSchema);
+const QuotaTracking = mongoose.model('QuotaTracking', QuotaTrackingSchema);
+const SunoKeyUsage = mongoose.model('SunoKeyUsage', SunoKeyUsageSchema);
+
+// ==================== ADAPTERS (API Compatibility) ====================
+
+class UserModel {
     async createUser(data) {
-        return this.create({
-            email: data.email,
-            plan: data.plan || 'free',
-            youtubeRefreshToken: data.youtubeRefreshToken || null,
-            sunoApiKey: data.sunoApiKey || null,
-            videosThisMonth: 0,
-            schedulersCount: 0
-        });
+        const user = await User.create(data);
+        return this._transform(user);
     }
-
     async findByEmail(email) {
-        const db = getFirestore();
-        const snapshot = await db.collection(this.collection)
-            .where('email', '==', email)
-            .limit(1)
-            .get();
-
-        if (snapshot.empty) return null;
-        const doc = snapshot.docs[0];
-        return { id: doc.id, ...doc.data() };
+        const user = await User.findOne({ email });
+        return this._transform(user);
     }
-
+    async findById(id) {
+        if (!mongoose.Types.ObjectId.isValid(id)) return null;
+        const user = await User.findById(id);
+        return this._transform(user);
+    }
+    async update(id, data) {
+        const user = await User.findByIdAndUpdate(id, data, { new: true });
+        return this._transform(user);
+    }
     async incrementVideosThisMonth(userId) {
-        const db = getFirestore();
-        await db.collection(this.collection).doc(userId).update({
-            videosThisMonth: admin.firestore.FieldValue.increment(1)
-        });
+        await User.findByIdAndUpdate(userId, { $inc: { videosThisMonth: 1 } });
     }
-
     async resetMonthlyVideos(userId) {
-        await this.update(userId, { videosThisMonth: 0, lastResetDate: new Date().toISOString() });
+        await User.findByIdAndUpdate(userId, { videosThisMonth: 0, lastResetDate: new Date() });
+    }
+    _transform(doc) {
+        if (!doc) return null;
+        return { ...doc.toObject(), id: doc._id.toString() };
     }
 }
 
-/**
- * Scheduler Model
- * Minimal fields - only what's needed
- */
-class SchedulerModel extends FirestoreModel {
-    constructor() {
-        super(config.collections.schedulers);
-    }
-
+class SchedulerModel {
     async createScheduler(data) {
-        return this.create({
-            name: data.name,
-            userId: data.userId,
-            channelId: data.channelId,
-
-            // Immutable after creation
-            time: data.time,  // HH:MM format
-            frequency: data.frequency,  // daily/weekly/monthly
-            activeDays: data.activeDays || [],  // [0-6] for weekly
-            language: data.language,
-
-            // Editable
-            genres: data.genres,  // Priority array
-            titlePrompt: data.titlePrompt || '',
-            descPrompt: data.descPrompt || '',
-            tagsPrompt: data.tagsPrompt || '',
-            lyricsPrompt: data.lyricsPrompt || '',
-
-            active: true,
-            nextRunAt: data.nextRunAt
-        });
+        const scheduler = await Scheduler.create(data);
+        return this._transform(scheduler);
     }
-
+    async findById(id) {
+        if (!mongoose.Types.ObjectId.isValid(id)) return null;
+        const scheduler = await Scheduler.findById(id);
+        return this._transform(scheduler);
+    }
     async findByUser(userId, channelId = null) {
-        const filters = { userId };
-        if (channelId) filters.channelId = channelId;
-        return this.findMany(filters);
+        const query = { userId };
+        if (channelId) query.channelId = channelId;
+        const docs = await Scheduler.find(query);
+        return docs.map(d => this._transform(d));
     }
-
-    async toggleActive(schedulerId) {
-        const scheduler = await this.findById(schedulerId);
-        if (!scheduler) throw new Error('Scheduler not found');
-        return this.update(schedulerId, { active: !scheduler.active });
+    async update(id, data) {
+        const scheduler = await Scheduler.findByIdAndUpdate(id, { ...data, updatedAt: new Date() }, { new: true });
+        return this._transform(scheduler);
     }
-
     async deactivateAllForUser(userId, reason = null) {
-        const schedulers = await this.findByUser(userId);
-        const updateData = { active: false };
-        if (reason) {
-            updateData.error = reason;
-        }
-
-        const promises = schedulers.map(scheduler =>
-            this.update(scheduler.id, updateData)
-        );
-        await Promise.all(promises);
-        console.log(`[SchedulerModel] Deactivated ${schedulers.length} schedulers for user ${userId}. Reason: ${reason || 'None'}`);
+        const update = { active: false };
+        if (reason) update.error = reason;
+        await Scheduler.updateMany({ userId }, update);
+    }
+    async toggleActive(id) {
+        const scheduler = await Scheduler.findById(id);
+        if (!scheduler) throw new Error('Scheduler not found');
+        scheduler.active = !scheduler.active;
+        await scheduler.save();
+        return this._transform(scheduler);
+    }
+    _transform(doc) {
+        if (!doc) return null;
+        return { ...doc.toObject(), id: doc._id.toString() };
     }
 }
 
-/**
- * Video Model
- * Storage-optimized - no redundant data
- */
-class VideoModel extends FirestoreModel {
-    constructor() {
-        super(config.collections.videos);
-    }
-
+class VideoModel {
     async createVideo(data) {
-        return this.create({
-            schedulerId: data.schedulerId,
-            userId: data.userId,
-            channelId: data.channelId,
-
-            // Content (generated)
-            title: data.title,
-            description: data.description,
-            tags: data.tags,
-            lyrics: data.lyrics,
-            genres: data.genres,
-
-            // Asset URLs (temporary - cleared after upload)
-            audioUrl: data.audioUrl || null,
-            thumbnailUrl: data.thumbnailUrl || null,
-
-            // YouTube data
-            youtubeId: data.youtubeId || null,
-            scheduledPublishAt: data.scheduledPublishAt || null,
-
-            // State
-            status: data.status || 'queued',  // queued/processing/ready/uploading/uploaded/failed
-            error: data.error || null,
-            locked: data.locked || false  // Lock after upload
-        });
+        const video = await Video.create(data);
+        return this._transform(video);
     }
+    async findById(id) {
+        // Video ID might be UUID from worker, or Mongo ObjectId. 
+        // If worker uses UUID, we need to handle that. 
+        // BUT, better to let Mongo generate ID. 
+        // Wait, worker generates UUID v4. We should probably use that as _id or store it.
+        // For simplicity, we'll let Mongo generate _id and worker will update using that ID.
+        // Actually, existing code passes UUID. Let's make _id be the String UUID if possible, OR just use Mongo ID.
+        // Mongoose _id is ObjectId by default.
+        // To support existing UUIDs from worker, we should search by `_id` if it's ObjectId, or creating with custom _id.
+        // EASIEST: Transform incoming UUID to allow string _id or map it.
+        // Let's rely on Mongoose's auto ID and update worker to use the ID returned by createVideo.
 
+        if (mongoose.Types.ObjectId.isValid(id)) {
+            const video = await Video.findById(id);
+            return this._transform(video);
+        }
+        return null;
+    }
+    async update(id, data) {
+        const video = await Video.findByIdAndUpdate(id, { ...data, updatedAt: new Date() }, { new: true });
+        return this._transform(video);
+    }
     async findByScheduler(schedulerId, limit = 50) {
-        return this.findMany({ schedulerId }, limit);
+        const docs = await Video.find({ schedulerId }).sort({ createdAt: -1 }).limit(limit);
+        return docs.map(d => this._transform(d));
     }
-
     async findByUser(userId, channelId = null, status = null) {
-        const filters = { userId };
-        if (channelId) filters.channelId = channelId;
-        if (status) filters.status = status;
-        return this.findMany(filters);
+        const query = { userId };
+        if (channelId) query.channelId = channelId;
+        if (status) query.status = status;
+        const docs = await Video.find(query).sort({ createdAt: -1 });
+        return docs.map(d => this._transform(d));
     }
-
-    async updateStatus(videoId, status, error = null) {
+    async updateStatus(id, status, error = null) {
         const update = { status };
         if (error) update.error = error;
-        return this.update(videoId, update);
+        return this.update(id, update);
     }
-
-    async markAsUploaded(videoId, youtubeId) {
-        return this.update(videoId, {
-            youtubeId,
+    async markAsUploaded(id, youtubeId) {
+        // Here we implement the DELETION Logic requested by user
+        // But we handle DB update here. Worker handles file deletion.
+        const update = {
             status: 'uploaded',
-            locked: true,  // Lock editing after upload
-            uploadedAt: new Date().toISOString(),
-            // Clear temporary URLs to save storage
+            youtubeId,
+            locked: true,
+            uploadedAt: new Date(),
+            // Clear URLs to prevent serving files that are deleted
             audioUrl: null,
-            thumbnailUrl: null
-        });
+            thumbnailUrl: null,
+            videoUrl: null,
+            // We KEEP paths for the worker to find and delete them, then worker clears them?
+            // Or we assume worker deletes them and we just clear the reference safe here.
+            // Let's clear references here.
+        };
+        return this.update(id, update);
     }
-
     async findReadyForUpload() {
-        const db = getFirestore();
-        const now = new Date().toISOString();
-
-        const snapshot = await db.collection(this.collection)
-            .where('status', '==', 'ready')
-            .where('scheduledPublishAt', '<=', now)
-            .limit(10)
-            .get();
-
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Check for scheduled time <= now
+        const docs = await Video.find({
+            status: 'ready',
+            scheduledPublishAt: { $lte: new Date() }
+        }).limit(10);
+        return docs.map(d => this._transform(d));
+    }
+    async delete(id) {
+        await Video.findByIdAndDelete(id);
+    }
+    _transform(doc) {
+        if (!doc) return null;
+        return { ...doc.toObject(), id: doc._id.toString() };
     }
 }
 
-/**
- * Quota Tracking Model
- * Track daily YouTube API quota usage
- */
-class QuotaTrackingModel extends FirestoreModel {
-    constructor() {
-        super(config.collections.quotaTracking);
-    }
-
+class QuotaTrackingModel {
     async getTodayQuota(userId) {
-        const today = new Date().toISOString().split('T')[0];  // YYYY-MM-DD
-        const db = getFirestore();
-
-        const snapshot = await db.collection(this.collection)
-            .where('userId', '==', userId)
-            .where('date', '==', today)
-            .limit(1)
-            .get();
-
-        if (snapshot.empty) {
-            // Create new quota tracking for today
-            return this.create({
-                userId,
-                date: today,
-                quotaUsed: 0,
-                videosUploaded: 0
-            });
+        const today = new Date().toISOString().split('T')[0];
+        let quota = await QuotaTracking.findOne({ userId, date: today });
+        if (!quota) {
+            quota = await QuotaTracking.create({ userId, date: today });
         }
-
-        const doc = snapshot.docs[0];
-        return { id: doc.id, ...doc.data() };
+        return this._transform(quota);
     }
-
-    async incrementQuota(userId, quotaCost) {
-        const quota = await this.getTodayQuota(userId);
-        const db = getFirestore();
-        await db.collection(this.collection).doc(quota.id).update({
-            quotaUsed: admin.firestore.FieldValue.increment(quotaCost),
-            videosUploaded: admin.firestore.FieldValue.increment(1)
-        });
+    async incrementQuota(userId, cost) {
+        const today = new Date().toISOString().split('T')[0];
+        await QuotaTracking.findOneAndUpdate(
+            { userId, date: today },
+            { $inc: { quotaUsed: cost, videosUploaded: 1 } },
+            { upsert: true }
+        );
     }
-
     async canUploadToday(userId) {
         const quota = await this.getTodayQuota(userId);
-        return quota.videosUploaded < config.youtube.quota.maxUploadsPerDay;
+        return quota.videosUploaded < config.youtube.quota.maxUploadsPerDay; // 6
+    }
+    _transform(doc) {
+        if (!doc) return null;
+        return { ...doc.toObject(), id: doc._id.toString() };
     }
 }
 
-/**
- * Suno Key Usage Model
- * Track usage per API Key
- */
-class SunoKeyUsageModel extends FirestoreModel {
-    constructor() {
-        super('suno_key_usage');
-    }
-
+class SunoKeyUsageModel {
     async getUsage(apiKey) {
-        const db = getFirestore();
-        // Use hashed key or just query by key if secure enough for this valid MVP
-        // For simplicity, we query by key. In prod, hash it.
-        const snapshot = await db.collection(this.collection)
-            .where('apiKey', '==', apiKey)
-            .limit(1)
-            .get();
-
-        if (snapshot.empty) {
-            return { id: null, usageCount: 0 };
-        }
-        const doc = snapshot.docs[0];
-        return { id: doc.id, ...doc.data() };
+        let usage = await SunoKeyUsage.findOne({ apiKey });
+        if (!usage) return { usageCount: 0 };
+        return this._transform(usage);
     }
-
     async incrementUsage(apiKey) {
-        const usage = await this.getUsage(apiKey);
-
-        if (!usage.id) {
-            return this.create({
-                apiKey,
-                usageCount: 1,
-                firstUsedAt: new Date().toISOString()
-            });
-        }
-
-        return this.update(usage.id, {
-            usageCount: admin.firestore.FieldValue.increment(1),
-            lastUsedAt: new Date().toISOString()
-        });
+        await SunoKeyUsage.findOneAndUpdate(
+            { apiKey },
+            { $inc: { usageCount: 1 }, lastUsedAt: new Date() },
+            { upsert: true }
+        );
+    }
+    _transform(doc) {
+        if (!doc) return null;
+        return { ...doc.toObject(), id: doc._id.toString() };
     }
 }
 
@@ -340,3 +297,4 @@ module.exports = {
     QuotaTrackingModel: new QuotaTrackingModel(),
     SunoKeyUsageModel: new SunoKeyUsageModel()
 };
+

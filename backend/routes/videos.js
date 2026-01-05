@@ -3,301 +3,116 @@ const router = express.Router();
 const { VideoModel } = require('../models');
 const youtubeService = require('../services/youtubeService');
 const fs = require('fs');
+const config = require('../config');
+const path = require('path');
 
-/**
- * Video Routes
- * Manage generated videos
- */
+// Helper to delete files
+const deleteVideoFiles = (video) => {
+    const safeDelete = (p) => { if (p && fs.existsSync(p)) fs.unlinkSync(p); };
+    safeDelete(video.videoPath);
+    safeDelete(video.audioPath);
+    safeDelete(video.thumbnailPath);
+};
 
-/**
- * GET /api/videos
- * List videos with filters
- */
+// GET /api/videos
 router.get('/', async (req, res) => {
     const { userId, channelId, schedulerId, status, limit = 50 } = req.query;
-
-    if (!userId) {
-        return res.status(400).json({ error: 'userId required' });
-    }
+    if (!userId) return res.status(400).json({ error: 'userId required' });
 
     try {
         let videos;
-
-        if (schedulerId) {
-            videos = await VideoModel.findByScheduler(schedulerId, parseInt(limit));
-        } else {
-            videos = await VideoModel.findByUser(userId, channelId, status);
-        }
-
+        if (schedulerId) videos = await VideoModel.findByScheduler(schedulerId, parseInt(limit));
+        else videos = await VideoModel.findByUser(userId, channelId, status);
         res.json({ videos });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-/**
- * GET /api/videos/:id
- * Get video details
- */
+// GET /api/videos/:id
 router.get('/:id', async (req, res) => {
-    const { id } = req.params;
-
     try {
-        const video = await VideoModel.findById(id);
-
-        if (!video) {
-            return res.status(404).json({ error: 'Video not found' });
-        }
-
+        const video = await VideoModel.findById(req.params.id);
+        if (!video) return res.status(404).json({ error: 'Video not found' });
         res.json({ video });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-/**
- * PATCH /api/videos/:id
- * Update video metadata (only if not uploaded)
- */
+// PATCH /api/videos/:id
 router.patch('/:id', async (req, res) => {
-    const { id } = req.params;
-    const { title, description, tags } = req.body;
-
     try {
-        const video = await VideoModel.findById(id);
+        const video = await VideoModel.findById(req.params.id);
+        if (!video) return res.status(404).json({ error: 'Video not found' });
+        if (video.locked || video.status === 'uploaded') return res.status(403).json({ error: 'Cannot edit uploaded video' });
 
-        if (!video) {
-            return res.status(404).json({ error: 'Video not found' });
-        }
-
-        if (video.locked || video.status === 'uploaded') {
-            return res.status(403).json({ error: 'Cannot edit uploaded video' });
-        }
-
-        const updates = {};
-        if (title) updates.title = title;
-        if (description) updates.description = description;
-        if (tags) updates.tags = tags;
-
-        const updated = await VideoModel.update(id, updates);
-        console.log(`[Videos] ✅ Updated video: ${id}`);
-
+        const updated = await VideoModel.update(req.params.id, req.body);
         res.json({ video: updated });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-/**
- * POST /api/videos/:id/thumbnail
- * Replace video thumbnail (only if not uploaded)
- */
-router.post('/:id/thumbnail', async (req, res) => {
-    const { id } = req.params;
-    const { thumbnailUrl } = req.body;  // New thumbnail URL or base64
-
+// DELETE /api/videos/:id
+router.delete('/:id', async (req, res) => {
     try {
-        const video = await VideoModel.findById(id);
+        const video = await VideoModel.findById(req.params.id);
+        if (!video) return res.status(404).json({ error: 'Video not found' });
+        if (video.status === 'uploaded') return res.status(403).json({ error: 'Cannot delete uploaded video' });
 
-        if (!video) {
-            return res.status(404).json({ error: 'Video not found' });
-        }
+        // DELETE FILES (Retention Policy)
+        deleteVideoFiles(video);
 
-        if (video.locked || video.status === 'uploaded') {
-            return res.status(403).json({ error: 'Cannot edit uploaded video' });
-        }
+        await VideoModel.delete(req.params.id);
+        console.log(`[Videos] Deleted video ${req.params.id} and its files.`);
 
-        // In production, handle thumbnail upload/storage here
-        const updated = await VideoModel.update(id, { thumbnailUrl });
+        res.json({ success: true, message: 'Video deleted' });
 
-        res.json({ video: updated, message: 'Thumbnail updated successfully' });
+        // Trigger keep-ahead
+        const videoWorker = req.app.get('videoWorker');
+        if (videoWorker) videoWorker.triggerForScheduler(video.schedulerId);
+
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-/**
- * GET /api/videos/:id/thumbnail-stream
- * Stream thumbnail image for preview in app
- */
-router.get('/:id/thumbnail-stream', async (req, res) => {
-    const { id } = req.params;
-    const path = require('path');
-
-    try {
-        const thumbnailPath = path.join('./temp/thumbnails', `${id}.png`);
-
-        if (!fs.existsSync(thumbnailPath)) {
-            return res.status(404).json({ error: 'Thumbnail not found. Still processing or cleaned up.' });
-        }
-
-        res.setHeader('Content-Type', 'image/png');
-        res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
-        fs.createReadStream(thumbnailPath).pipe(res);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-/**
- * GET /api/videos/:id/stream
- * Stream video file for preview in app
- */
-router.get('/:id/stream', async (req, res) => {
-    const { id } = req.params;
-    const path = require('path');
-
-    try {
-        const video = await VideoModel.findById(id);
-
-        if (!video) {
-            return res.status(404).json({ error: 'Video not found' });
-        }
-
-        const videoPath = path.join('./temp/videos', `${id}.mp4`);
-
-        if (!fs.existsSync(videoPath)) {
-            return res.status(404).json({ error: 'Video file not found. Still processing or cleaned up.' });
-        }
-
-        const stat = fs.statSync(videoPath);
-        const fileSize = stat.size;
-        const range = req.headers.range;
-
-        if (range) {
-            // Handle range requests for video seeking
-            const parts = range.replace(/bytes=/, '').split('-');
-            const start = parseInt(parts[0], 10);
-            const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-            const chunkSize = (end - start) + 1;
-            const file = fs.createReadStream(videoPath, { start, end });
-
-            res.writeHead(206, {
-                'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-                'Accept-Ranges': 'bytes',
-                'Content-Length': chunkSize,
-                'Content-Type': 'video/mp4',
-            });
-
-            file.pipe(res);
-        } else {
-            res.writeHead(200, {
-                'Content-Length': fileSize,
-                'Content-Type': 'video/mp4',
-            });
-
-            fs.createReadStream(videoPath).pipe(res);
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-/**
- * POST /api/videos/:id/upload-now
- * Trigger immediate upload to YouTube
- */
+// POST /api/videos/:id/upload-now
 router.post('/:id/upload-now', async (req, res) => {
-    const { id } = req.params;
     const { accessToken } = req.body;
-
-    if (!accessToken) {
-        return res.status(400).json({ error: 'Access token required' });
-    }
+    if (!accessToken) return res.status(400).json({ error: 'Token required' });
 
     try {
-        const video = await VideoModel.findById(id);
+        const video = await VideoModel.findById(req.params.id);
+        if (!video) return res.status(404).json({ error: 'Not found' });
 
-        if (!video) {
-            return res.status(404).json({ error: 'Video not found' });
+        let videoPath = video.videoPath;
+        if (!videoPath || !fs.existsSync(videoPath)) {
+            return res.status(404).json({ error: 'Video file not found via path' });
         }
 
-        if (video.status !== 'ready') {
-            return res.status(400).json({ error: `Video not ready for upload. Status: ${video.status}` });
-        }
-
-        // Note: In production, videoPath should be stored temporarily
-        // For now, we'll assume it exists in temp directory
-        const videoPath = `./temp/videos/${id}.mp4`;
-
-        if (!fs.existsSync(videoPath)) {
-            return res.status(404).json({ error: 'Video file not found. It may have been cleaned up.' });
-        }
-
-        // Upload to YouTube
-        await VideoModel.updateStatus(id, 'uploading');
+        await VideoModel.updateStatus(video.id, 'uploading');
 
         const result = await youtubeService.uploadVideo(
             videoPath,
-            {
-                title: video.title,
-                description: video.description,
-                tags: video.tags,
-                scheduledPublishAt: video.scheduledPublishAt
-            },
+            { title: video.title, description: video.description, tags: video.tags, scheduledPublishAt: video.scheduledPublishAt },
             accessToken,
             video.userId
         );
 
-        // Mark as uploaded and lock for editing
-        await VideoModel.markAsUploaded(id, result.videoId);
+        await VideoModel.markAsUploaded(video.id, result.videoId);
 
-        // Cleanup video file
-        fs.unlinkSync(videoPath);
+        // CLEANUP FILES (Retention Policy)
+        deleteVideoFiles(video);
 
-        console.log(`[Videos] ✅ Uploaded video ${id} to YouTube: ${result.videoId}`);
+        res.json({ success: true, youtubeId: result.videoId, url: result.url });
 
-        res.json({
-            success: true,
-            youtubeId: result.videoId,
-            url: result.url,
-            message: 'Video uploaded successfully'
-        });
-
-        // Trigger keep-ahead generation
         const videoWorker = req.app.get('videoWorker');
-        if (videoWorker) {
-            videoWorker.triggerForScheduler(video.schedulerId);
-        }
+        if (videoWorker) videoWorker.triggerForScheduler(video.schedulerId);
+
     } catch (error) {
-        // Mark as failed
-        await VideoModel.updateStatus(id, 'failed', error.message);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-/**
- * DELETE /api/videos/:id
- * Delete video (only if not uploaded)
- */
-router.delete('/:id', async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        const video = await VideoModel.findById(id);
-
-        if (!video) {
-            return res.status(404).json({ error: 'Video not found' });
-        }
-
-        if (video.status === 'uploaded') {
-            return res.status(403).json({ error: 'Cannot delete uploaded video' });
-        }
-
-        // Capture schedulerId before deletion (wait, we have video object)
-        const schedulerId = video.schedulerId;
-
-        await VideoModel.delete(id);
-        console.log(`[Videos] ✅ Deleted video: ${id}`);
-
-        res.json({ success: true, message: 'Video deleted' });
-
-        // Trigger keep-ahead generation
-        const videoWorker = req.app.get('videoWorker');
-        if (videoWorker) {
-            videoWorker.triggerForScheduler(schedulerId);
-        }
-    } catch (error) {
+        await VideoModel.updateStatus(req.params.id, 'failed', error.message);
         res.status(500).json({ error: error.message });
     }
 });

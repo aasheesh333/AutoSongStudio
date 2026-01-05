@@ -1,7 +1,13 @@
 require('dotenv').config();
-const { initializeFirebase } = require('../config/firebase');
+const mongoose = require('mongoose');
+const config = require('../config');
 const VideoGenerationWorker = require('./videoGenerationWorker');
 const UploadWorker = require('./uploadWorker');
+
+// Connect to MongoDB
+mongoose.connect(config.mongo.url)
+    .then(() => console.log('✅ Workers connected to MongoDB'))
+    .catch(err => console.error('❌ Workers MongoDB Request Error:', err));
 
 /**
  * Worker Process Entry Point

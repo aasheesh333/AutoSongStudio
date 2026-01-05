@@ -2,18 +2,22 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { initializeFirebase } = require('./config/firebase');
 const config = require('./config');
+const mongoose = require('mongoose');
+const path = require('path');
 
 // Initialize Express app
 const app = express();
+
+// Connect to MongoDB
+mongoose.connect(config.mongo.url)
+    .then(() => console.log('✅ Connected to MongoDB'))
+    .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 // Trust proxy - required for Render.com and other reverse proxies
 // This fixes the X-Forwarded-For header validation error from express-rate-limit
 app.set('trust proxy', 1);
 
-// Initialize Firebase
-initializeFirebase();
 
 // Middleware
 app.use(helmet());  // Security headers
@@ -34,7 +38,7 @@ app.use('/api/', limiter);
 
 // Request logging
 app.use((req, res, next) => {
-    console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
+    console.log(`${ req.method } ${ req.path } - ${ new Date().toISOString() } `);
     next();
 });
 
@@ -86,9 +90,9 @@ const PORT = config.port;
 const server = app.listen(PORT, () => {
     console.log('='.repeat(50));
     console.log(`🚀 AutoSong Studio Backend`);
-    console.log(`📡 Server running on port ${PORT}`);
-    console.log(`🌍 Environment: ${config.nodeEnv}`);
-    console.log(`🔗 Base URL: ${config.baseUrl}`);
+    console.log(`📡 Server running on port ${ PORT } `);
+    console.log(`🌍 Environment: ${ config.nodeEnv } `);
+    console.log(`🔗 Base URL: ${ config.baseUrl } `);
     console.log('='.repeat(50));
 });
 

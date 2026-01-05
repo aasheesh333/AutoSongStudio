@@ -16,8 +16,10 @@ Production-ready backend for YouTube music automation with AI-powered content ge
 
 - **Runtime**: Node.js 18+
 - **Framework**: Express.js
-- **Database**: Firebase Firestore
-- **APIs**: Groq, Suno, HuggingFace, YouTube Data API v3
+- **Database**: MongoDB (Self-Hosted)
+- **Authentication**: YouTube OAuth
+- **AI Models**:
+  - Lyrics & Metadata: Groq (Llama 3 70B)
 - **Video Processing**: FFmpeg
 - **Deployment**: Render.com
 
@@ -50,7 +52,6 @@ nano .env
 ```
 
 Required variables:
-- `FIREBASE_JSON_BASE64` - Base64 encoded Firebase service account JSON
 - `LLAMA_API_KEY` - Groq API key
 - `HF_TOKEN` - HuggingFace API token
 - `SUNO_API_KEY` - Suno API key (for Pro users)
