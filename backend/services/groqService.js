@@ -129,7 +129,7 @@ METADATA GUIDELINES (If no specific User Prompt):
         if (lyricsPrompt && lyricsPrompt.trim()) {
             userPrompt += `[LYRICS INSTRUCTION]: ${lyricsPrompt}\n(Follow this instruction STRICTLY)\n`;
         } else {
-            userPrompt += `[LYRICS INSTRUCTION]: Write a creative song about a theme suitable for ${genresText} music. Make it emotional and catchy.\n`;
+            userPrompt += `[LYRICS INSTRUCTION]: Write a creative, emotionally powerful song about a theme suitable for ${genresText} music. Use vivid imagery, metaphors, and make it memorable and catchy. Include at least 3 verses, a strong chorus, and a bridge.\n`;
         }
 
         userPrompt += `\nGenerate the Lyrics first. Then, based on those lyrics and the genres, generate the Metadata.\n\n`;
@@ -140,30 +140,49 @@ METADATA GUIDELINES (If no specific User Prompt):
         if (titlePrompt && titlePrompt.trim()) {
             userPrompt += `[TITLE INSTRUCTION]: ${titlePrompt}\n(Follow this instruction STRICTLY)\n`;
         } else {
-            userPrompt += `[TITLE INSTRUCTION]: Generate a creative title based on the lyrics' hook or theme. Do NOT use generic titles like "${genres[0]} Song".\n`;
+            userPrompt += `[TITLE INSTRUCTION]: Generate a CATCHY, CREATIVE, SEO-OPTIMIZED title (50-80 characters). The title should:
+- Include the main emotional theme or hook from the lyrics
+- Be memorable and click-worthy
+- Include a relevant keyword for YouTube search
+- NOT be generic like "Song" or just the genre name
+Example good titles: "Midnight Memories - Chill Lofi Beats", "Heartbreak Avenue | Emotional Love Song 2024"\n`;
         }
 
         // Description
         if (descPrompt && descPrompt.trim()) {
             userPrompt += `[DESCRIPTION INSTRUCTION]: ${descPrompt}\n(Follow this instruction STRICTLY)\n`;
         } else {
-            userPrompt += `[DESCRIPTION INSTRUCTION]: Write an engaging YouTube description summarizing the song's story/mood. Mention the genres. Include the first 2 lines of lyrics in quotes.\n`;
+            userPrompt += `[DESCRIPTION INSTRUCTION]: Write a LONG, SEO-OPTIMIZED YouTube description (400-600 characters). The description MUST include:
+- An engaging opening hook that makes viewers want to listen
+- Summary of the song's emotional journey/story
+- Quote 2-3 memorable lines from the lyrics in quotation marks
+- Mention of the genres (${genresText})
+- Call to action (like, subscribe, comment)
+- Relevant hashtags at the end
+Make it feel human-written, not robotic. This description helps with YouTube SEO.\n`;
         }
 
         // Tags
         if (tagsPrompt && tagsPrompt.trim()) {
             userPrompt += `[TAGS INSTRUCTION]: ${tagsPrompt}\n(Follow this instruction STRICTLY)\n`;
         } else {
-            userPrompt += `[TAGS INSTRUCTION]: Generate 15 relevant tags covering genre, mood, instruments, and vibes.\n`;
+            userPrompt += `[TAGS INSTRUCTION]: Generate 15-20 HIGH-VOLUME SEO tags. Include:
+- Genre-specific tags (${genresText})
+- Mood/emotion tags (relaxing, sad, romantic, energetic, etc.)
+- Instrument tags (guitar, piano, beats, etc.)
+- Popular search terms (new music 2024, best songs, viral music)
+- Language-specific tags if applicable
+- Similar artist style tags
+Tags should be what real users would search for on YouTube.\n`;
         }
 
         userPrompt += `
 \nReturn ONLY this JSON structure:
 {
   "lyrics": "full lyrics string with \\n for line breaks",
-  "title": "final title string",
-  "description": "final description string",
-  "tags": ["tag1", "tag2", "tag3"]
+  "title": "final title string (50-80 chars, SEO optimized)",
+  "description": "final description string (400-600 chars, engaging, SEO optimized)",
+  "tags": ["tag1", "tag2", "tag3", ... 15-20 tags]
 }`;
 
         const response = await this.makeRequest([
