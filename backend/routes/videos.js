@@ -117,4 +117,64 @@ router.post('/:id/upload-now', async (req, res) => {
     }
 });
 
+// GET /api/videos/:id/stream - Video streaming (backward compatibility)
+router.get('/:id/stream', async (req, res) => {
+    try {
+        const video = await VideoModel.findById(req.params.id);
+        if (!video) return res.status(404).json({ error: 'Video not found' });
+
+        const videoPath = video.videoPath;
+        if (!videoPath || !fs.existsSync(videoPath)) {
+            return res.status(404).json({ error: 'Video file not found' });
+        }
+
+        const stat = fs.statSync(videoPath);
+        const fileSize = stat.size;
+        const range = req.headers.range;
+
+        if (range) {
+            const parts = range.replace(/bytes=/, '').split('-');
+            const start = parseInt(parts[0], 10);
+            const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+            const chunkSize = end - start + 1;
+
+            const file = fs.createReadStream(videoPath, { start, end });
+            res.writeHead(206, {
+                'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+                'Accept-Ranges': 'bytes',
+                'Content-Length': chunkSize,
+                'Content-Type': 'video/mp4'
+            });
+            file.pipe(res);
+        } else {
+            res.writeHead(200, {
+                'Content-Length': fileSize,
+                'Content-Type': 'video/mp4'
+            });
+            fs.createReadStream(videoPath).pipe(res);
+        }
+    } catch (error) {
+        console.error('[Videos] Stream error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /api/videos/:id/thumbnail-stream - Thumbnail streaming (backward compatibility)
+router.get('/:id/thumbnail-stream', async (req, res) => {
+    try {
+        const video = await VideoModel.findById(req.params.id);
+        if (!video) return res.status(404).json({ error: 'Video not found' });
+
+        const thumbnailPath = video.thumbnailPath;
+        if (!thumbnailPath || !fs.existsSync(thumbnailPath)) {
+            return res.status(404).json({ error: 'Thumbnail not found' });
+        }
+
+        res.setHeader('Content-Type', 'image/png');
+        fs.createReadStream(thumbnailPath).pipe(res);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;
