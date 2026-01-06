@@ -30,11 +30,18 @@ jobs:
 
     - name: Grant execute permission for gradlew
       run: chmod +x android_app/gradlew
-      
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        cache-read-only: false
+
     - name: Build Release APK
       run: |
         cd android_app
-        ./gradlew assembleRelease --no-daemon
+        ./gradlew assembleRelease --no-daemon --retry --build-cache
+      env:
+        GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2 -Dorg.gradle.parallel=true"
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
@@ -42,3 +49,4 @@ jobs:
         name: autosong-studio-release
         path: android_app/app/build/outputs/apk/release/*.apk
         retention-days: 30
+
