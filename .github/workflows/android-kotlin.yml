@@ -5,10 +5,12 @@ on:
     branches: [ default2 ]
     paths:
       - 'android_app/**'
+      - '.github/workflows/android-kotlin.yml'
   pull_request:
     branches: [ default2 ]
     paths:
       - 'android_app/**'
+      - '.github/workflows/android-kotlin.yml'
   workflow_dispatch:
 
 jobs:
