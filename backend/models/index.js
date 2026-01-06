@@ -248,15 +248,20 @@ class VideoModel {
             youtubeId,
             locked: true,
             uploadedAt: new Date(),
+
             // Clear all file paths and URLs (files already deleted by worker)
             audioPath: null,
             audioUrl: null,
             thumbnailPath: null,
-            thumbnailUrl: null,
+            // Use YouTube Thumbnail for display
+            thumbnailUrl: `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`,
             videoPath: null,
             videoUrl: null,
-            // Clear lyrics (keep title, description, tags for display)
-            lyrics: null,
+
+            // Clear metadata (details non-editable as requested)
+            lyrics: '',
+            description: '',
+            tags: []
         };
         return this.update(id, update);
     }
