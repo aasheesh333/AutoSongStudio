@@ -31,11 +31,12 @@ class YouTubeService {
     /**
      * Get OAuth consent URL
      */
-    getAuthUrl() {
+    getAuthUrl(state) {
         const authUrl = this.oauth2Client.generateAuthUrl({
             access_type: 'offline',  // Gets refresh token
             scope: config.youtube.scopes,
-            prompt: 'consent'  // Force consent screen to get refresh token
+            prompt: 'consent',  // Force consent screen to get refresh token
+            state: state
         });
 
         console.log('[YouTube] Generated OAuth URL');

@@ -77,7 +77,7 @@ class AppRepository @Inject constructor(
 
     // ==================== AUTH ====================
     suspend fun getYouTubeAuthUrl(): Result<String> = runCatching {
-        val response = apiService.getYouTubeAuthUrl()
+        val response = apiService.getYouTubeAuthUrl("mobile_app")
         if (response.isSuccessful) {
             response.body()?.get("authUrl") ?: throw Exception("No authUrl in response")
         } else {

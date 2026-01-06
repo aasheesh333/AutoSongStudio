@@ -7,7 +7,9 @@ import retrofit2.http.*
 interface ApiService {
     // ==================== AUTH ====================
     @GET(ApiConstants.AUTH_YOUTUBE)
-    suspend fun getYouTubeAuthUrl(): Response<Map<String, String>>
+    suspend fun getYouTubeAuthUrl(
+        @Query("state") state: String
+    ): Response<Map<String, String>>
 
     @GET(ApiConstants.AUTH_CALLBACK)
     suspend fun handleOAuthCallback(

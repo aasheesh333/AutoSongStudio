@@ -14,7 +14,8 @@ const { UserModel } = require('../models');
  */
 router.get('/youtube', (req, res) => {
     try {
-        const authUrl = youtubeService.getAuthUrl();
+        const { state } = req.query;
+        const authUrl = youtubeService.getAuthUrl(state);
         res.json({ authUrl });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -67,7 +68,7 @@ router.get('/callback', async (req, res) => {
             // Encode complex objects
             const channelsJson = encodeURIComponent(JSON.stringify(channels));
 
-            const redirectUri = `autosongstudio://auth/callback?` +
+            const redirectUri = `autosong://auth/callback?` +
                 `access_token=${tokens.accessToken}&` +
                 `refresh_token=${tokens.refreshToken}&` +
                 `user_id=${user.id}&` +
