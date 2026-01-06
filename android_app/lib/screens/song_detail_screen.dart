@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
 import '../models/video.dart';
@@ -381,6 +382,29 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                   if (_video!.isEditable)
                     PopupMenuButton(
                       itemBuilder: (context) => [
+                        // Download Audio Option
+                        if (_video!.audioUrl != null)
+                          PopupMenuItem(
+                            onTap: () async {
+                              final url = Uri.parse(_video!.audioUrl!);
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(url, mode: LaunchMode.externalApplication);
+                              } else {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Could not launch download URL')),
+                                  );
+                                }
+                              }
+                            },
+                            child: const Row(
+                              children: [
+                                Icon(Icons.download, color: AppTheme.primaryColor),
+                                SizedBox(width: 8),
+                                Text('Download Audio'),
+                              ],
+                            ),
+                          ),
                         PopupMenuItem(
                           onTap: _deleteVideo,
                           child: const Row(

@@ -83,7 +83,7 @@ class ImageGenerationService {
 
         // Convert lyric line to visual concept (avoid using actual text)
         const lyricVisual = randomLyricLine.length > 0
-            ? `inspired by the concept: "${randomLyricLine.substring(0, 50)}"`
+            ? `concept inspired by "${randomLyricLine.substring(0, 40)}"`
             : '';
 
         // Genre-specific visuals (including Indian/Bollywood)
@@ -97,7 +97,7 @@ class ImageGenerationService {
             'phonk': 'dark urban drifting cars, purple and red smoke effects, night city skyline',
             'deep house': 'tropical beach sunset, ocean waves crashing, purple orange gradient sky',
             'acoustic': 'wooden guitar by window, natural forest light, cozy cabin atmosphere',
-            'bollywood': 'cinematic Indian aesthetic, vibrant colors, dramatic lighting, emotional depth',
+            'bollywood': 'cinematic Indian aesthetic, vibrant colors, dramatic lighting, emotional depth, royal palace background',
             'hindi': 'romantic Indian setting, marigold flowers, warm golden hour, cultural richness',
             'romantic': 'sunset silhouette of couple, warm golden tones, dreamy atmosphere, soft bokeh',
             'pop': 'vibrant modern aesthetic, dynamic colors, stylish urban setting, bright energy',
@@ -107,28 +107,40 @@ class ImageGenerationService {
             'soul': 'warm studio lighting, vinyl records, vintage microphone, authentic emotion',
             'hiphop': 'urban street culture, graffiti murals, authentic vibe, streetwear aesthetic',
             'sad': 'rainy window, melancholic blue tones, solitary figure, emotional atmosphere',
-            'happy': 'bright sunshine, vibrant flowers, joyful colors, celebration mood'
+            'happy': 'bright sunshine, vibrant flowers, joyful colors, celebration mood',
+            'devotional': 'temple silhouette at sunrise, divine light rays, peaceful spiritual atmosphere, saffron tones',
+            'meditation': 'zen garden, stones and water, soft green nature, peaceful balance'
         };
 
-        // MORE random visual elements for variety
-        const randomElements = [
-            'golden hour lighting with lens flare',
-            'blue hour mood, twilight atmosphere',
-            'dramatic silhouette against sunset',
-            'soft pastel color palette',
-            'vibrant neon accents and reflections',
-            'misty atmospheric fog',
-            'cinematic depth of field, bokeh',
-            'ethereal glowing particles',
-            'moody contrasting shadows',
-            'dreamy double exposure effect',
-            'abstract geometric overlays',
-            'flowing silk fabric texture',
-            'rain droplets on glass',
-            'starry night sky background',
-            'aurora borealis northern lights',
-            'underwater light rays'
+        // EXTREME VARIETY GENERATORS
+        const cameras = [
+            'cinematic 35mm lens, f/1.8', 'drone aerial shot', 'GoPro wide angle action', 'macro close-up detail',
+            'Sony A7R IV photography', 'vintage Polaroid style', 'fisheye lens distortion', 'telephoto compression',
+            'double exposure photography', 'tilt-shift miniature effect'
         ];
+
+        const lightings = [
+            'golden hour soft sunlight', 'neon cyberpunk city glow', 'moody volumetric fog and shafts of light',
+            'studio softbox professional lighting', 'bioluminescent magical glow', 'dramatic noir high contrast shadows',
+            'warm candlelight atmosphere', 'cold blue moonlight', 'colorful stage concert lighting', 'natural dappled forest light'
+        ];
+
+        const artStyles = [
+            'hyperrealistic 8k render', 'digital artstation masterpiece', 'oil painting texture with heavy brushstrokes',
+            'vaporwave retro aesthetic', 'dark fantasy concept art', 'minimalist vector flat design',
+            'watercolor painting style', 'cyberpunk futuristic 2077', 'surrealist dreamscape like Dali', 'anime Makoto Shinkai style'
+        ];
+
+        const moods = [
+            'mysterious and foggy', 'energetic and dynamic', 'peaceful and serene', 'dark and gritty',
+            'romantic and dreamy', 'nostalgic and vintage', 'futuristic and clean', 'chaotic and colorful'
+        ];
+
+        // Randomly select elements
+        const randomCamera = cameras[Math.floor(Math.random() * cameras.length)];
+        const randomLighting = lightings[Math.floor(Math.random() * lightings.length)];
+        const randomStyle = artStyles[Math.floor(Math.random() * artStyles.length)];
+        const randomMood = moods[Math.floor(Math.random() * moods.length)];
 
         // Find matching genre visual
         let genreVisual = 'abstract artistic music visualization, vibrant professional colors';
@@ -139,14 +151,11 @@ class ImageGenerationService {
             }
         }
 
-        // Pick MULTIPLE random elements for more variety
-        const randomElement1 = randomElements[Math.floor(Math.random() * randomElements.length)];
-        const randomElement2 = randomElements[Math.floor(Math.random() * randomElements.length)];
+        // Final Prompt Construction (Uniqueness guaranteed by random combinations)
+        // Explicitly asking for NO TEXT
+        const prompt = `masterpiece, award-winning digital art, ${randomStyle}, ${genreVisual}, ${emotionalContext}, ${lyricVisual}, ${randomCamera}, ${randomLighting}, ${randomMood}, high detailed, 8k resolution, trending on artstation, emotionally evocative, ((absolutely no text)), ((no words)), ((no letters)), ((no typography)), ((no writing)), no watermark, no signature, no logos`;
 
-        // Construct highly varied prompt - STRICTLY NO TEXT
-        const prompt = `masterpiece, award-winning digital art, ${genreVisual}, ${emotionalContext}, ${randomElement1}, ${randomElement2}, ${lyricVisual}, professional music album cover, cinematic composition, dramatic lighting, 8k ultra HD, trending on artstation, emotionally evocative, ((absolutely no text)), ((no words)), ((no letters)), ((no typography)), ((no writing)), no watermark, no signature, no logos`;
-
-        console.log(`[ImageGen] Generated unique prompt with seed context`);
+        console.log(`[ImageGen] Generated unique prompt: ${prompt.substring(0, 100)}...`);
         return prompt;
     }
 
