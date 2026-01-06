@@ -58,7 +58,7 @@ fun CreateSchedulerGenresScreen(
                 progress = { 0.25f },
                 modifier = Modifier.fillMaxWidth(),
                 color = PrimaryColor,
-                trackColor = SurfaceHighlight
+                trackColor = SurfaceHighlight,
             )
 
             Column(

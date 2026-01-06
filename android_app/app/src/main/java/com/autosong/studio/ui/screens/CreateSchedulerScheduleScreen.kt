@@ -54,10 +54,10 @@ fun CreateSchedulerScheduleScreen(
                 .padding(padding)
         ) {
             LinearProgressIndicator(
-                progress = { 0.75f },
+                progress = 0.75f,
                 modifier = Modifier.fillMaxWidth(),
                 color = PrimaryColor,
-                trackColor = SurfaceHighlight
+                trackColor = SurfaceHighlight,
             )
 
             Column(
