@@ -205,7 +205,7 @@ class VideoGenerationWorker {
 
             if (isCreditsExhausted) {
                 console.error(`[Worker] ⚠️ Suno credits exhausted for user ${scheduler.userId}. Pausing ALL schedulers.`);
-                await SchedulerModel.deactivateAllForUser(scheduler.userId, 'Suno API credits exhausted. Please add more credits or update your API key.');
+                await SchedulerModel.deactivateAllForUser(scheduler.userId, 'API key limit exceeds please change API key from settings');
             }
 
             // Mark the video as failed if we have a videoId

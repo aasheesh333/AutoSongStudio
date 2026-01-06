@@ -223,7 +223,11 @@ class _SchedulerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: AppTheme.cardDecoration(),
+      decoration: AppTheme.cardDecoration().copyWith(
+        border: (scheduler.error != null && !scheduler.active)
+            ? Border.all(color: AppTheme.error, width: 1.5)
+            : null,
+      ),
       child: InkWell(
         onTap: () {
           Navigator.pushNamed(

@@ -181,6 +181,7 @@ class SchedulerModel {
         if (reason) update.error = reason;
         await Scheduler.updateMany({ userId }, update);
     }
+
     async toggleActive(id) {
         const scheduler = await Scheduler.findById(id);
         if (!scheduler) throw new Error('Scheduler not found');
