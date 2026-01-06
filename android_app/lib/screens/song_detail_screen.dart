@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'dart:async';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
 import '../models/video.dart';
@@ -27,6 +28,10 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
   VideoPlayerController? _videoController;
   bool _isVideoInitialized = false;
   bool _isPlaying = false;
+  
+  // YouTube Player (WebView)
+  WebViewController? _webViewController;
+  bool _isYouTubeInitialized = false;
   
   // Validation
   bool _titleError = false;
@@ -236,26 +241,50 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
   }
 
   void _initVideoPlayer() {
-    if (_video == null || _video!.status != 'ready') return;
+    if (_video == null) return;
     
-    // Get the video stream URL
-    final baseUrl = ApiService.apiBaseUrl;  // https://jusdown.onrender.com/api
-    final videoUrl = '$baseUrl/videos/${_video!.id}/stream';  // No duplicate /api
-    
-    _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl))
-      ..initialize().then((_) {
-        if (mounted) {
-          setState(() => _isVideoInitialized = true);
-        }
-      }).catchError((e) {
-        debugPrint('Error initializing video player: $e');
-      });
-    
-    _videoController!.addListener(() {
+    // Case 1: Uploaded to YouTube -> Use WebView
+    if (_video!.status == 'uploaded' && _video!.youtubeId != null) {
+      final youtubeUrl = 'https://www.youtube.com/embed/${_video!.youtubeId}?autoplay=0&rel=0';
+      
+      _webViewController = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setBackgroundColor(const Color(0x00000000))
+        ..setNavigationDelegate(
+          NavigationDelegate(
+            onNavigationRequest: (request) {
+              return NavigationDecision.navigate;
+            },
+          ),
+        )
+        ..loadRequest(Uri.parse(youtubeUrl));
+        
       if (mounted) {
-        setState(() => _isPlaying = _videoController!.value.isPlaying);
+        setState(() => _isYouTubeInitialized = true);
       }
-    });
+      return;
+    }
+    
+    // Case 2: Ready (Local) -> Use VideoPlayer
+    if (_video!.status == 'ready') {
+      final baseUrl = ApiService.apiBaseUrl;
+      final videoUrl = '$baseUrl/videos/${_video!.id}/stream';
+      
+      _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl))
+        ..initialize().then((_) {
+          if (mounted) {
+            setState(() => _isVideoInitialized = true);
+          }
+        }).catchError((e) {
+          debugPrint('Error initializing video player: $e');
+        });
+      
+      _videoController!.addListener(() {
+        if (mounted) {
+          setState(() => _isPlaying = _videoController!.value.isPlaying);
+        }
+      });
+    }
   }
 
   Future<void> _togglePlayPause() async {
@@ -376,7 +405,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Video Player with Thumbnail Edit Button (no separate thumbnail preview)
-                    if (_video!.status == 'ready')
+                    if (_video!.status == 'ready' || _video!.status == 'uploaded')
                       Container(
                         decoration: BoxDecoration(
                           color: AppTheme.surfaceDark,
@@ -389,65 +418,71 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                               child: AspectRatio(
                                 aspectRatio: 16 / 9,
-                                child: _isVideoInitialized && _videoController != null
-                                    ? Stack(
-                                        alignment: Alignment.center,
-                                        children: [
-                                          VideoPlayer(_videoController!),
-                                          // Play/Pause Overlay
-                                          GestureDetector(
-                                            onTap: _togglePlayPause,
-                                            child: Container(
-                                              color: Colors.transparent,
-                                              child: AnimatedOpacity(
-                                                opacity: _isPlaying ? 0.0 : 1.0,
-                                                duration: const Duration(milliseconds: 300),
-                                                child: Container(
-                                                  padding: const EdgeInsets.all(16),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.black.withOpacity(0.5),
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                  child: const Icon(Icons.play_arrow, size: 48, color: Colors.white),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          // Thumbnail Edit Icon (top right)
-                                          if (_video!.isEditable)
-                                            Positioned(
-                                              top: 8,
-                                              right: 8,
-                                              child: GestureDetector(
-                                                onTap: _isUploadingThumbnail ? null : _pickAndUploadThumbnail,
-                                                child: Container(
-                                                  padding: const EdgeInsets.all(8),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.black.withOpacity(0.6),
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                  child: _isUploadingThumbnail
-                                                      ? const SizedBox(
-                                                          width: 16,
-                                                          height: 16,
-                                                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                                        )
-                                                      : const Icon(Icons.edit, size: 16, color: Colors.white),
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      )
-                                    : const Center(
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                child: _video!.status == 'uploaded' 
+                                  // YouTube Player (WebView)
+                                  ? (_isYouTubeInitialized && _webViewController != null
+                                      ? WebViewWidget(controller: _webViewController!)
+                                      : const Center(child: CircularProgressIndicator()))
+                                  // Local Player
+                                  : (_isVideoInitialized && _videoController != null
+                                      ? Stack(
+                                          alignment: Alignment.center,
                                           children: [
-                                            CircularProgressIndicator(),
-                                            SizedBox(height: 12),
-                                            Text('Loading video...'),
+                                            VideoPlayer(_videoController!),
+                                            // Play/Pause Overlay
+                                            GestureDetector(
+                                              onTap: _togglePlayPause,
+                                              child: Container(
+                                                color: Colors.transparent,
+                                                child: AnimatedOpacity(
+                                                  opacity: _isPlaying ? 0.0 : 1.0,
+                                                  duration: const Duration(milliseconds: 300),
+                                                  child: Container(
+                                                    padding: const EdgeInsets.all(16),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black.withOpacity(0.5),
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: const Icon(Icons.play_arrow, size: 48, color: Colors.white),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            // Thumbnail Edit Icon (top right)
+                                            if (_video!.isEditable)
+                                              Positioned(
+                                                top: 8,
+                                                right: 8,
+                                                child: GestureDetector(
+                                                  onTap: _isUploadingThumbnail ? null : _pickAndUploadThumbnail,
+                                                  child: Container(
+                                                    padding: const EdgeInsets.all(8),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black.withOpacity(0.6),
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: _isUploadingThumbnail
+                                                        ? const SizedBox(
+                                                            width: 16,
+                                                            height: 16,
+                                                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                                          )
+                                                        : const Icon(Icons.edit, size: 16, color: Colors.white),
+                                                  ),
+                                                ),
+                                              ),
                                           ],
-                                        ),
-                                      ),
+                                        )
+                                      : const Center(
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              CircularProgressIndicator(),
+                                              SizedBox(height: 12),
+                                              Text('Loading video...'),
+                                            ],
+                                          ),
+                                        )),
                               ),
                             ),
                             // Video Controls

@@ -173,8 +173,15 @@ class VideoGenerationWorker {
 
             const videoUrl = `${config.backendUrl}${config.storage.publicUrl}/videos/${videoFilename}`;
 
-            // 5-MINUTE DELAYED PUBLISHING: Add 5 minutes to scheduled time
-            const publishAt = new Date(scheduler.nextRunAt || Date.now());
+            // 5-MINUTE DELAYED PUBLISHING: Ensure strictly 5 minutes AFTER triggers
+            // If nextRunAt is in past (catch-up), use NOW as base. If future, use nextRunAt.
+            let baseTime = new Date();
+            if (scheduler.nextRunAt) {
+                const scheduledTime = new Date(scheduler.nextRunAt);
+                if (scheduledTime > baseTime) baseTime = scheduledTime;
+            }
+
+            const publishAt = new Date(baseTime);
             publishAt.setMinutes(publishAt.getMinutes() + 5);
 
             await VideoModel.update(videoId, {
