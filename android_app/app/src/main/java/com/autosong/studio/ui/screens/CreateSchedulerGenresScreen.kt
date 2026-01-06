@@ -55,7 +55,7 @@ fun CreateSchedulerGenresScreen(
         ) {
             // Progress indicator
             LinearProgressIndicator(
-                progress = { 0.25f },
+                progress = 0.25f,
                 modifier = Modifier.fillMaxWidth(),
                 color = PrimaryColor,
                 trackColor = SurfaceHighlight,
