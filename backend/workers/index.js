@@ -19,8 +19,7 @@ console.log('='.repeat(60));
 console.log('🔧 AutoSong Studio Workers Starting...');
 console.log('='.repeat(60));
 
-// Initialize Firebase
-initializeFirebase();
+// Workers don't need Firebase - it's only used for mobile app
 
 // Start workers
 const generationWorker = require('./videoGenerationWorker');

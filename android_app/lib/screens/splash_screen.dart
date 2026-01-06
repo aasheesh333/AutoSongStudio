@@ -59,7 +59,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         try {
           await appState.loadChannels();
           await appState.loadSchedulers();
-          await appState.loadVideos();
+          await appState.loadVideos(forceRefresh: true);  // Always fresh on app launch
           await appState.loadSettings();
         } catch (e) {
           debugPrint('⚠️ Error loading user data: $e');

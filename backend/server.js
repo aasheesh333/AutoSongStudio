@@ -68,8 +68,12 @@ app.use('/api/user', userRoutes);
 
 // Start Background Workers
 const videoWorker = require('./workers/videoGenerationWorker');
+const uploadWorker = require('./workers/uploadWorker');
+
 // videoWorker is now a singleton instance, no need to instantiate
 videoWorker.run();
+uploadWorker.run();  // CRITICAL: This was missing - scheduled uploads were never executing!
+
 app.set('videoWorker', videoWorker);
 
 // 404 handler

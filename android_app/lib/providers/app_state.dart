@@ -304,8 +304,9 @@ class AppState extends ChangeNotifier {
   Future<void> loadVideos({String? schedulerId, String? status, bool forceRefresh = false, bool loadMore = false}) async {
     if (_currentUser == null) return;
     
-    // Use cache if not forcing refresh and not loading more
-    if (!forceRefresh && !loadMore && _videosLastFetched != null) {
+    // Use cache ONLY if we have actual cached data (not empty) and not forcing refresh
+    // First load must always fetch from server
+    if (!forceRefresh && !loadMore && _videosLastFetched != null && _videos.isNotEmpty) {
       return; // Use cached data
     }
     
