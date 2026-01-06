@@ -10,6 +10,16 @@ const UserSchema = new mongoose.Schema({
     sunoApiKey: { type: String, default: null },
     videosThisMonth: { type: Number, default: 0 },
     lastResetDate: { type: Date, default: Date.now },
+    // Data persistence fields
+    lastActiveAt: { type: Date, default: Date.now },  // For 24-hour engagement rule
+    channels: [{
+        id: String,
+        title: String,
+        thumbnailUrl: String,
+        subscriberCount: String,
+        videoCount: String
+    }],
+    selectedChannelId: { type: String, default: null },
     createdAt: { type: Date, default: Date.now }
 });
 
@@ -69,6 +79,7 @@ const VideoSchema = new mongoose.Schema({
         enum: ['queued', 'processing', 'ready', 'uploading', 'uploaded', 'failed']
     },
     error: String,
+    failedAt: { type: Date, default: null },  // For 7-day cleanup of failed videos
     locked: { type: Boolean, default: false },
     uploadedAt: Date,
     createdAt: { type: Date, default: Date.now },
@@ -230,22 +241,30 @@ class VideoModel {
         return this.update(id, update);
     }
     async markAsUploaded(id, youtubeId) {
-        // Here we implement the DELETION Logic requested by user
-        // But we handle DB update here. Worker handles file deletion.
+        // Clear ALL data except YouTube URL - file cleanup done by worker
         const update = {
             status: 'uploaded',
             youtubeId,
             locked: true,
             uploadedAt: new Date(),
-            // Clear URLs to prevent serving files that are deleted
+            // Clear all file paths and URLs (files already deleted by worker)
+            audioPath: null,
             audioUrl: null,
+            thumbnailPath: null,
             thumbnailUrl: null,
+            videoPath: null,
             videoUrl: null,
-            // We KEEP paths for the worker to find and delete them, then worker clears them?
-            // Or we assume worker deletes them and we just clear the reference safe here.
-            // Let's clear references here.
+            // Clear lyrics (keep title, description, tags for display)
+            lyrics: null,
         };
         return this.update(id, update);
+    }
+    async markAsFailed(id, error) {
+        return this.update(id, {
+            status: 'failed',
+            error,
+            failedAt: new Date()  // For 7-day retention cleanup
+        });
     }
     async findReadyForUpload() {
         // Check for scheduled time <= now

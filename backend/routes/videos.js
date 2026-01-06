@@ -14,15 +14,31 @@ const deleteVideoFiles = (video) => {
     safeDelete(video.thumbnailPath);
 };
 
-// GET /api/videos
+// GET /api/videos - with pagination support
 router.get('/', async (req, res) => {
-    const { userId, channelId, schedulerId, status, limit = 50 } = req.query;
+    const { userId, channelId, schedulerId, status, limit = 10, skip = 0 } = req.query;
     if (!userId) return res.status(400).json({ error: 'userId required' });
 
     try {
         let videos;
-        if (schedulerId) videos = await VideoModel.findByScheduler(schedulerId, parseInt(limit));
-        else videos = await VideoModel.findByUser(userId, channelId, status);
+        if (schedulerId) {
+            videos = await VideoModel.findByScheduler(schedulerId, parseInt(limit));
+        } else {
+            // Use pagination for user videos
+            const mongoose = require('mongoose');
+            const Video = mongoose.model('Video');
+
+            const query = { userId };
+            if (channelId) query.channelId = channelId;
+            if (status) query.status = status;
+
+            const docs = await Video.find(query)
+                .sort({ createdAt: -1 })
+                .skip(parseInt(skip))
+                .limit(parseInt(limit));
+
+            videos = docs.map(d => ({ ...d.toObject(), id: d._id.toString() }));
+        }
         res.json({ videos });
     } catch (error) {
         res.status(500).json({ error: error.message });

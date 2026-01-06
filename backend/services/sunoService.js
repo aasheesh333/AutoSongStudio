@@ -64,6 +64,7 @@ class SunoService {
 
     /**
      * Make authenticated request to Suno API
+     * Enhanced to detect credits exhaustion in various formats
      */
     async makeRequest(endpoint, method = 'GET', data = null, apiKey) {
         await this.checkRateLimit();
@@ -81,15 +82,34 @@ class SunoService {
                 }
             });
 
-            return response.data;
+            // Check for credits exhaustion in response body (some APIs return 200 with error in body)
+            const respData = response.data;
+            if (respData.code === 429 ||
+                respData.code === 402 ||
+                (respData.msg && (
+                    respData.msg.toLowerCase().includes('credit') ||
+                    respData.msg.toLowerCase().includes('insufficient') ||
+                    respData.msg.toLowerCase().includes('quota') ||
+                    respData.msg.toLowerCase().includes('limit')
+                ))) {
+                throw new Error('CREDITS_EXHAUSTED: Suno API credits or quota exhausted. Please add more credits.');
+            }
+
+            return respData;
         } catch (error) {
+            // Handle HTTP-level errors
+            if (error.response?.status === 429 || error.response?.status === 402) {
+                throw new Error('CREDITS_EXHAUSTED: Suno API rate limit or credits exhausted. Please check your account.');
+            }
+
             // Don't log 404s here, let the caller handle them (e.g. checkCredits)
             if (error.response?.status !== 404) {
                 console.error('[Suno] API Error:', error.response?.data || error.message);
             }
 
-            if (error.response?.status === 429) {
-                throw new Error('Insufficient Suno credits. Please check your account.');
+            // Re-throw our custom credits error
+            if (error.message.includes('CREDITS_EXHAUSTED')) {
+                throw error;
             }
 
             throw new Error(`Suno API failed: ${error.response?.data?.message || error.message}`);

@@ -14,39 +14,61 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Timer? _pollingTimer;
+  // REMOVED: Auto-polling timer (now manual refresh only per user request)
+  late ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
-    _refreshData();
-    _startPolling();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+    
+    // Send heartbeat for 24-hour engagement rule
+    _sendHeartbeat();
+    
+    // Load data (will use cache if available)
+    _loadData();
   }
 
   @override
   void dispose() {
-    _pollingTimer?.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  void _startPolling() {
-    if (_pollingTimer != null && _pollingTimer!.isActive) return;
-    
-    // Poll every 5 seconds for real-time updates
-    _pollingTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
-      if (!mounted) return;
-      
-      final appState = Provider.of<AppState>(context, listen: false);
-      // Always poll to get live updates
-      await appState.loadVideos();
-    });
+  /// Send heartbeat to server - required for free users to keep schedulers running
+  void _sendHeartbeat() {
+    final appState = Provider.of<AppState>(context, listen: false);
+    appState.sendHeartbeat();
   }
 
-  Future<void> _refreshData() async {
+  /// Detect when user scrolls near bottom for infinite scroll pagination
+  void _onScroll() {
+    if (_scrollController.position.pixels >= 
+        _scrollController.position.maxScrollExtent - 200) {
+      final appState = Provider.of<AppState>(context, listen: false);
+      if (appState.hasMoreVideos && !appState.isLoading) {
+        appState.loadVideos(loadMore: true);
+      }
+    }
+  }
+
+  /// Load data without forcing refresh (uses cache)
+  Future<void> _loadData() async {
     final appState = Provider.of<AppState>(context, listen: false);
     await Future.wait([
       appState.loadSchedulers(),
       appState.loadVideos(),
+      appState.loadSettings(),
+    ]);
+  }
+
+  /// Manual refresh - force fetches fresh data from server
+  Future<void> _refreshData() async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    await Future.wait([
+      appState.loadSchedulers(),
+      appState.loadVideos(forceRefresh: true),
       appState.loadSettings(),
     ]);
   }
@@ -101,6 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: RefreshIndicator(
           onRefresh: _refreshData,
           child: CustomScrollView(
+            controller: _scrollController,  // For infinite scroll pagination
             slivers: [
               // App Bar
               SliverToBoxAdapter(

@@ -68,14 +68,23 @@ class ImageGenerationService {
     }
 
     /**
-     * Generate optimized prompt for music cover art with emotion
+     * Generate optimized prompt for music cover art with MAXIMUM variety
+     * Each thumbnail should be unique - uses lyrics context and timestamp seed
      */
     generatePrompt(genres, lyrics, title) {
         // Extract emotion from lyrics
         const emotionalContext = this.extractEmotion(lyrics);
 
-        // Extract key words from title for more relevance
-        const titleWords = title.split(' ').slice(0, 3).join(' ');
+        // VARIETY: Extract a random line from lyrics to inspire the image
+        const lyricsLines = lyrics.split('\n').filter(l => l.trim().length > 10);
+        const randomLyricLine = lyricsLines.length > 0
+            ? lyricsLines[Math.floor(Math.random() * lyricsLines.length)].trim()
+            : '';
+
+        // Convert lyric line to visual concept (avoid using actual text)
+        const lyricVisual = randomLyricLine.length > 0
+            ? `inspired by the concept: "${randomLyricLine.substring(0, 50)}"`
+            : '';
 
         // Genre-specific visuals (including Indian/Bollywood)
         const genreVisuals = {
@@ -84,35 +93,41 @@ class ImageGenerationService {
             'synthwave': 'retro 80s neon grid, pink and cyan sunset, palm trees, retrofuturistic',
             'ambient': 'ethereal cloudscape, peaceful mountains, soft pastel aurora, calm reflective water',
             'classical': 'grand concert hall, elegant piano, golden chandelier lighting, velvet curtains',
-            'trap': 'urban street art, neon graffiti, city night, bold colors',
-            'phonk': 'dark urban drifting, purple and red smoke, night city, aggressive aesthetic',
-            'deep house': 'tropical beach sunset, ocean waves, purple orange gradient sky',
+            'trap': 'urban street art, neon graffiti walls, city night scene, bold contrasting colors',
+            'phonk': 'dark urban drifting cars, purple and red smoke effects, night city skyline',
+            'deep house': 'tropical beach sunset, ocean waves crashing, purple orange gradient sky',
             'acoustic': 'wooden guitar by window, natural forest light, cozy cabin atmosphere',
             'bollywood': 'cinematic Indian aesthetic, vibrant colors, dramatic lighting, emotional depth',
             'hindi': 'romantic Indian setting, marigold flowers, warm golden hour, cultural richness',
             'romantic': 'sunset silhouette of couple, warm golden tones, dreamy atmosphere, soft bokeh',
-            'pop': 'vibrant modern aesthetic, dynamic colors, stylish urban setting',
-            'rock': 'electric guitar, stage lights, dramatic smoke, powerful energy',
-            'edm': 'colorful laser lights, DJ booth, festival atmosphere, electric energy',
+            'pop': 'vibrant modern aesthetic, dynamic colors, stylish urban setting, bright energy',
+            'rock': 'electric guitar close-up, stage lights, dramatic smoke effects, powerful energy',
+            'edm': 'colorful laser lights, festival crowd silhouette, electric atmosphere',
             'rnb': 'smooth urban night, city lights reflection, intimate mood lighting',
             'soul': 'warm studio lighting, vinyl records, vintage microphone, authentic emotion',
-            'hiphop': 'urban street culture, graffiti art, bold typography, authentic vibe'
+            'hiphop': 'urban street culture, graffiti murals, authentic vibe, streetwear aesthetic',
+            'sad': 'rainy window, melancholic blue tones, solitary figure, emotional atmosphere',
+            'happy': 'bright sunshine, vibrant flowers, joyful colors, celebration mood'
         };
 
-        // Random visual elements for variety
+        // MORE random visual elements for variety
         const randomElements = [
-            'golden hour lighting',
-            'blue hour mood',
-            'dramatic silhouette',
-            'soft pastel palette',
-            'vibrant neon accents',
-            'misty atmosphere',
-            'cinematic depth of field',
-            'ethereal glow',
-            'moody shadows',
-            'dreamy bokeh effect',
-            'abstract geometric patterns',
-            'flowing fabric texture'
+            'golden hour lighting with lens flare',
+            'blue hour mood, twilight atmosphere',
+            'dramatic silhouette against sunset',
+            'soft pastel color palette',
+            'vibrant neon accents and reflections',
+            'misty atmospheric fog',
+            'cinematic depth of field, bokeh',
+            'ethereal glowing particles',
+            'moody contrasting shadows',
+            'dreamy double exposure effect',
+            'abstract geometric overlays',
+            'flowing silk fabric texture',
+            'rain droplets on glass',
+            'starry night sky background',
+            'aurora borealis northern lights',
+            'underwater light rays'
         ];
 
         // Find matching genre visual
@@ -124,13 +139,14 @@ class ImageGenerationService {
             }
         }
 
-        // Pick random element for variety
-        const randomElement = randomElements[Math.floor(Math.random() * randomElements.length)];
+        // Pick MULTIPLE random elements for more variety
+        const randomElement1 = randomElements[Math.floor(Math.random() * randomElements.length)];
+        const randomElement2 = randomElements[Math.floor(Math.random() * randomElements.length)];
 
-        // Construct highly varied prompt based on lyrics theme
-        const prompt = `masterpiece, best quality, highly detailed digital art, ${genreVisual}, ${emotionalContext}, ${randomElement}, professional music album cover art, cinematic composition, dramatic lighting, 8k resolution, trending on artstation, emotional and evocative, absolutely no text, no words, no letters, no watermark, no signature`;
+        // Construct highly varied prompt - STRICTLY NO TEXT
+        const prompt = `masterpiece, award-winning digital art, ${genreVisual}, ${emotionalContext}, ${randomElement1}, ${randomElement2}, ${lyricVisual}, professional music album cover, cinematic composition, dramatic lighting, 8k ultra HD, trending on artstation, emotionally evocative, ((absolutely no text)), ((no words)), ((no letters)), ((no typography)), ((no writing)), no watermark, no signature, no logos`;
 
-        console.log(`[ImageGen] Generated prompt: ${prompt.substring(0, 100)}...`);
+        console.log(`[ImageGen] Generated unique prompt with seed context`);
         return prompt;
     }
 

@@ -53,13 +53,21 @@ router.get('/callback', async (req, res) => {
             user = await UserModel.createUser({
                 email: channelId,
                 youtubeRefreshToken: tokens.refreshToken,
-                plan: 'free'
+                plan: 'free',
+                // Store channels for data persistence
+                channels: channels,
+                selectedChannelId: channels[0].id,
+                lastActiveAt: new Date()
             });
         } else {
-            // Update refresh token
+            // Update on every login - refresh token, channels, and activity timestamp
             await UserModel.update(user.id, {
-                youtubeRefreshToken: tokens.refreshToken
+                youtubeRefreshToken: tokens.refreshToken,
+                channels: channels,  // Update channels in case user added new ones
+                lastActiveAt: new Date()
             });
+            // Refetch user to get updated data
+            user = await UserModel.findById(user.id);
         }
 
         if (req.query.state === 'mobile_app') {

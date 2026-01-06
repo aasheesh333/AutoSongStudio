@@ -38,7 +38,7 @@ app.use('/api/', limiter);
 
 // Request logging
 app.use((req, res, next) => {
-    console.log(`${ req.method } ${ req.path } - ${ new Date().toISOString() } `);
+    console.log(`${req.method} ${req.path} - ${new Date().toISOString()} `);
     next();
 });
 
@@ -57,12 +57,14 @@ const schedulerRoutes = require('./routes/schedulers');
 const videoRoutes = require('./routes/videos');
 const settingsRoutes = require('./routes/settings');
 const webhookRoutes = require('./routes/webhooks');
+const userRoutes = require('./routes/user');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/schedulers', schedulerRoutes);
 app.use('/api/videos', videoRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/user', userRoutes);
 
 // Start Background Workers
 const videoWorker = require('./workers/videoGenerationWorker');
@@ -90,9 +92,9 @@ const PORT = config.port;
 const server = app.listen(PORT, () => {
     console.log('='.repeat(50));
     console.log(`🚀 AutoSong Studio Backend`);
-    console.log(`📡 Server running on port ${ PORT } `);
-    console.log(`🌍 Environment: ${ config.nodeEnv } `);
-    console.log(`🔗 Base URL: ${ config.baseUrl } `);
+    console.log(`📡 Server running on port ${PORT} `);
+    console.log(`🌍 Environment: ${config.nodeEnv} `);
+    console.log(`🔗 Base URL: ${config.baseUrl} `);
     console.log('='.repeat(50));
 });
 

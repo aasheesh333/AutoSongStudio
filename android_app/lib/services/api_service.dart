@@ -179,11 +179,14 @@ class ApiService {
 
   // ==================== VIDEOS ====================
 
+  /// Get videos with pagination support
   Future<List<Video>> getVideos(
     String userId, {
     String? channelId,
     String? schedulerId,
     String? status,
+    int skip = 0,
+    int limit = 10,
   }) async {
     final response = await _dio.get(
       ApiConstants.videos,
@@ -192,6 +195,8 @@ class ApiService {
         if (channelId != null) 'channelId': channelId,
         if (schedulerId != null) 'schedulerId': schedulerId,
         if (status != null) 'status': status,
+        'skip': skip,
+        'limit': limit,
       },
     );
     
@@ -277,5 +282,26 @@ class ApiService {
       queryParameters: {'userId': userId},
     );
     return response.data as Map<String, dynamic>;
+  }
+
+  // ==================== USER ACTIVITY ====================
+
+  /// Send heartbeat to server - required for 24-hour engagement rule
+  Future<void> sendHeartbeat(String userId) async {
+    await _dio.post(
+      '/user/heartbeat',
+      data: {'userId': userId},
+    );
+  }
+
+  /// Save channel selection to server for cross-device persistence
+  Future<void> selectChannel(String userId, String channelId) async {
+    await _dio.post(
+      '/user/select-channel',
+      data: {
+        'userId': userId,
+        'channelId': channelId,
+      },
+    );
   }
 }

@@ -22,6 +22,15 @@ class AppState extends ChangeNotifier {
   List<Video> _videos = [];
   Map<String, dynamic>? _settings;
 
+  // Caching timestamps - only refresh on manual pull
+  DateTime? _videosLastFetched;
+  DateTime? _schedulersLastFetched;
+  
+  // Pagination for videos
+  int _videoPage = 0;
+  static const int _pageSize = 10;
+  bool _hasMoreVideos = true;
+
   // Getters
   User? get currentUser => _currentUser;
   List<YouTubeChannel> get channels => _channels;
@@ -31,6 +40,7 @@ class AppState extends ChangeNotifier {
   List<Scheduler> get schedulers => _schedulers;
   List<Video> get videos => _videos;
   Map<String, dynamic>? get settings => _settings;
+  bool get hasMoreVideos => _hasMoreVideos;
 
   AppState() {
     // Don't call async method in constructor without awaiting
@@ -288,16 +298,39 @@ class AppState extends ChangeNotifier {
 
   // ==================== VIDEOS ====================
 
-  Future<void> loadVideos({String? schedulerId, String? status}) async {
+  /// Load videos with caching and pagination
+  /// forceRefresh: true to ignore cache (pull-to-refresh)
+  /// loadMore: true to load next page (infinite scroll)
+  Future<void> loadVideos({String? schedulerId, String? status, bool forceRefresh = false, bool loadMore = false}) async {
     if (_currentUser == null) return;
     
+    // Use cache if not forcing refresh and not loading more
+    if (!forceRefresh && !loadMore && _videosLastFetched != null) {
+      return; // Use cached data
+    }
+    
     try {
-      _videos = await _api.getVideos(
+      if (loadMore) {
+        _videoPage++;
+      } else {
+        // Fresh load - reset pagination
+        _videoPage = 0;
+        _videos = [];
+        _hasMoreVideos = true;
+      }
+      
+      final newVideos = await _api.getVideos(
         _currentUser!.id,
         channelId: _selectedChannel?.id,
         schedulerId: schedulerId,
         status: status,
+        skip: _videoPage * _pageSize,
+        limit: _pageSize,
       );
+      
+      _videos.addAll(newVideos);
+      _hasMoreVideos = newVideos.length == _pageSize;
+      _videosLastFetched = DateTime.now();
       notifyListeners();
     } catch (e) {
       print('Error loading videos: $e');
@@ -363,5 +396,39 @@ class AppState extends ChangeNotifier {
   Future<Map<String, dynamic>> getQuotaUsage() async {
     if (_currentUser == null) return {};
     return await _api.getQuotaUsage(_currentUser!.id);
+  }
+
+  // ==================== USER ACTIVITY (24-Hour Rule) ====================
+
+  /// Send heartbeat to server - call this when app opens or becomes active
+  /// This is required for free users to keep schedulers running
+  Future<void> sendHeartbeat() async {
+    if (_currentUser == null) return;
+    
+    try {
+      await _api.sendHeartbeat(_currentUser!.id);
+      print('✅ Heartbeat sent successfully');
+    } catch (e) {
+      print('Error sending heartbeat: $e');
+    }
+  }
+
+  /// Save selected channel to server for persistence across devices
+  Future<void> selectChannelOnServer(String channelId) async {
+    if (_currentUser == null) return;
+    
+    try {
+      await _api.selectChannel(_currentUser!.id, channelId);
+    } catch (e) {
+      print('Error saving channel selection: $e');
+    }
+  }
+
+  /// Clear video cache - use when channel changes
+  void clearVideoCache() {
+    _videosLastFetched = null;
+    _videos = [];
+    _videoPage = 0;
+    _hasMoreVideos = true;
   }
 }

@@ -94,11 +94,22 @@ class VideoGenerationWorker {
             const user = await UserModel.findById(scheduler.userId);
             if (!user) {
                 console.error(`[Worker] User NOT found for ID: ${scheduler.userId}`);
-                // Try finding by email if userId looks like a channelId (legacy)
-                if (scheduler.userId.includes('@') || scheduler.userId.length > 20) {
-                    // Potential fallback if we had email, but we only have userId here.
-                }
                 throw new Error(`User not found: ${scheduler.userId}`);
+            }
+
+            // 24-HOUR RULE: Check if free user has opened app in last 24 hours
+            if (user.plan === 'free') {
+                const lastActiveAt = new Date(user.lastActiveAt || 0);
+                const hoursSinceActive = (Date.now() - lastActiveAt.getTime()) / (1000 * 60 * 60);
+
+                if (hoursSinceActive > 24) {
+                    console.log(`[Worker] ⚠️ Free user ${scheduler.userId} inactive for ${hoursSinceActive.toFixed(1)} hours. Pausing all schedulers.`);
+                    await SchedulerModel.deactivateAllForUser(
+                        scheduler.userId,
+                        'App not opened in 24 hours. Please open the app and re-enable your schedulers.'
+                    );
+                    throw new Error('User inactive for 24+ hours - schedulers paused');
+                }
             }
 
             // Create Video Record first
@@ -161,11 +172,16 @@ class VideoGenerationWorker {
             await ffmpegService.createVideoSafe(audioPath, thumbnailPath, videoPath, true);
 
             const videoUrl = `${config.backendUrl}${config.storage.publicUrl}/videos/${videoFilename}`;
+
+            // 5-MINUTE DELAYED PUBLISHING: Add 5 minutes to scheduled time
+            const publishAt = new Date(scheduler.nextRunAt || Date.now());
+            publishAt.setMinutes(publishAt.getMinutes() + 5);
+
             await VideoModel.update(videoId, {
                 videoPath,
                 videoUrl,
                 status: 'ready',
-                scheduledPublishAt: scheduler.nextRunAt
+                scheduledPublishAt: publishAt
             });
 
             console.log(`[Worker] ✅ Complete: ${videoId}`);
@@ -224,14 +240,46 @@ class VideoGenerationWorker {
         }
     }
 
+    // 7-DAY CLEANUP: Remove failed videos older than 7 days
+    async cleanupOldFailedVideos() {
+        try {
+            const mongoose = require('mongoose');
+            const Video = mongoose.model('Video');
+
+            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+            const oldFailedVideos = await Video.find({
+                status: 'failed',
+                failedAt: { $lt: sevenDaysAgo }
+            });
+
+            for (const video of oldFailedVideos) {
+                await this.deleteVideoFiles({ id: video._id.toString(), ...video.toObject() });
+                await VideoModel.delete(video._id.toString());
+                console.log(`[Worker] 🗑️ Cleaned up old failed video: ${video._id}`);
+            }
+
+            if (oldFailedVideos.length > 0) {
+                console.log(`[Worker] Cleaned up ${oldFailedVideos.length} old failed videos`);
+            }
+        } catch (e) {
+            console.error('[Worker] Cleanup error:', e.message);
+        }
+    }
+
     async run() {
         console.log('[Worker] Started (MongoDB Version)');
-        // Recover stale videos
+
+        // Run cleanup on startup
+        await this.cleanupOldFailedVideos();
+
         const mongoose = require('mongoose');
         const Video = mongoose.model('Video');
 
         // Find 'processing' videos older than 10 mins and fail them
         // ... (simplified for brevity)
+
+        // Run cleanup daily
+        setInterval(() => this.cleanupOldFailedVideos(), 24 * 60 * 60 * 1000);
 
         setInterval(async () => {
             if (this.isGenerating) return;
