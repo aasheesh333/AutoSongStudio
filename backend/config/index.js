@@ -5,7 +5,7 @@ module.exports = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: process.env.PORT || 3000,
   baseUrl: process.env.BASE_URL || 'http://localhost:3000',  // Suno API base URL
-  backendUrl: process.env.BACKEND_URL || 'http://51.222.156.30:3000',  // User's VPS IP for Android access
+  backendUrl: process.env.BACKEND_URL || 'https://51.222.156.30.sslip.io',  // User's VPS Domain (HTTPS)
 
   // Database & Storage
   mongo: {
