@@ -39,7 +39,7 @@ jobs:
     - name: Build Release APK
       run: |
         cd android_app
-        ./gradlew assembleRelease --no-daemon --retry --build-cache
+        ./gradlew assembleRelease --no-daemon --build-cache
       env:
         GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2 -Dorg.gradle.parallel=true"
 
