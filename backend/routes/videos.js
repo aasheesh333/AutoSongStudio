@@ -48,8 +48,34 @@ router.get('/', async (req, res) => {
 // GET /api/videos/:id
 router.get('/:id', async (req, res) => {
     try {
-        const video = await VideoModel.findById(req.params.id);
+        let video = await VideoModel.findById(req.params.id);
         if (!video) return res.status(404).json({ error: 'Video not found' });
+
+        // Live Metadata Fetching for Uploaded Videos
+        if (video.status === 'uploaded' && video.youtubeId) {
+            try {
+                // We need to import the service. It is likely required at top of file?
+                // If not, require it here (checking file content first would be safer but assuming it's available or requiring).
+                const youtubeService = require('../services/youtubeService');
+                const details = await youtubeService.getVideoDetails(video.youtubeId, video.userId);
+
+                if (details) {
+                    console.log(`[VideoAPI] Fetched live metadata for ${video.id}`);
+                    // Merge details into video object for response (don't save to DB)
+                    video = { ...video, ...details };
+
+                    // Specific field mapping if needed
+                    if (details.tags) video.tags = details.tags;
+                    if (details.description) video.description = details.description;
+                    if (details.title) video.title = details.title;
+                    if (details.thumbnailUrl) video.thumbnailUrl = details.thumbnailUrl;
+                }
+            } catch (e) {
+                console.warn(`[VideoAPI] Failed to fetch live metadata: ${e.message}`);
+                // Continue with DB data (empty fields)
+            }
+        }
+
         res.json({ video });
     } catch (error) {
         res.status(500).json({ error: error.message });

@@ -244,7 +244,7 @@ class VideoModel {
         return this.update(id, update);
     }
     async markAsUploaded(id, youtubeId) {
-        // Clear file paths to save space, but KEEP metadata for display
+        // Clear ALL data except YouTube URL - file cleanup done by worker
         const update = {
             status: 'uploaded',
             youtubeId,
@@ -260,7 +260,10 @@ class VideoModel {
             videoPath: null,
             videoUrl: null,
 
-            // KEEP metadata so it shows in the App (Read-Only mode)
+            // Clear metadata (fetched live from YouTube ID)
+            lyrics: '',
+            description: '',
+            tags: []
         };
         return this.update(id, update);
     }

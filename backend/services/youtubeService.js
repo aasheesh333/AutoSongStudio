@@ -129,6 +129,58 @@ class YouTubeService {
     }
 
     /**
+     * Get video details from YouTube Data API
+     */
+    async getVideoDetails(videoId, userId) {
+        try {
+            // Get user tokens
+            const UserModel = require('../models').UserModel; // Circular dependency if at top
+            const user = await UserModel.findById(userId);
+            if (!user || !user.youtubeRefreshToken) throw new Error('User not authenticated with YouTube');
+
+            // Refresh tokens
+            const tokens = await this.refreshAccessToken(user.youtubeRefreshToken);
+            const accessToken = tokens.accessToken;
+
+            // Fetch video details
+            const google = require('googleapis').google;
+            const youtube = google.youtube('v3');
+
+            const response = await youtube.videos.list({
+                auth: this.oauth2Client, // Client has credentials set by refreshAccessToken?
+                // refreshAccessToken sets credentials on `this.oauth2Client` (line 69/90)
+                // Wait, refreshAccessToken sets it.
+                part: 'snippet,status,statistics',
+                id: videoId
+            });
+
+            if (!response.data.items || response.data.items.length === 0) {
+                return null;
+            }
+
+            const item = response.data.items[0];
+            const snippet = item.snippet;
+
+            return {
+                title: snippet.title,
+                description: snippet.description,
+                tags: snippet.tags || [],
+                // Get highest quality thumbnail available
+                thumbnailUrl: snippet.thumbnails.maxres?.url ||
+                    snippet.thumbnails.standard?.url ||
+                    snippet.thumbnails.high?.url ||
+                    snippet.thumbnails.medium?.url,
+                viewCount: item.statistics?.viewCount,
+                likeCount: item.statistics?.likeCount
+            };
+
+        } catch (error) {
+            console.error(`[YouTubeService] Failed to get video details for ${videoId}: ${error.message}`);
+            return null; // Fail gracefully
+        }
+    }
+
+    /**
      * Upload video to YouTube
      */
     async uploadVideo(videoPath, metadata, accessToken, userId) {
