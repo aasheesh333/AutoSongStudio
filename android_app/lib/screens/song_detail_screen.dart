@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
+import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
 import '../models/video.dart';
@@ -231,6 +235,84 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
     }
   }
 
+  /// Download audio file to device Downloads folder
+  Future<void> _downloadAudio() async {
+    if (_video?.audioUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No audio URL available')),
+      );
+      return;
+    }
+
+    // Request storage permission
+    final status = await Permission.storage.request();
+    if (!status.isGranted) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Storage permission required for download')),
+        );
+      }
+      return;
+    }
+
+    // Show download started
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Downloading audio...')),
+      );
+    }
+
+    try {
+      final dio = Dio();
+      
+      // Get Downloads directory
+      Directory? downloadsDir;
+      if (Platform.isAndroid) {
+        downloadsDir = Directory('/storage/emulated/0/Download');
+      } else {
+        downloadsDir = await getApplicationDocumentsDirectory();
+      }
+
+      // Create filename from title
+      final safeTitle = (_video!.title)
+          .replaceAll(RegExp(r'[^\w\s-]'), '')
+          .replaceAll(' ', '_')
+          .substring(0, _video!.title.length > 50 ? 50 : _video!.title.length);
+      final filename = '${safeTitle}_${_video!.id}.mp3';
+      final savePath = '${downloadsDir.path}/$filename';
+
+      await dio.download(
+        _video!.audioUrl!,
+        savePath,
+        onReceiveProgress: (received, total) {
+          if (total != -1) {
+            debugPrint('Download progress: ${(received / total * 100).toStringAsFixed(0)}%');
+          }
+        },
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Audio saved to: $filename'),
+            backgroundColor: AppTheme.success,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Download error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Download failed: ${e.toString()}'),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   void dispose() {
     _pollingTimer?.cancel();
@@ -385,18 +467,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                         // Download Audio Option
                         if (_video!.audioUrl != null)
                           PopupMenuItem(
-                            onTap: () async {
-                              final url = Uri.parse(_video!.audioUrl!);
-                              if (await canLaunchUrl(url)) {
-                                await launchUrl(url, mode: LaunchMode.externalApplication);
-                              } else {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Could not launch download URL')),
-                                  );
-                                }
-                              }
-                            },
+                            onTap: _downloadAudio,
                             child: const Row(
                               children: [
                                 Icon(Icons.download, color: AppTheme.primaryColor),

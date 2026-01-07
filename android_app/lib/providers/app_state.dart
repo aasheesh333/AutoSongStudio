@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -30,6 +31,10 @@ class AppState extends ChangeNotifier {
   int _videoPage = 0;
   static const int _pageSize = 10;
   bool _hasMoreVideos = true;
+
+  // Polling timer for real-time updates
+  Timer? _videoPollingTimer;
+  bool _isPolling = false;
 
   // Getters
   User? get currentUser => _currentUser;
@@ -436,4 +441,29 @@ class AppState extends ChangeNotifier {
     _videoPage = 0;
     _hasMoreVideos = true;
   }
+
+  // ==================== REAL-TIME POLLING ====================
+
+  /// Start polling for video updates every 5 seconds
+  void startVideoPolling() {
+    if (_isPolling) return;
+    _isPolling = true;
+    print('[AppState] Starting video polling (5s interval)');
+    
+    _videoPollingTimer?.cancel();
+    _videoPollingTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      loadVideos(forceRefresh: true);
+    });
+  }
+
+  /// Stop polling
+  void stopVideoPolling() {
+    _isPolling = false;
+    _videoPollingTimer?.cancel();
+    _videoPollingTimer = null;
+    print('[AppState] Stopped video polling');
+  }
+
+  /// Check if polling is active
+  bool get isPolling => _isPolling;
 }

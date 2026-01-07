@@ -28,10 +28,19 @@ class _HomeScreenState extends State<HomeScreen> {
     
     // Load data (will use cache if available)
     _loadData();
+    
+    // Start real-time polling (5-second interval)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final appState = Provider.of<AppState>(context, listen: false);
+      appState.startVideoPolling();
+    });
   }
 
   @override
   void dispose() {
+    // Stop polling when leaving screen
+    final appState = Provider.of<AppState>(context, listen: false);
+    appState.stopVideoPolling();
     _scrollController.dispose();
     super.dispose();
   }
