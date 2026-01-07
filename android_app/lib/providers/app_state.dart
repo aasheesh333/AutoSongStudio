@@ -314,13 +314,12 @@ class AppState extends ChangeNotifier {
       if (loadMore) {
         _videoPage++;
       } else {
-        // Fresh load - reset pagination
+        // Fresh load - reset pagination logic, but don't clear data yet
         _videoPage = 0;
-        _videos = [];
         _hasMoreVideos = true;
       }
       
-      final newVideos = await _api.getVideos(
+      final videos = await _api.getVideos(
         _currentUser!.id,
         channelId: _selectedChannel?.id,
         schedulerId: schedulerId,
@@ -329,8 +328,13 @@ class AppState extends ChangeNotifier {
         limit: _pageSize,
       );
       
-      _videos.addAll(newVideos);
-      _hasMoreVideos = newVideos.length == _pageSize;
+      if (loadMore) {
+        _videos.addAll(videos);
+      } else {
+        _videos = videos;
+      }
+      
+      _hasMoreVideos = videos.length == _pageSize;
       _videosLastFetched = DateTime.now();
       notifyListeners();
     } catch (e) {

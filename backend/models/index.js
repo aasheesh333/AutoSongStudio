@@ -177,9 +177,11 @@ class SchedulerModel {
         return this._transform(scheduler);
     }
     async deactivateAllForUser(userId, reason = null) {
+        console.log(`[SchedulerModel] Deactivating all for user: ${userId}, Reason: ${reason}`);
         const update = { active: false };
         if (reason) update.error = reason;
-        await Scheduler.updateMany({ userId }, update);
+        const result = await Scheduler.updateMany({ userId }, update);
+        console.log(`[SchedulerModel] Deactivated count: ${result.modifiedCount || result.nModified}`);
     }
 
     async toggleActive(id) {
@@ -242,14 +244,14 @@ class VideoModel {
         return this.update(id, update);
     }
     async markAsUploaded(id, youtubeId) {
-        // Clear ALL data except YouTube URL - file cleanup done by worker
+        // Clear file paths to save space, but KEEP metadata for display
         const update = {
             status: 'uploaded',
             youtubeId,
             locked: true,
             uploadedAt: new Date(),
 
-            // Clear all file paths and URLs (files already deleted by worker)
+            // Clear all file paths and URLs (files deleted by user retention policy)
             audioPath: null,
             audioUrl: null,
             thumbnailPath: null,
@@ -258,10 +260,7 @@ class VideoModel {
             videoPath: null,
             videoUrl: null,
 
-            // Clear metadata (details non-editable as requested)
-            lyrics: '',
-            description: '',
-            tags: []
+            // KEEP metadata so it shows in the App (Read-Only mode)
         };
         return this.update(id, update);
     }
