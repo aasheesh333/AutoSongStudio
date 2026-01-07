@@ -11,7 +11,7 @@ const axios = require('axios');
 class VideoGenerationWorker {
     constructor() {
         this.isGenerating = false;
-        this.storageDir = config.storage.localPath;
+        this.storageDir = config.storage.path;
 
         // Ensure directories exist
         ['audio', 'thumbnails', 'videos'].forEach(dir => {
