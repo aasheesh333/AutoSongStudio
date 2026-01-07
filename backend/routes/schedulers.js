@@ -188,10 +188,48 @@ router.post('/:id/toggle', async (req, res) => {
     const { id } = req.params;
 
     try {
-        const updated = await SchedulerModel.toggleActive(id);
-        console.log(`[Schedulers] Toggled scheduler: ${id} - Active: ${updated.active}`);
+        const scheduler = await SchedulerModel.findById(id);
+        if (!scheduler) {
+            return res.status(404).json({ error: 'Scheduler not found' });
+        }
 
-        res.json({ scheduler: updated });
+        const newActive = !scheduler.active;
+        const update = { active: newActive };
+
+        if (newActive) {
+            update.error = null;
+        }
+
+        await SchedulerModel.update(id, update);
+        console.log(`[Schedulers] Toggled scheduler: ${id} - Active: ${newActive}`);
+
+        // If Enabling, Trigger Immediate Validation
+        if (newActive) {
+            try {
+                const videoWorker = req.app.get('videoWorker');
+                if (videoWorker) {
+                    // This will wait for ~5-8 seconds (Groq + Suno Check)
+                    console.log(`[Schedulers] Validating resources for ${id}...`);
+                    await videoWorker.triggerForScheduler(id);
+                }
+            } catch (validationError) {
+                console.error(`[Schedulers] Validation failed: ${validationError.message}`);
+
+                // REVERT activation
+                await SchedulerModel.update(id, {
+                    active: false,
+                    error: validationError.message
+                });
+
+                return res.status(400).json({
+                    error: validationError.message,
+                    active: false,
+                    details: 'Scheduler reverted due to validation failure'
+                });
+            }
+        }
+
+        res.json({ success: true, active: newActive });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
