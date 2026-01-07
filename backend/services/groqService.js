@@ -26,7 +26,7 @@ class GroqService {
     /**
      * Make a request to Groq API with rate limiting
      */
-    async makeRequest(messages, maxTokens = 2500) {
+    async makeRequest(messages, maxTokens = 3000) {
         // Simple rate limiting (reset every minute)
         const now = Date.now();
         if (now - this.lastResetTime > 60000) {
@@ -65,23 +65,7 @@ class GroqService {
 
     /**
      * Generate ALL content in a SINGLE request for full context awareness
-     * - Lyrics: In the selected language
-     * - Title, Description, Tags: Always in ENGLISH for YouTube SEO
-     * 
-     * This allows user prompts like:
-     * - descPrompt: "Include lyrics and title in description"
-     * - tagsPrompt: "Generate tags related to title"
-     * 
-     * @param {Object} options - Generation options
-     * @param {string[]} options.genres - Music genres
-     * @param {string} options.language - Lyrics language (e.g., "English", "Hindi")
-     * @param {string} [options.titlePrompt] - User direction for title
-     * @param {string} [options.descPrompt] - User direction for description
-     * @param {string} [options.tagsPrompt] - User direction for tags
-     * @param {string} [options.lyricsPrompt] - User direction for lyrics
-     */
-    /**
-     * Generate All Content with improved prompt engineering
+     * Enforces strict YouTube limits: Title < 100, Desc < 5000, Tags < 500.
      */
     async generateAllContent(options) {
         const {
@@ -109,23 +93,26 @@ class GroqService {
 - **STRUCTURE**: Verse 1 → Pre-Chorus → Chorus → Verse 2 → Chorus → Bridge → Final Chorus (Ensure significant length)
 
 📈 WORLD'S BEST SEO STRATEGIST (YouTube algorithm expert):
-- Generate metadata that MAXIMIZES YouTube discoverability
+- Generate metadata that MAXIMIZES YouTube discoverability with STRICT LIMITS.
 - **TITLE RULES**: 
-  - MUST be 80-100 characters long (Maximum impact)
+  - **ABSOLUTE MAX LENGTH: 99 CHARACTERS**. (YouTube rejects 100+)
+  - Aim for 80-99 characters for maximum impact.
   - MUST include: Main Keyword + Emotional Hook + Action Verb + Context + (Unique ID/Vibe)
   - Example: "Heartbreaking Sad Piano Song for Crying 2024 | Emotional Breakup Music with Rain [Deep Focus]"
-  - NEVER use short titles unless explicitly requested.
 - **DESCRIPTION RULES**:
+  - **ABSOLUTE MAX LENGTH: 4999 CHARACTERS**. (YouTube reject 5000+)
   - Minimum 1000 characters.
   - Include lyrics, story behind the song, usage scenarios, and call-to-action.
-- **TAGS**: 20-25 diverse, high-volume search terms.
+- **TAGS RULES**:
+  - **ABSOLUTE MAX TOTAL LENGTH: 499 CHARACTERS** (All tags combined + commas).
+  - 20-25 diverse, high-volume search terms.
 
 CRITICAL RULES - USER PROMPT PRIORITY:
 🔴 HIGHEST: If user provides ANY specific instruction, FOLLOW IT EXACTLY.
    - If user says "3 minute long", generate EXTRA verses and repeated choruses to ensure audio length.
    
-🟡 NO PROMPT PROVIDED: Generate MAXIMUM length, highest-quality content:
-   - Title: MAX allowed length (90-100 chars), SEO stuffed.
+🟡 NO PROMPT PROVIDED: Generate MAXIMUM length (within limits), highest-quality content:
+   - Title: MAX allowed length (90-99 chars), SEO stuffed.
    - Description: Detailed and rich.
    - Lyrics: Extended structure (Verse-Chorus-Verse-Chorus-Bridge-Chorus-Outro).
 
@@ -133,7 +120,14 @@ OUTPUT FORMAT:
 - Return ONLY valid JSON
 - Lyrics in ${language}
 - Title/Description/Tags in ENGLISH (for YouTube SEO)
-- NO AI phrases like "Here's the song" or "As requested"`;
+- NO AI phrases like "Here's the song" or "As requested"
+- JSON Structure:
+  {
+    "title": "String (Max 99 chars)",
+    "description": "String (Max 4999 chars)",
+    "tags": ["tag1", "tag2"],
+    "lyrics": "String"
+  }`;
 
         // 2. Construct the User Prompt (The "Specific Task")
         let userPrompt = `TASK: Create a new song package for genres: ${genresText}.\n\n`;
@@ -148,106 +142,101 @@ OUTPUT FORMAT:
         userPrompt += `\nGenerate the Lyrics first. Then, based on those lyrics and the genres, generate the Metadata.\n\n`;
 
         // --- SECTION B: METADATA ---
+        userPrompt += `[METADATA INSTRUCTION]:\n`;
 
-        // Title
         if (titlePrompt && titlePrompt.trim()) {
-            userPrompt += `[TITLE INSTRUCTION]: ${titlePrompt}\n(Follow this instruction STRICTLY)\n`;
+            userPrompt += `- TITLE: ${titlePrompt} (STRICTLY < 100 chars)\n`;
         } else {
-            userPrompt += `[TITLE INSTRUCTION]: Generate a CATCHY, CREATIVE, SEO-OPTIMIZED title (50-80 characters). The title should:
-- Include the main emotional theme or hook from the lyrics
-- Be memorable and click-worthy
-- Include a relevant keyword for YouTube search
-- NOT be generic like "Song" or just the genre name
-Example good titles: "Midnight Memories - Chill Lofi Beats", "Heartbreak Avenue | Emotional Love Song 2024"\n`;
+            userPrompt += `- TITLE: Generate a click-worthy, SEO-optimized title (80-99 chars).\n`;
         }
 
-        // Description
         if (descPrompt && descPrompt.trim()) {
-            userPrompt += `[DESCRIPTION INSTRUCTION]: ${descPrompt}\n(Follow this instruction STRICTLY)\n`;
+            userPrompt += `- DESCRIPTION: ${descPrompt} (Include lyrics, strict < 5000 chars)\n`;
         } else {
-            userPrompt += `[DESCRIPTION INSTRUCTION]: Write a LONG, SEO-OPTIMIZED YouTube description (400-600 characters). The description MUST include:
-- An engaging opening hook that makes viewers want to listen
-- Summary of the song's emotional journey/story
-- Quote 2-3 memorable lines from the lyrics in quotation marks
-- Mention of the genres (${genresText})
-- Call to action (like, subscribe, comment)
-- Relevant hashtags at the end
-Make it feel human-written, not robotic. This description helps with YouTube SEO.\n`;
+            userPrompt += `- DESCRIPTION: Write a rich description with lyrics, story, and hashtags (< 5000 chars).\n`;
         }
 
-        // Tags
         if (tagsPrompt && tagsPrompt.trim()) {
-            userPrompt += `[TAGS INSTRUCTION]: ${tagsPrompt}\n(Follow this instruction STRICTLY)\n`;
+            userPrompt += `- TAGS: ${tagsPrompt} (Relevant tags, max 500 chars total)\n`;
         } else {
-            userPrompt += `[TAGS INSTRUCTION]: Generate 15-20 HIGH-VOLUME SEO tags. Include:
-- Genre-specific tags (${genresText})
-- Mood/emotion tags (relaxing, sad, romantic, energetic, etc.)
-- Instrument tags (guitar, piano, beats, etc.)
-- Popular search terms (new music 2024, best songs, viral music)
-- Language-specific tags if applicable
-- Similar artist style tags
-Tags should be what real users would search for on YouTube.\n`;
+            userPrompt += `- TAGS: Generate 20-30 high-volume tags relevant to the song/genre.\n`;
         }
 
         userPrompt += `
 \nReturn ONLY this JSON structure:
 {
   "lyrics": "full lyrics string with \\n for line breaks",
-  "title": "final title string (50-80 chars, SEO optimized)",
-  "description": "final description string (400-600 chars, engaging, SEO optimized)",
-  "tags": ["tag1", "tag2", "tag3", ... 15-20 tags]
+  "title": "final title string (MAX 99 chars)",
+  "description": "final description string (MAX 4999 chars)",
+  "tags": ["tag1", "tag2", "tag3", ... max 499 chars total]
 }`;
 
-        const response = await this.makeRequest([
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-        ], 3000); // Increased token limit slightly for longer lyrics
-
         try {
-            // Robust JSON extraction
-            let jsonString = response;
-            const jsonMatch = response.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                jsonString = jsonMatch[0];
+            const rawResponse = await this.makeRequest([
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt }
+            ]);
+
+            // Parse content
+            let content;
+            try {
+                // Find JSON object start/end (handling potential markdown)
+                const jsonStart = rawResponse.indexOf('{');
+                const jsonEnd = rawResponse.lastIndexOf('}');
+                if (jsonStart === -1 || jsonEnd === -1) throw new Error('No JSON found');
+
+                const jsonStr = rawResponse.substring(jsonStart, jsonEnd + 1);
+                content = JSON.parse(jsonStr);
+            } catch (parseError) {
+                console.error('[Groq] JSON Parse Error:', parseError);
+                console.error('Raw Response:', rawResponse);
+                throw new Error('Failed to parse AI response');
             }
 
-            const content = JSON.parse(jsonString);
+            // SAFETY: Strict Character Limit Enforcement (Truncation)
+            // Even if AI hallucinates longer content, we strictly truncate it.
 
-            // Validation and Fallbacks
-            if (!content.lyrics) content.lyrics = "[Instrumental]";
-
-            if (!content.title) {
-                // Critical Fallback if AI fails to generate title
-                content.title = `${genres[0]} Vibes - ${new Date().toLocaleDateString()}`;
+            if (content.title && content.title.length > 99) {
+                console.warn(`[Groq] Truncating Title from ${content.title.length} to 99 chars`);
+                content.title = content.title.substring(0, 99);
             }
 
-            if (!content.tags || !Array.isArray(content.tags)) {
+            if (content.description && content.description.length > 4999) {
+                console.warn(`[Groq] Truncating Description from ${content.description.length} to 4999 chars`);
+                content.description = content.description.substring(0, 4999);
+            }
+
+            // Tags limit check (Total string length of comma-separated tags)
+            if (content.tags && Array.isArray(content.tags)) {
+                let currentLength = 0;
+                const validTags = [];
+                for (const tag of content.tags) {
+                    const tagStr = String(tag).trim();
+                    const tagLen = tagStr.length;
+
+                    // YouTube limits tags to 500 chars total (including commas)
+                    // We check: current + tag + comma(1) <= 499
+                    if (currentLength + tagLen + 1 <= 499) {
+                        validTags.push(tagStr);
+                        currentLength += tagLen + 1;
+                    } else {
+                        break; // Stop adding tags if limit reached
+                    }
+                }
+                content.tags = validTags;
+            } else if (!content.tags) {
                 content.tags = genres;
             }
 
-            if (!content.description) {
-                content.description = `Listen to this new ${genresText} track!`;
-            }
+            // Fallbacks
+            if (!content.lyrics) content.lyrics = "[Instrumental]";
+            if (!content.title) content.title = `${genres[0]} Song`;
+            if (!content.description) content.description = `New ${genresText} song.`;
 
-            // Sanitization
-            if (content.tags) {
-                content.tags = content.tags.slice(0, 20).map(t => String(t).trim());
-            }
-
-            console.log(`[Groq] ✅ Generated: "${content.title}" (${content.lyrics.length} chars)`);
             return content;
-
         } catch (error) {
-            console.error('[Groq] JSON Parsing Failed:', error.message);
-            console.log('Raw Response:', response);
-
-            // Emergency fallback to prevent worker crash
-            return {
-                lyrics: response.substring(0, 2000), // Return raw text as lyrics if it's not JSON
-                title: `New ${genres[0]} Track`,
-                description: `A new ${genresText} song.`,
-                tags: genres
-            };
+            console.error('[Groq] Content Generation Failed:', error);
+            throw error;
         }
     }
 }

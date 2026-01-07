@@ -1,51 +1,34 @@
-const { SchedulerModel, VideoModel, UserModel, SunoKeyUsageModel } = require('../models');
+const config = require('../config');
+const VideoModel = require('../models/Video');
+const SchedulerModel = require('../models/Scheduler');
+const UserModel = require('../models/User');
+const SunoKeyUsageModel = require('../models/SunoKeyUsage');
 const groqService = require('../services/groqService');
 const sunoService = require('../services/sunoService');
 const imageService = require('../services/imageGenerationService');
 const ffmpegService = require('../services/ffmpegService');
-const config = require('../config');
-const fs = require('fs');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
+const axios = require('axios');
 
-/**
- * Video Generation Worker (MongoDB + Local Storage)
- */
 class VideoGenerationWorker {
     constructor() {
-        // Use persistent storage instead of temp
-        this.storageDir = config.storage.path;
-        this.ensureDirectories();
         this.isGenerating = false;
-    }
+        this.storageDir = config.storage.localPath;
 
-    ensureDirectories() {
-        const dirs = [
-            this.storageDir,
-            path.join(this.storageDir, 'audio'),
-            path.join(this.storageDir, 'thumbnails'),
-            path.join(this.storageDir, 'videos')
-        ];
-
-        dirs.forEach(dir => {
-            if (!fs.existsSync(dir)) {
-                fs.mkdirSync(dir, { recursive: true });
-            }
+        // Ensure directories exist
+        ['audio', 'thumbnails', 'videos'].forEach(dir => {
+            const fullPath = path.join(this.storageDir, dir);
+            if (!fs.existsSync(fullPath)) fs.mkdirSync(fullPath, { recursive: true });
         });
     }
 
     async checkSchedulers() {
-        // MongoDB: Find active schedulers
-        // We use the Adapter which returns POJOs
-        // But for complex queries we might need direct Mongoose if Adapter is limited
-        // Adapter `findByUser` helps, but here we need ALL active schedulers.
-        // Let's use the Mongoose model directly for this internal system query if needed,
-        // OR extend the adapter. Adapter has no `findAllActive`.
-        // Let's import the Mongoose model directly for this worker logic
         const mongoose = require('mongoose');
         const Scheduler = mongoose.model('Scheduler');
         const Video = mongoose.model('Video');
 
+        // Find active schedulers
         const activeSchedulers = await Scheduler.find({ active: true });
         const schedulersNeedingVideos = [];
 
@@ -75,7 +58,7 @@ class VideoGenerationWorker {
      * Does NOT wait for FFmpeg.
      */
     async validateAndStart(scheduler) {
-        if (this.isGenerating) return; // Simple lock (per worker instance)
+        if (this.isGenerating) return;
         this.isGenerating = true;
 
         let videoId = null;
@@ -84,8 +67,6 @@ class VideoGenerationWorker {
             console.log(`\n[Worker] Validating & Starting for: ${scheduler.name}`);
 
             // 1. Validation & Setup
-            const mongoose = require('mongoose');
-            const Scheduler = mongoose.model('Scheduler');
             const user = await UserModel.findById(scheduler.userId);
 
             if (!user) throw new Error(`User not found: ${scheduler.userId}`);
@@ -117,7 +98,6 @@ class VideoGenerationWorker {
                 if (!user.sunoApiKey) throw new Error('Suno API key required');
                 const usage = await SunoKeyUsageModel.getUsage(user.sunoApiKey);
                 if (usage.usageCount >= 4) throw new Error('API Key Limit Reached (Pre-check)');
-                // Note: Actual API call might still fail if key is invalid/exhausted remotely
             }
 
             // 2. Generate Content (Groq) - Fast
@@ -137,46 +117,22 @@ class VideoGenerationWorker {
                 lyrics: content.lyrics
             });
 
-            // 3. Generate Audio (Suno) - The Critical Check
+            // 3. Generate Audio (Suno) - The Critical Check & Init
             // If this fails (Credits), it throws, and we catch it below.
-            const audioData = await sunoService.generateSong(
-                content.lyrics,
-                scheduler.genres.join(', '),
+            // Returns taskId immediately.
+            const taskId = await sunoService.generateAudio(
+                content.lyrics, // Clean lyrics (no JSON)
+                scheduler.genres, // Array of strings
                 user.plan,
                 user.sunoApiKey
             );
 
-            // Download audio if not already downloaded by sunoService
-            let audioPath = audioData.audioPath;
-            if (!audioPath && audioData.audioUrl) {
-                const audioFilename = `${videoId}.mp3`;
-                audioPath = path.join(this.storageDir, 'audio', audioFilename);
-                await sunoService.downloadAudio(audioData.audioUrl, audioPath);
-            }
-
-            const audioUrl = `${config.backendUrl}${config.storage.publicUrl}/audio/${path.basename(audioPath)}`;
-
-            await VideoModel.update(videoId, {
-                audioUrl: audioUrl,
-                audioPath: audioPath,
-                duration: audioData.duration
-            });
-
-            if (user.plan !== 'pro') await SunoKeyUsageModel.incrementUsage(user.sunoApiKey);
-
-            console.log(`[Worker] ✅ Suno Request Accepted for ${videoId}. Finishing in background...`);
+            console.log(`[Worker] ✅ Suno Request Accepted. Task ID: ${taskId}`);
 
             // 4. Trigger Background Completion (Fire & Forget)
-            this._completeGeneration(videoId, scheduler, content)
+            // Pass taskId so background thread can poll and download
+            this._completeGeneration(videoId, scheduler, content, taskId, user)
                 .catch(err => console.error(`[Worker] Background completion failed for ${videoId}:`, err));
-
-            // Release lock immediately for other tasks? 
-            // Ideally keep locked until complete, but user wants "Immediate Check".
-            // Since we use `isGenerating` flag, returning here means we can accept another?
-            // No, `isGenerating` stays true until `_completeGeneration` finishes.
-            // Wait, if I return, `videoGenerationWorker` might be called again?
-            // `isGenerating` is instance var. 
-            // I should pass lock responsibility to `_completeGeneration`.
 
             return; // Success!
 
@@ -206,14 +162,31 @@ class VideoGenerationWorker {
     }
 
     /**
-     * Finish generation (Images + FFmpeg) - Background
+     * Finish generation (Poll Audio -> Images -> FFmpeg) - Background
      */
-    async _completeGeneration(videoId, scheduler, content) {
+    async _completeGeneration(videoId, scheduler, content, taskId, user) {
         try {
             const video = await VideoModel.findById(videoId);
-            if (!video) {
-                throw new Error(`Video ${videoId} not found for completion.`);
-            }
+            if (!video) throw new Error(`Video ${videoId} not found.`);
+
+            // 3b. Poll & Download Audio (Long Running)
+            const apiKey = sunoService.getApiKey(user.plan, user.sunoApiKey);
+            const audioResult = await sunoService.pollGenerationStatus(taskId, apiKey);
+
+            // Download
+            const audioFilename = `${videoId}.mp3`;
+            const audioPath = path.join(this.storageDir, 'audio', audioFilename);
+            await sunoService.downloadAudio(audioResult.audioUrl, audioPath);
+
+            const audioUrlLink = `${config.backendUrl}${config.storage.publicUrl}/audio/${audioFilename}`;
+
+            await VideoModel.update(videoId, {
+                audioUrl: audioUrlLink,
+                audioPath: audioPath,
+                duration: audioResult.duration
+            });
+
+            if (user.plan !== 'pro') await SunoKeyUsageModel.incrementUsage(user.sunoApiKey);
 
             // 5. Generate Images
             const imagePrompts = await imageService.generatePrompts(content.lyrics);
@@ -240,34 +213,20 @@ class VideoGenerationWorker {
             await VideoModel.update(videoId, { thumbnailPath: thumbnails[0], thumbnailUrl });
 
             // 6. FFmpeg
-            // We need audioPath. SunoService returns it? 
-            // In step 3 we got `audioData`. But `_completeGeneration` context lost `audioData`.
-            // We need to re-fetch or pass it.
-            // Actually, we saved to DB.
-            // But wait, sunoService might be async download?
-            // Original code: `const audioPath = await sunoService.downloadAudio...`
-            // My step 3 `generateSong` handles download? 
-            // I need to check `sunoService.generateSong` implementation.
-            // Assuming `generateSong` returns object with `audioPath`.
-
-            // Render
             const outputPath = path.join(this.storageDir, 'videos', `${videoId}.mp4`);
             await ffmpegService.createVideo({
-                audioPath: video.audioPath,
+                audioPath: audioPath,
                 images: thumbnails,
                 outputPath,
-                lyrics: JSON.parse(video.lyrics || '[]')
+                lyrics: JSON.parse(video.lyrics || content.lyrics || '[]')
             });
 
             const videoUrl = `${config.backendUrl}${config.storage.publicUrl}/videos/${path.basename(outputPath)}`;
 
-            // 5-MINUTE DELAYED PUBLISHING: Ensure strictly 5 minutes AFTER triggers
-            // If nextRunAt is in past (catch-up), use NOW as base. If future, use nextRunAt.
-            let baseTime = new Date();
-            if (scheduler.nextRunAt) {
-                const scheduledTime = new Date(scheduler.nextRunAt);
-                if (scheduledTime > baseTime) baseTime = scheduledTime;
-            }
+            // 5-MINUTE DELAYED PUBLISHING
+            const baseTime = video.scheduledPublishAt && video.scheduledPublishAt > Date.now()
+                ? video.scheduledPublishAt
+                : new Date();
 
             const publishAt = new Date(baseTime);
             publishAt.setMinutes(publishAt.getMinutes() + 5);
@@ -279,8 +238,6 @@ class VideoGenerationWorker {
                 status: 'ready',
                 scheduledPublishAt: publishAt
             });
-
-            // Schedule for Upload (UploadWorker handles this via `scheduledPublishAt`)
 
             console.log(`[Worker] ✅ Full Completion: ${videoId}`);
 
@@ -358,9 +315,6 @@ class VideoGenerationWorker {
         const mongoose = require('mongoose');
         const Video = mongoose.model('Video');
 
-        // Find 'processing' videos older than 10 mins and fail them
-        // ... (simplified for brevity)
-
         // Run cleanup daily
         setInterval(() => this.cleanupOldFailedVideos(), 24 * 60 * 60 * 1000);
 
@@ -369,10 +323,10 @@ class VideoGenerationWorker {
             try {
                 const schedulers = await this.checkSchedulers();
                 if (schedulers.length > 0) {
-                    await this.generateVideo(schedulers[0]);
+                    await this.validateAndStart(schedulers[0]);
                 }
             } catch (e) {
-                console.error('[Worker] Loop error:', e);
+                console.error('[Worker] Loop error:', e.message);
                 this.isGenerating = false;
             }
         }, 60000); // 1 min check
