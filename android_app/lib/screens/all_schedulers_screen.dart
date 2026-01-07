@@ -261,10 +261,24 @@ class _SchedulerCard extends StatelessWidget {
                       return Switch(
                         value: scheduler.active,
                         onChanged: (value) async {
+                          // Prevent toggling if error exists? No, user needs to re-enable.
+                          // But logically, if they re-enable, we clear error.
                           await appState.toggleScheduler(scheduler.id);
                         },
                         activeColor: AppTheme.success,
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        thumbIcon: MaterialStateProperty.resolveWith<Icon?>((states) {
+                          if (!scheduler.active && scheduler.error != null) {
+                            return Icon(Icons.error, color: AppTheme.error, size: 20);
+                          }
+                          return null; // Default check/close
+                        }),
+                        trackColor: MaterialStateProperty.resolveWith<Color?>((states) {
+                          if (!scheduler.active && scheduler.error != null) {
+                            return AppTheme.error.withOpacity(0.3);
+                          }
+                          return null;
+                        }),
                       );
                     },
                   ),

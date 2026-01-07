@@ -197,10 +197,12 @@ class VideoGenerationWorker {
             console.error(`[Worker] ❌ Failed: ${error.message}`);
 
             // Check for Suno credits exhaustion
+            // Check for Suno credits exhaustion
             const isCreditsExhausted =
                 error.message.toLowerCase().includes('insufficient') ||
                 error.message.includes('429') ||
                 error.message.toLowerCase().includes('credit') ||
+                error.message.toLowerCase().includes('limit') || // Handles "API Key Limit Reached"
                 error.message.toLowerCase().includes('quota');
 
             if (isCreditsExhausted) {
