@@ -185,38 +185,17 @@ class VideoGenerationWorker {
 
             if (user.plan !== 'pro') await SunoKeyUsageModel.incrementUsage(user.sunoApiKey);
 
-            // 5. Generate Images
-            const imagePrompts = await imageService.generatePrompts(content.lyrics);
-            const imageUrls = await imageService.generateImages(imagePrompts);
+            // 5. Generate Thumbnail
+            const thumbFilename = `${videoId}.png`;
+            const thumbnailPath = path.join(this.storageDir, 'thumbnails', thumbFilename);
+            await imageService.generateAndSave(scheduler.genres, content.lyrics, content.title, thumbnailPath);
 
-            const thumbnails = [];
-            const thumbDir = path.join(this.storageDir, 'thumbnails');
-
-            for (let i = 0; i < imageUrls.length; i++) {
-                const url = imageUrls[i];
-                const localPath = path.join(thumbDir, `${videoId}_${i}.png`);
-
-                const response = await axios({ url, responseType: 'stream' });
-                const writer = fs.createWriteStream(localPath);
-                response.data.pipe(writer);
-                await new Promise((resolve, reject) => {
-                    writer.on('finish', resolve);
-                    writer.on('error', reject);
-                });
-                thumbnails.push(localPath);
-            }
-
-            const thumbnailUrl = `${config.backendUrl}${config.storage.publicUrl}/thumbnails/${path.basename(thumbnails[0])}`;
-            await VideoModel.update(videoId, { thumbnailPath: thumbnails[0], thumbnailUrl });
+            const thumbnailUrl = `${config.backendUrl}${config.storage.publicUrl}/thumbnails/${thumbFilename}`;
+            await VideoModel.update(videoId, { thumbnailPath, thumbnailUrl });
 
             // 6. FFmpeg
             const outputPath = path.join(this.storageDir, 'videos', `${videoId}.mp4`);
-            await ffmpegService.createVideo({
-                audioPath: audioPath,
-                images: thumbnails,
-                outputPath,
-                lyrics: JSON.parse(video.lyrics || content.lyrics || '[]')
-            });
+            await ffmpegService.createVideo(audioPath, thumbnailPath, outputPath);
 
             const videoUrl = `${config.backendUrl}${config.storage.publicUrl}/videos/${path.basename(outputPath)}`;
 
