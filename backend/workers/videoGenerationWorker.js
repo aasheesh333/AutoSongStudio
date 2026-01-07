@@ -199,13 +199,25 @@ class VideoGenerationWorker {
 
             const videoUrl = `${config.backendUrl}${config.storage.publicUrl}/videos/${path.basename(outputPath)}`;
 
-            // 5-MINUTE DELAYED PUBLISHING
-            const baseTime = video.scheduledPublishAt && video.scheduledPublishAt > Date.now()
-                ? video.scheduledPublishAt
-                : new Date();
+            // Calculate proper publish time based on scheduler's configured time
+            let publishAt;
+            if (scheduler.time) {
+                // scheduler.time is in "HH:MM" format (e.g., "09:00")
+                const [hours, minutes] = scheduler.time.split(':').map(Number);
+                publishAt = new Date();
+                publishAt.setHours(hours, minutes, 0, 0);
 
-            const publishAt = new Date(baseTime);
-            publishAt.setMinutes(publishAt.getMinutes() + 5);
+                // If time has already passed today, schedule for tomorrow
+                if (publishAt <= new Date()) {
+                    publishAt.setDate(publishAt.getDate() + 1);
+                }
+                console.log(`[Worker] Scheduled publish at: ${publishAt.toISOString()} (from scheduler.time: ${scheduler.time})`);
+            } else {
+                // Fallback: 5 minutes from now
+                publishAt = new Date();
+                publishAt.setMinutes(publishAt.getMinutes() + 5);
+                console.log(`[Worker] No scheduler.time set, publishing in 5 mins: ${publishAt.toISOString()}`);
+            }
 
             // Finalize
             await VideoModel.update(videoId, {

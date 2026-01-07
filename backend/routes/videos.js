@@ -39,6 +39,7 @@ router.get('/', async (req, res) => {
 
             videos = docs.map(d => ({ ...d.toObject(), id: d._id.toString() }));
         }
+        console.log(`[Videos API] userId=${userId}, channelId=${channelId || 'none'}, returned=${videos.length} videos`);
         res.json({ videos });
     } catch (error) {
         res.status(500).json({ error: error.message });
