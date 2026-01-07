@@ -1,8 +1,6 @@
 const config = require('../config');
-const VideoModel = require('../models/Video');
-const SchedulerModel = require('../models/Scheduler');
-const UserModel = require('../models/User');
-const SunoKeyUsageModel = require('../models/SunoKeyUsage');
+const config = require('../config');
+const { VideoModel, SchedulerModel, UserModel, SunoKeyUsageModel } = require('../models');
 const groqService = require('../services/groqService');
 const sunoService = require('../services/sunoService');
 const imageService = require('../services/imageGenerationService');
