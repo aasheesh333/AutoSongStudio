@@ -149,32 +149,58 @@ OUTPUT FORMAT:
         // --- SECTION B: METADATA ---
         userPrompt += `[METADATA INSTRUCTION]:\n`;
 
+        // TITLE PROMPT - Follow user instructions strictly
         if (titlePrompt && titlePrompt.trim()) {
-            userPrompt += `- TITLE: ${titlePrompt} (STRICTLY < 100 chars)\n`;
+            userPrompt += `- TITLE: ${titlePrompt}
+  IMPORTANT: Follow the user's exact instruction above.
+  If user specifies a length (e.g., "50 chars"), generate EXACTLY that length.
+  Otherwise, keep it under 99 characters.
+  (ABSOLUTE MAX: 99 chars, not a single character more)\n`;
         } else {
             userPrompt += `- TITLE: Generate a click-worthy, SEO-optimized title (80-99 chars).\n`;
         }
 
+        // DESCRIPTION PROMPT - Follow user instructions strictly
         if (descPrompt && descPrompt.trim()) {
-            userPrompt += `- DESCRIPTION: ${descPrompt} (Include lyrics, strict < 5000 chars)\n`;
+            userPrompt += `- DESCRIPTION: ${descPrompt}
+  CRITICAL INSTRUCTIONS:
+  - If user says "include title in description" → ADD the title to description
+  - If user says "include lyrics in description" → ADD full lyrics to description
+  - If user specifies length (e.g., "4000 characters") → Generate EXACTLY that length (±50 chars)
+  - If user mentions hashtags/tags → Include relevant hashtags in description
+  - Follow ALL user specifications EXACTLY
+  (ABSOLUTE MAX: 4999 chars, not a single character more)\n`;
         } else {
-            userPrompt += `- DESCRIPTION: Write a rich description with lyrics, story, and hashtags (< 5000 chars).\n`;
+            userPrompt += `- DESCRIPTION: Write a rich description including: full lyrics, story behind the song, relevant hashtags. Target 3000-4000 chars. (MAX 4999 chars).\n`;
         }
 
+        // TAGS PROMPT - Follow user instructions strictly
         if (tagsPrompt && tagsPrompt.trim()) {
-            userPrompt += `- TAGS: ${tagsPrompt} (Relevant tags, max 500 chars total)\n`;
+            userPrompt += `- TAGS: ${tagsPrompt}
+  Follow user's exact specifications for tags.
+  (ABSOLUTE MAX: 499 chars total for all tags combined)\n`;
         } else {
-            userPrompt += `- TAGS: Generate 20-30 high-volume tags relevant to the song/genre.\n`;
+            userPrompt += `- TAGS: Generate 20-30 high-volume YouTube tags relevant to the song/genre.\n`;
         }
 
         userPrompt += `
-\nReturn ONLY this JSON structure:
+\n⚠️ STRICT COMPLIANCE REQUIRED:
+- Follow ALL user prompts EXACTLY as specified
+- If user says "female version" for lyrics → write from female perspective
+- If user says "male version" for lyrics → write from male perspective
+- If user says "soft music" → write calm, gentle, melodic lyrics
+- If user says "hard music" → write intense, powerful, energetic lyrics
+- If user specifies character counts → match EXACTLY (not more)
+- Never exceed the absolute maximums: Title=99, Description=4999, Lyrics=3000, Tags=499
+
+Return ONLY this JSON structure:
 {
   "lyrics": "full lyrics string (STRICTLY UNDER 3000 chars) with \\n for line breaks",
   "title": "final title string (MAX 99 chars)",
-  "description": "final description string (MAX 4999 chars)",
+  "description": "final description string (MAX 4999 chars) - include title/lyrics if user requested",
   "tags": ["tag1", "tag2", "tag3", ... max 499 chars total]
 }`;
+
 
         try {
             const rawResponse = await this.makeRequest([

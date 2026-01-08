@@ -251,13 +251,47 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
       return;
     }
 
-    // Request storage permission
-    final status = await Permission.storage.request();
+    // Request storage permission with proper Android 11+ handling
+    PermissionStatus status;
+    
+    // For Android 10 and below, use storage permission
+    // For Android 11+, we use Downloads directory which doesn't need permission
+    // But we still request for better compatibility
+    if (await Permission.storage.isGranted) {
+      status = PermissionStatus.granted;
+    } else {
+      status = await Permission.storage.request();
+    }
+    
+    // If denied, try audio permission for Android 13+
     if (!status.isGranted) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Storage permission required for download')),
-        );
+      status = await Permission.audio.request();
+    }
+    
+    // If still denied, show dialog to open settings
+    if (!status.isGranted && mounted) {
+      final openSettings = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Storage Permission Required'),
+          content: const Text(
+            'To download audio files, please grant storage permission in Settings.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Open Settings'),
+            ),
+          ],
+        ),
+      );
+      
+      if (openSettings == true) {
+        await openAppSettings();
       }
       return;
     }
