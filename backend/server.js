@@ -51,6 +51,15 @@ app.get('/health', (req, res) => {
     });
 });
 
+// Static file serving for thumbnails, audio, and videos
+// Serves files from config.storage.path at /files URL path
+app.use('/files', express.static(config.storage.path, {
+    maxAge: '7d',  // Cache for 7 days
+    etag: true,
+    lastModified: true
+}));
+console.log(`[Server] Static files served from: ${config.storage.path} at /files`);
+
 // API Routes
 const authRoutes = require('./routes/auth');
 const schedulerRoutes = require('./routes/schedulers');
