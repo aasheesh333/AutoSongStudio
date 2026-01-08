@@ -45,25 +45,31 @@ class Video {
 
   factory Video.fromJson(Map<String, dynamic> json) {
     return Video(
-      id: json['id'] as String,
-      schedulerId: json['schedulerId'] as String,
-      userId: json['userId'] as String,
-      channelId: json['channelId'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      tags: (json['tags'] as List).cast<String>(),
+      id: json['id'] as String? ?? json['_id'] as String? ?? '',
+      schedulerId: json['schedulerId'] as String? ?? '',
+      userId: json['userId'] as String? ?? '',
+      channelId: json['channelId'] as String? ?? '',
+      title: json['title'] as String? ?? 'Untitled Video',
+      description: json['description'] as String? ?? 'No description available.',
+      tags: json['tags'] != null 
+          ? List<String>.from(json['tags']) 
+          : <String>[],
       lyrics: json['lyrics'] as String? ?? '',
-      genres: (json['genres'] as List).cast<String>(),
+      genres: json['genres'] != null 
+          ? List<String>.from(json['genres']) 
+          : <String>[],
       audioUrl: json['audioUrl'] as String?,
       thumbnailUrl: json['thumbnailUrl'] as String?,
       youtubeId: json['youtubeId'] as String?,
       scheduledPublishAt: json['scheduledPublishAt'] != null
           ? DateTime.parse(json['scheduledPublishAt'] as String)
           : null,
-      status: json['status'] as String,
+      status: json['status'] as String? ?? 'unknown',
       error: json['error'] as String?,
       locked: json['locked'] as bool? ?? false,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: json['createdAt'] != null 
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
       uploadedAt: json['uploadedAt'] != null
           ? DateTime.parse(json['uploadedAt'] as String)
           : null,
