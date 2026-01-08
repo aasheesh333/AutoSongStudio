@@ -86,7 +86,7 @@ class ImageGenerationService {
             ? `concept inspired by "${randomLyricLine.substring(0, 40)}"`
             : '';
 
-        // Genre-specific visuals (including Indian/Bollywood)
+        // Genre-specific visuals (including Indian/Bollywood and devotional)
         const genreVisuals = {
             'lofi': 'cozy anime room, warm sunset through window, vinyl records, indoor plants, soft lo-fi aesthetic',
             'jazz': 'smoky jazz club, saxophone silhouette, noir atmosphere, city lights through window',
@@ -109,7 +109,19 @@ class ImageGenerationService {
             'sad': 'rainy window, melancholic blue tones, solitary figure, emotional atmosphere',
             'happy': 'bright sunshine, vibrant flowers, joyful colors, celebration mood',
             'devotional': 'temple silhouette at sunrise, divine light rays, peaceful spiritual atmosphere, saffron tones',
-            'meditation': 'zen garden, stones and water, soft green nature, peaceful balance'
+            'meditation': 'zen garden, stones and water, soft green nature, peaceful balance',
+            // Deity-specific themes
+            'khatushyam': 'ancient temple architecture, divine golden light rays, peacock feathers motif, saffron and gold palette, himalayan mountain backdrop, spiritual aura',
+            'khatu shyam': 'ancient temple architecture, divine golden light rays, peacock feathers motif, saffron and gold palette, himalayan mountain backdrop, spiritual aura',
+            'shyam': 'mystical blue twilight sky, peacock feather silhouette, divine golden glow, temple bells aesthetic, spiritual tranquility',
+            'krishna': 'enchanting flute silhouette, moonlit night, lotus pond, peacock feathers, divine blue ethereal glow, yamuna river backdrop',
+            'shiva': 'himalayan mountain peaks with snow, crescent moon, trishul silhouette, mystic blue energy, sacred om symbol, meditation aesthetic',
+            'hanuman': 'sunrise over mountains, orange saffron hues, strength and devotion symbols, ancient temple architecture, divine warrior aesthetic',
+            'ganesh': 'auspicious beginnings, lotus flowers, modak sweets silhouette, traditional lamp lighting, prosperity and wisdom symbols',
+            'durga': 'powerful divine feminine energy, lion silhouette, red and gold palette, victory over evil aesthetic, dramatic lighting',
+            'lakshmi': 'golden lotus flowers, flowing river of gold coins, prosperity aesthetic, divine radiance, elegant traditional patterns',
+            'bhajan': 'traditional diya lamps, temple bells silhouette, evening aarti atmosphere, warm golden lighting, devotional serenity',
+            'spiritual': 'abstract cosmic mandala, chakra energy visualization, sacred geometry patterns, divine light emanation, transcendental aesthetic'
         };
 
         // EXTREME VARIETY GENERATORS
@@ -142,11 +154,18 @@ class ImageGenerationService {
         const randomStyle = artStyles[Math.floor(Math.random() * artStyles.length)];
         const randomMood = moods[Math.floor(Math.random() * moods.length)];
 
-        // Find matching genre visual
+        // Find matching genre visual - check genres, title, AND lyrics for keywords
         let genreVisual = 'abstract artistic music visualization, vibrant professional colors';
+        const searchText = [
+            ...genres.map(g => g.toLowerCase()),
+            title.toLowerCase(),
+            lyrics.toLowerCase().substring(0, 200)  // First 200 chars of lyrics
+        ].join(' ');
+
         for (const [genre, visual] of Object.entries(genreVisuals)) {
-            if (genres.some(g => g.toLowerCase().includes(genre))) {
+            if (searchText.includes(genre)) {
                 genreVisual = visual;
+                console.log(`[ImageGen] Matched theme: ${genre}`);
                 break;
             }
         }
