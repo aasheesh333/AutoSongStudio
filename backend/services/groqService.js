@@ -126,20 +126,25 @@ OUTPUT FORMAT:
     "title": "String (Max 99 chars)",
     "description": "String (Max 4999 chars)",
     "tags": ["tag1", "tag2"],
-    "lyrics": "String"
+    "lyrics": "String (CRITICAL: MAX 3000 chars for Suno API)"
   }`;
 
         // 2. Construct the User Prompt (The "Specific Task")
         let userPrompt = `TASK: Create a new song package for genres: ${genresText}.\n\n`;
 
         // --- SECTION A: LYRICS ---
+        // CRITICAL: Suno API V4 has 3000 char limit for lyrics
+        const LYRICS_MAX_CHARS = 3000;
+
         if (lyricsPrompt && lyricsPrompt.trim()) {
             userPrompt += `[LYRICS INSTRUCTION]: ${lyricsPrompt}\n(Follow this instruction STRICTLY)\n`;
         } else {
-            userPrompt += `[LYRICS INSTRUCTION]: Write a creative, emotionally powerful song about a theme suitable for ${genresText} music. Use vivid imagery, metaphors, and make it memorable and catchy. Include at least 3 verses, a strong chorus, and a bridge.\n`;
+            userPrompt += `[LYRICS INSTRUCTION]: Write a creative, emotionally powerful song about a theme suitable for ${genresText} music. Use vivid imagery, metaphors, and make it memorable and catchy. Include 2-3 verses, a strong chorus, and optionally a bridge.\n`;
         }
 
-        userPrompt += `\nGenerate the Lyrics first. Then, based on those lyrics and the genres, generate the Metadata.\n\n`;
+        userPrompt += `\n⚠️ CRITICAL LYRICS LIMIT: Lyrics MUST be under ${LYRICS_MAX_CHARS} characters. This is a HARD LIMIT for the Suno music generation API. If lyrics exceed this limit, the song WILL FAIL to generate. Write concise, impactful lyrics.\n`;
+
+        userPrompt += `\nGenerate the Lyrics first (keeping under ${LYRICS_MAX_CHARS} chars). Then, based on those lyrics and the genres, generate the Metadata.\n\n`;
 
         // --- SECTION B: METADATA ---
         userPrompt += `[METADATA INSTRUCTION]:\n`;
@@ -165,7 +170,7 @@ OUTPUT FORMAT:
         userPrompt += `
 \nReturn ONLY this JSON structure:
 {
-  "lyrics": "full lyrics string with \\n for line breaks",
+  "lyrics": "full lyrics string (STRICTLY UNDER 3000 chars) with \\n for line breaks",
   "title": "final title string (MAX 99 chars)",
   "description": "final description string (MAX 4999 chars)",
   "tags": ["tag1", "tag2", "tag3", ... max 499 chars total]
@@ -222,6 +227,18 @@ OUTPUT FORMAT:
             if (content.description && content.description.length > 4999) {
                 console.warn(`[Groq] Truncating Description from ${content.description.length} to 4999 chars`);
                 content.description = content.description.substring(0, 4999);
+            }
+
+            // CRITICAL: Lyrics limit for Suno API (3000 chars for V4)
+            if (content.lyrics && content.lyrics.length > 3000) {
+                console.warn(`[Groq] ⚠️ Truncating Lyrics from ${content.lyrics.length} to 3000 chars (Suno API limit)`);
+                // Truncate at the last complete line before 3000 chars
+                let truncated = content.lyrics.substring(0, 3000);
+                const lastNewline = truncated.lastIndexOf('\n');
+                if (lastNewline > 2500) {
+                    truncated = truncated.substring(0, lastNewline);
+                }
+                content.lyrics = truncated;
             }
 
             // Tags limit check (Total string length of comma-separated tags)
