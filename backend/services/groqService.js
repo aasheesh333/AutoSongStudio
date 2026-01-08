@@ -185,11 +185,29 @@ OUTPUT FORMAT:
                 const jsonEnd = rawResponse.lastIndexOf('}');
                 if (jsonStart === -1 || jsonEnd === -1) throw new Error('No JSON found');
 
-                const jsonStr = rawResponse.substring(jsonStart, jsonEnd + 1);
+                let jsonStr = rawResponse.substring(jsonStart, jsonEnd + 1);
+
+                // SANITIZE: Remove control characters that break JSON parsing
+                // This handles Hindi/multilingual text with raw line breaks inside strings
+                jsonStr = jsonStr
+                    // Replace actual newlines inside strings with escaped newlines
+                    .replace(/[\r\n]+/g, ' ')  // Replace newlines with spaces
+                    .replace(/[\x00-\x1F\x7F]/g, (char) => {
+                        // Keep valid whitespace, escape everything else
+                        if (char === '\t') return ' ';  // Tab to space
+                        return '';  // Remove other control characters
+                    })
+                    // Clean up multiple spaces
+                    .replace(/\s+/g, ' ')
+                    // Fix common JSON issues
+                    .replace(/,\s*}/g, '}')  // Remove trailing commas
+                    .replace(/,\s*]/g, ']'); // Remove trailing commas in arrays
+
+                console.log('[Groq] Sanitized JSON length:', jsonStr.length);
                 content = JSON.parse(jsonStr);
             } catch (parseError) {
                 console.error('[Groq] JSON Parse Error:', parseError);
-                console.error('Raw Response:', rawResponse);
+                console.error('Raw Response:', rawResponse.substring(0, 500));
                 throw new Error('Failed to parse AI response');
             }
 
