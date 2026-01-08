@@ -93,17 +93,16 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
           }
         });
 
-        // Start polling if processing, init video player if ready
+        // Start polling if processing, init video player if ready or uploaded
         if (_video!.status == 'processing') {
           _startPolling(id);
         } else {
           _stopPolling();
-          // Initialize video player if ready
-          if (_video!.status == 'ready' && _videoController == null) {
+          // Initialize video player for ready (local) or uploaded (YouTube) videos
+          if ((_video!.status == 'ready' && _videoController == null) ||
+              (_video!.status == 'uploaded' && _video!.youtubeId != null && !_isYouTubeInitialized)) {
             _initVideoPlayer();
           }
-          // For uploaded videos, YouTube URL is available via video.youtubeUrl
-          // User can open in external YouTube app/browser
         }
       }
     } catch (e) {
