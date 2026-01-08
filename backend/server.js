@@ -22,8 +22,8 @@ app.set('trust proxy', 1);
 // Middleware
 app.use(helmet());  // Security headers
 app.use(cors());  // Enable CORS
-app.use(express.json());  // Parse JSON bodies
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));  // Parse JSON bodies - increased for thumbnails
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));  // Increased for image uploads
 
 // Rate limiting
 const limiter = rateLimit({
