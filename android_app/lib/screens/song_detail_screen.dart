@@ -102,10 +102,8 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
           if (_video!.status == 'ready' && _videoController == null) {
             _initVideoPlayer();
           }
-          // Initialize YouTube player if uploaded
-          if (_video!.status == 'uploaded' && _video!.youtubeId != null) {
-            _initYouTubePlayer();
-          }
+          // For uploaded videos, YouTube URL is available via video.youtubeUrl
+          // User can open in external YouTube app/browser
         }
       }
     } catch (e) {
