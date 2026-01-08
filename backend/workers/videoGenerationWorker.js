@@ -243,13 +243,22 @@ class VideoGenerationWorker {
             const Scheduler = mongoose.model('Scheduler');
             const schedulerDoc = await Scheduler.findById(schedulerId);
 
-            if (schedulerDoc) {
-                const scheduler = { id: schedulerDoc._id.toString(), ...schedulerDoc.toObject() };
-                console.log(`[Worker] Manual trigger for scheduler: ${scheduler.name}`);
-
-                // Await validation completely!
-                await this.validateAndStart(scheduler);
+            if (!schedulerDoc) {
+                console.log(`[Worker] triggerForScheduler: Scheduler ${schedulerId} not found - skipping`);
+                return;
             }
+
+            // CRITICAL: Check if scheduler is active before triggering
+            if (!schedulerDoc.active) {
+                console.log(`[Worker] triggerForScheduler: Scheduler "${schedulerDoc.name}" is paused - skipping generation`);
+                return;
+            }
+
+            const scheduler = { id: schedulerDoc._id.toString(), ...schedulerDoc.toObject() };
+            console.log(`[Worker] Manual trigger for scheduler: ${scheduler.name}`);
+
+            // Await validation completely!
+            await this.validateAndStart(scheduler);
         } catch (e) {
             console.error(`[Worker] triggerForScheduler/Validation error: ${e.message}`);
             throw e; // RETHROW so route catches it!
