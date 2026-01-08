@@ -68,6 +68,144 @@ class ImageGenerationService {
     }
 
     /**
+     * Detect main character from lyrics and title for targeted thumbnail generation
+     * Returns visual description of the main subject for the thumbnail
+     */
+    detectMainCharacter(lyrics, title, genres) {
+        const text = `${title} ${lyrics}`.toLowerCase();
+        const genreText = genres.join(' ').toLowerCase();
+
+        // DEITY DETECTION - Specific Hindu deities with detailed visual descriptions
+        const deityKeywords = {
+            // Khatu Shyam / Shyam Baba
+            'khatu shyam': 'majestic divine figure of Khatu Shyam Ji, blue-skinned deity with golden crown, standing in ancient temple with divine golden light rays, peacock feathers, devotees in prayer, sacred saffron atmosphere',
+            'khatushyam': 'majestic divine figure of Khatu Shyam Ji, blue-skinned deity with golden crown, ancient temple backdrop, divine aura, peacock feathers decoration, spiritual devotion scene',
+            'shyam baba': 'divine Shyam Baba figure, blue deity with serene expression, golden ornaments, temple architecture background, evening aarti lamps, devotional atmosphere',
+            'barbarik': 'warrior deity Barbarik with three arrows, majestic royal appearance, divine golden armor, Himalayan backdrop, heroic pose, mythological setting',
+
+            // Krishna
+            'krishna': 'ethereal Lord Krishna playing divine flute, mesmerizing blue skin with golden jewelry, peacock feather crown, standing by lotus pond under moonlight, radiant divine glow, enchanting smile',
+            'kanha': 'adorable baby Krishna, cute divine child with butter pot, playful expression, golden ornaments, village of Vrindavan backdrop, cows and peacocks, warm sunset',
+            'gopal': 'young cowherd Krishna surrounded by cows, pastoral Vrindavan landscape, flute in hand, peacock feather crown, golden hour lighting, divine pastoral scene',
+            'radha krishna': 'divine couple Radha and Krishna in eternal love, Radha in pink saree, Krishna with flute, enchanted forest of Vrindavan, lotus flowers, moonlit romantic atmosphere, celestial beauty',
+            'radhe': 'beautiful Radha Rani in elegant pink and gold attire, divine beauty, lotus in hand, Yamuna river backdrop, golden temple, devotional grace, ethereal glow',
+
+            // Shiva
+            'shiva': 'majestic Lord Shiva in deep meditation, blue throat (Neelkanth), third eye, crescent moon in matted locks, snow-covered Kailash mountain, Ganga flowing from hair, trishul and damru, serpent Vasuki, divine cosmic energy',
+            'mahadev': 'powerful Mahadev form of Shiva, cosmic destroyer and creator, Nataraja dance pose, ring of fire, universe in backdrop, ash-covered body, divine masculine energy',
+            'bholenath': 'gentle Bholenath sitting in peaceful meditation, simple ash-covered form, rudraksha beads, cannabis leaves, devotees seeking blessings, Himalayan cave ashram, dim lamp lighting',
+            'shankar': 'graceful Lord Shankar with Goddess Parvati, divine couple on Mount Kailash, tiger skin, trishul, snow peaks, peaceful family scene with Ganesha and Kartikeya',
+
+            // Hanuman
+            'hanuman': 'mighty Lord Hanuman in heroic flying pose, glowing orange-gold body, massive muscular form, carrying Dronagiri mountain, Ram naam on chest, sunrise over mountains, divine warrior energy',
+            'bajrangbali': 'powerful Bajrangbali with golden mace (gada), muscular divine form, devotion in eyes, temple bells, saffron flags, strength and devotion symbolism',
+            'maruti': 'dynamic Maruti in action pose, flying through clouds, serving Lord Ram, orange hues, wind god son, speed and power visualization',
+
+            // Ganesha
+            'ganesh': 'beloved Lord Ganesha with elephant head, seated on lotus throne, modak sweets, mouse vehicle, broken tusk, writing Mahabharata, auspicious red and gold colors, prosperity symbols',
+            'ganapati': 'dancing Ganapati in celebration, large belly and gentle eyes, four arms with various mudras, blessings pose, festive Ganesh Chaturthi atmosphere, flowers and lamps',
+            'vighnaharta': 'wise Vighnaharta removing obstacles, serene elephant-headed deity, scholar pose with books, blessing devotees, golden crown and jewelry, divine wisdom',
+
+            // Durga
+            'durga': 'fierce Goddess Durga riding lion, ten arms wielding divine weapons, slaying demon Mahishasura, red and gold saree, third eye blazing, cosmic battle scene, powerful feminine divine energy',
+            'mata rani': 'benevolent Mata Rani showering blessings, beautiful divine mother, multiple arms with weapons and lotus, lion mount, red saree, devotees receiving grace, temple setting',
+            'sherawali': 'triumphant Sherawali Maa on lion mount, victorious pose over evil, red and gold attire, fierce protective mother aspect, Navratri celebration atmosphere',
+
+            // Lakshmi
+            'lakshmi': 'gracious Goddess Lakshmi seated on lotus, gold coins flowing, four arms with lotus flowers, elephant bathing her, prosperity and wealth symbols, pink lotus pond, divine beauty and abundance',
+            'mahalaxmi': 'resplendent Mahalaxmi in red and gold, standing on lotus, blessing devotees with wealth, golden temple background, oil lamps, Diwali celebration atmosphere',
+
+            // Ram
+            'ram': 'noble Lord Ram with divine bow, princely blue skin, golden crown, Sita and Lakshman beside, Ayodhya kingdom backdrop, righteousness personified, regal bearing',
+            'sita ram': 'divine couple Sita and Ram, ideal husband-wife, forest exile scene or royal court, Hanuman in devotion, epic Ramayana visualization',
+
+            // Other deities
+            'saraswati': 'graceful Goddess Saraswati on white lotus, playing veena, swan vehicle, white pure attire, books and knowledge symbols, peaceful wisdom emanation',
+            'vishnu': 'supreme Lord Vishnu reclining on Sheshnag serpent, blue skin, four arms with conch shell chakra mace lotus, cosmic ocean, Lakshmi at feet, divine preservation aspect',
+            'kartikeya': 'handsome warrior god Kartikeya on peacock, spear (vel) in hand, six heads, divine army commander, South Indian temple style, victory over demons'
+        };
+
+        // Check for deity keywords
+        for (const [deity, visual] of Object.entries(deityKeywords)) {
+            if (text.includes(deity)) {
+                console.log(`[ImageGen] Detected deity character: ${deity}`);
+                return { type: 'deity', visual };
+            }
+        }
+
+        // Check for general devotional/bhajan without specific deity
+        if (genreText.includes('devotional') || genreText.includes('bhajan') || text.includes('bhagwan') || text.includes('prabhu') || text.includes('mandir')) {
+            console.log('[ImageGen] Detected general devotional theme');
+            return {
+                type: 'devotional',
+                visual: 'serene devotional scene, ancient temple silhouette at golden sunrise, divine light rays through clouds, oil lamps (diyas), devotees in prayer, saffron and golden atmosphere, spiritual peace'
+            };
+        }
+
+        // ROMANTIC COUPLE DETECTION
+        const coupleKeywords = ['tum aur main', 'hum dono', 'tere sang', 'saath', 'couple', 'jodi', 'dulhan', 'shaadi', 'wedding', 'love story', 'romance'];
+        for (const keyword of coupleKeywords) {
+            if (text.includes(keyword)) {
+                console.log('[ImageGen] Detected romantic couple theme');
+                return {
+                    type: 'couple',
+                    visual: 'romantic couple silhouette at golden sunset, man and woman in love, holding hands, cinematic lighting, dreamy bokeh, warm golden hour, emotional connection, love story atmosphere'
+                };
+            }
+        }
+
+        // FEMALE PROTAGONIST DETECTION
+        const femaleKeywords = ['ladki', 'larki', 'girl', 'she', 'her', 'wo', 'uski', 'naari', 'aurat', 'beti', 'girlfriend', 'patni', 'wife', 'meri jaan', 'jaanu'];
+        const femaleEmotions = ['roti', 'royee', 'tanhai', 'akeli', 'miss her', 'bichhad', 'judai'];
+
+        for (const keyword of [...femaleKeywords, ...femaleEmotions]) {
+            if (text.includes(keyword)) {
+                // Check if sad/melancholic
+                if (text.includes('sad') || text.includes('roti') || text.includes('aansu') || text.includes('dard') || text.includes('tanhai')) {
+                    console.log('[ImageGen] Detected sad female protagonist');
+                    return {
+                        type: 'female_sad',
+                        visual: 'beautiful young Indian woman alone, melancholic expression, tears glistening, looking out rainy window, blue-grey tones, emotional depth, soft lighting, loneliness and heartbreak, cinematic portrait'
+                    };
+                }
+                console.log('[ImageGen] Detected female protagonist');
+                return {
+                    type: 'female',
+                    visual: 'beautiful young Indian woman, elegant traditional or modern attire, expressive eyes, graceful pose, warm golden lighting, portrait style, emotional depth, cinematic beauty shot'
+                };
+            }
+        }
+
+        // MALE PROTAGONIST DETECTION
+        const maleKeywords = ['ladka', 'larka', 'boy', 'he', 'his', 'uska', 'aadmi', 'boyfriend', 'pati', 'husband'];
+        const maleEmotions = ['rota', 'roya', 'akela', 'tanha'];
+
+        for (const keyword of [...maleKeywords, ...maleEmotions]) {
+            if (text.includes(keyword)) {
+                if (text.includes('sad') || text.includes('rota') || text.includes('dard') || text.includes('tanha')) {
+                    console.log('[ImageGen] Detected sad male protagonist');
+                    return {
+                        type: 'male_sad',
+                        visual: 'handsome young Indian man alone, contemplative sad expression, sitting by window at night, city lights in background, emotional vulnerability, blue tones, cinematic portrait, heartbreak visualization'
+                    };
+                }
+                console.log('[ImageGen] Detected male protagonist');
+                return {
+                    type: 'male',
+                    visual: 'handsome young Indian man, stylish modern or traditional attire, confident yet emotional expression, urban or natural backdrop, warm cinematic lighting, portrait style'
+                };
+            }
+        }
+
+        // Default - abstract music visualization
+        console.log('[ImageGen] No specific character detected, using abstract theme');
+        return {
+            type: 'abstract',
+            visual: 'abstract artistic music visualization, dynamic sound waves, vibrant colors, emotional energy flow, professional album art aesthetic'
+        };
+    }
+
+    /**
      * Generate optimized prompt for music cover art with MAXIMUM variety
      * Each thumbnail should be unique - uses lyrics context and timestamp seed
      */
@@ -170,11 +308,31 @@ class ImageGenerationService {
             }
         }
 
-        // Final Prompt Construction (Uniqueness guaranteed by random combinations)
-        // Explicitly asking for NO TEXT
-        const prompt = `masterpiece, award-winning digital art, ${randomStyle}, ${genreVisual}, ${emotionalContext}, ${lyricVisual}, ${randomCamera}, ${randomLighting}, ${randomMood}, high detailed, 8k resolution, trending on artstation, emotionally evocative, ((absolutely no text)), ((no words)), ((no letters)), ((no typography)), ((no writing)), no watermark, no signature, no logos`;
+        // MAIN CHARACTER DETECTION - Primary subject for the thumbnail
+        const character = this.detectMainCharacter(lyrics, title, genres);
+        let mainVisual;
 
-        console.log(`[ImageGen] Generated unique prompt: ${prompt.substring(0, 100)}...`);
+        if (character.type !== 'abstract') {
+            // Character detected - use as PRIMARY visual (takes priority over genre)
+            mainVisual = character.visual;
+            console.log(`[ImageGen] Using character visual (${character.type}): ${mainVisual.substring(0, 50)}...`);
+        } else {
+            // No character detected - use genre visual
+            mainVisual = genreVisual;
+        }
+
+        // HIGH QUALITY MODIFIERS for professional thumbnails
+        const qualityModifiers = [
+            'masterpiece', 'award-winning digital art', 'ultra detailed', '8K UHD',
+            'professional YouTube thumbnail', 'trending on artstation',
+            'photorealistic', 'cinematic composition', 'dramatic lighting'
+        ].join(', ');
+
+        // Final Prompt Construction (Character-first for better thumbnails)
+        // Character visual is the PRIMARY focus, supplemented by style and mood
+        const prompt = `${qualityModifiers}, ${mainVisual}, ${emotionalContext}, ${randomStyle}, ${randomLighting}, ${randomMood}, ${lyricVisual}, highly detailed, emotionally evocative, professional album art, ((absolutely no text)), ((no words)), ((no letters)), ((no typography)), ((no writing)), no watermark, no signature, no logos`;
+
+        console.log(`[ImageGen] Final prompt: ${prompt.substring(0, 120)}...`);
         return prompt;
     }
 
