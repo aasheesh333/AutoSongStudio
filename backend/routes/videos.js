@@ -104,17 +104,37 @@ router.delete('/:id', async (req, res) => {
         if (!video) return res.status(404).json({ error: 'Video not found' });
         if (video.status === 'uploaded') return res.status(403).json({ error: 'Cannot delete uploaded video' });
 
+        const videoStatus = video.status;  // Save before deletion
+        const schedulerId = video.schedulerId;
+
         // DELETE FILES (Retention Policy)
         deleteVideoFiles(video);
 
         await VideoModel.delete(req.params.id);
-        console.log(`[Videos] Deleted video ${req.params.id} and its files.`);
+        console.log(`[Videos] Deleted video ${req.params.id} (status was: ${videoStatus})`);
 
         res.json({ success: true, message: 'Video deleted' });
 
-        // Trigger keep-ahead
-        const videoWorker = req.app.get('videoWorker');
-        if (videoWorker) videoWorker.triggerForScheduler(video.schedulerId);
+        // Trigger keep-ahead ONLY if:
+        // 1. Video was NOT failed (failed videos don't need replacement)
+        // 2. Scheduler is still active (paused schedulers shouldn't trigger generation)
+        if (videoStatus === 'failed') {
+            console.log(`[Videos] Skipping replacement: video was 'failed' status`);
+        } else {
+            // Check if scheduler is active before triggering
+            const { SchedulerModel } = require('../models');
+            const scheduler = await SchedulerModel.findById(schedulerId);
+
+            if (!scheduler) {
+                console.log(`[Videos] Skipping replacement: scheduler not found`);
+            } else if (!scheduler.active) {
+                console.log(`[Videos] Skipping replacement: scheduler '${scheduler.name}' is paused`);
+            } else {
+                console.log(`[Videos] Triggering replacement for active scheduler: ${scheduler.name}`);
+                const videoWorker = req.app.get('videoWorker');
+                if (videoWorker) videoWorker.triggerForScheduler(schedulerId);
+            }
+        }
 
     } catch (error) {
         res.status(500).json({ error: error.message });
