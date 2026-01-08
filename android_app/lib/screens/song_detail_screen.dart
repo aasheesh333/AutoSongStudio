@@ -65,12 +65,18 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
     try {
       final appState = Provider.of<AppState>(context, listen: false);
       
-      // Force refresh data from API if polling
-      if (_video != null) {
-        await appState.loadVideos(schedulerId: _video!.schedulerId);
+      // IMPORTANT: Call API directly to get fresh data including YouTube metadata
+      // For uploaded videos, backend fetches live title/description/tags from YouTube
+      Video updatedVideo;
+      try {
+        final api = ApiService();
+        updatedVideo = await api.getVideo(id);
+        debugPrint('[SongDetail] Fetched video from API: ${updatedVideo.title}');
+      } catch (e) {
+        debugPrint('[SongDetail] API fetch failed, falling back to cache: $e');
+        // Fallback to cached list if API fails
+        updatedVideo = appState.videos.firstWhere((v) => v.id == id);
       }
-      
-      final updatedVideo = appState.videos.firstWhere((v) => v.id == id);
       
       if (mounted) {
         setState(() {
@@ -95,6 +101,10 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
           // Initialize video player if ready
           if (_video!.status == 'ready' && _videoController == null) {
             _initVideoPlayer();
+          }
+          // Initialize YouTube player if uploaded
+          if (_video!.status == 'uploaded' && _video!.youtubeId != null) {
+            _initYouTubePlayer();
           }
         }
       }
