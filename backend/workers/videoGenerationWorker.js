@@ -200,18 +200,44 @@ class VideoGenerationWorker {
             const videoUrl = `${config.backendUrl}${config.storage.publicUrl}/videos/${path.basename(outputPath)}`;
 
             // Calculate proper publish time based on scheduler's configured time
+            // NOTE: scheduler.time is in user's local time (IST for Indian users)
+            // Server runs in UTC, so we need to convert IST to UTC
             let publishAt;
             if (scheduler.time) {
-                // scheduler.time is in "HH:MM" format (e.g., "09:00")
+                // scheduler.time is in "HH:MM" format (e.g., "09:00") in IST
                 const [hours, minutes] = scheduler.time.split(':').map(Number);
-                publishAt = new Date();
-                publishAt.setHours(hours, minutes, 0, 0);
 
-                // If time has already passed today, schedule for tomorrow
+                // Create date in UTC
+                publishAt = new Date();
+
+                // IST is UTC+5:30, so we subtract 5 hours 30 minutes to convert to UTC
+                // If user says 7:00 AM IST, we need to schedule for 1:30 AM UTC
+                const istOffsetHours = 5;
+                const istOffsetMinutes = 30;
+
+                // Set the time in UTC (by calculating IST offset)
+                let utcHours = hours - istOffsetHours;
+                let utcMinutes = minutes - istOffsetMinutes;
+
+                // Handle minute underflow
+                if (utcMinutes < 0) {
+                    utcMinutes += 60;
+                    utcHours -= 1;
+                }
+
+                // Handle hour underflow (goes to previous day)
+                if (utcHours < 0) {
+                    utcHours += 24;
+                    publishAt.setDate(publishAt.getDate() - 1); // Go back one day first
+                }
+
+                publishAt.setUTCHours(utcHours, utcMinutes, 0, 0);
+
+                // If time has already passed today (in UTC), schedule for tomorrow
                 if (publishAt <= new Date()) {
                     publishAt.setDate(publishAt.getDate() + 1);
                 }
-                console.log(`[Worker] Scheduled publish at: ${publishAt.toISOString()} (from scheduler.time: ${scheduler.time})`);
+                console.log(`[Worker] Scheduler time: ${scheduler.time} IST → ${publishAt.toISOString()} UTC`);
             } else {
                 // Fallback: 5 minutes from now
                 publishAt = new Date();
