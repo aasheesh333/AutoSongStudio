@@ -295,6 +295,115 @@ class SunoService {
             audioUrl: result.audioUrl
         };
     }
+
+    // ================== COVER IMAGE GENERATION ==================
+
+    /**
+     * Generate cover image using Suno Cover API
+     * Must be called AFTER music generation is complete
+     * @param {string} musicTaskId - TaskId from the original music generation
+     * @param {string} apiKey - Suno API key
+     * @returns {string} Cover generation taskId
+     */
+    async generateCover(musicTaskId, apiKey) {
+        console.log(`[Suno] Requesting cover for music task: ${musicTaskId}`);
+
+        const payload = {
+            taskId: musicTaskId,
+            callBackUrl: `${config.backendUrl}/api/webhooks/suno-cover`
+        };
+
+        const result = await this.makeRequest('/api/v1/cover', 'POST', payload, apiKey);
+
+        if (!result || !result.data || !result.data.taskId) {
+            // Check if cover already exists (400 error)
+            if (result.code === 400 && result.data?.taskId) {
+                console.log(`[Suno] Cover already exists, using existing taskId: ${result.data.taskId}`);
+                return result.data.taskId;
+            }
+            console.error('[Suno] Cover generation failed:', JSON.stringify(result, null, 2));
+            throw new Error('Failed to start cover generation');
+        }
+
+        console.log(`[Suno] Cover generation started, taskId: ${result.data.taskId}`);
+        return result.data.taskId;
+    }
+
+    /**
+     * Poll cover generation status until complete
+     * @param {string} coverTaskId - TaskId from generateCover
+     * @param {string} apiKey - Suno API key
+     * @param {number} maxAttempts - Max polling attempts (default 30 = 2.5 mins)
+     * @returns {Object} { imageUrl, imageUrl2 } - Two cover image URLs
+     */
+    async pollCoverStatus(coverTaskId, apiKey, maxAttempts = 30) {
+        console.log(`[Suno] Polling cover status for: ${coverTaskId}`);
+
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            await new Promise(resolve => setTimeout(resolve, 5000));  // Wait 5 seconds
+
+            const status = await this.makeRequest(
+                `/api/v1/cover/record-info?taskId=${coverTaskId}`,
+                'GET',
+                null,
+                apiKey
+            );
+
+            if (!status || !status.data) {
+                console.warn(`[Suno] Invalid cover status response, attempt ${attempt + 1}`);
+                continue;
+            }
+
+            const state = status.data.status || 'unknown';
+            console.log(`[Suno] Cover status: ${state}`);
+
+            if (state === 'SUCCESS') {
+                // Cover data is in response.sunoData
+                const coverData = status.data.response?.sunoData?.[0];
+                if (coverData && coverData.imageUrl) {
+                    console.log(`[Suno] ✅ Cover generation complete!`);
+                    return {
+                        imageUrl: coverData.imageUrl,
+                        imageUrl2: coverData.imageUrl2 || null  // Second style option
+                    };
+                }
+            }
+
+            if (state === 'FAILED' || state === 'CREATE_TASK_FAILED') {
+                throw new Error(`Cover generation failed with status: ${state}`);
+            }
+        }
+
+        throw new Error('Cover generation timeout (2.5 minutes)');
+    }
+
+    /**
+     * Download cover image to local file
+     * @param {string} imageUrl - URL of the cover image
+     * @param {string} outputPath - Local path to save the image
+     */
+    async downloadCover(imageUrl, outputPath) {
+        console.log(`[Suno] Downloading cover from: ${imageUrl}`);
+
+        const response = await axios({
+            method: 'GET',
+            url: imageUrl,
+            responseType: 'stream'
+        });
+
+        const fs = require('fs');
+        const writer = fs.createWriteStream(outputPath);
+
+        response.data.pipe(writer);
+
+        return new Promise((resolve, reject) => {
+            writer.on('finish', () => {
+                console.log(`[Suno] ✅ Cover downloaded to: ${outputPath}`);
+                resolve(outputPath);
+            });
+            writer.on('error', reject);
+        });
+    }
 }
 
 module.exports = new SunoService();

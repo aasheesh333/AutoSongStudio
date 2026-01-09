@@ -185,10 +185,22 @@ class VideoGenerationWorker {
 
             if (user.plan !== 'pro') await SunoKeyUsageModel.incrementUsage(user.sunoApiKey);
 
-            // 5. Generate Thumbnail
+            // 5. Generate Thumbnail using Suno Cover API (matches the music style)
             const thumbFilename = `${videoId}.png`;
             const thumbnailPath = path.join(this.storageDir, 'thumbnails', thumbFilename);
-            await imageService.generateAndSave(scheduler.genres, content.lyrics, content.title, thumbnailPath);
+
+            try {
+                // Request cover image from Suno (uses the music taskId)
+                console.log(`[Worker] Generating cover using Suno API for task: ${taskId}`);
+                const coverTaskId = await sunoService.generateCover(taskId, apiKey);
+                const coverResult = await sunoService.pollCoverStatus(coverTaskId, apiKey);
+                await sunoService.downloadCover(coverResult.imageUrl, thumbnailPath);
+                console.log(`[Worker] ✅ Suno cover downloaded: ${thumbnailPath}`);
+            } catch (coverError) {
+                // Fallback to Pollinations if Suno Cover fails
+                console.warn(`[Worker] Suno cover failed (${coverError.message}), falling back to Pollinations`);
+                await imageService.generateAndSave(scheduler.genres, content.lyrics, content.title, thumbnailPath);
+            }
 
             const thumbnailUrl = `${config.backendUrl}${config.storage.publicUrl}/thumbnails/${thumbFilename}`;
             await VideoModel.update(videoId, { thumbnailPath, thumbnailUrl });
