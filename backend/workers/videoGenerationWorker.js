@@ -200,35 +200,59 @@ class VideoGenerationWorker {
             const videoUrl = `${config.backendUrl}${config.storage.publicUrl}/videos/${path.basename(outputPath)}`;
 
             // Calculate proper publish time based on scheduler's configured time
-            // NOTE: scheduler.time is in user's local time (IST for Indian users)
-            // Server runs in UTC, so we need to convert IST to UTC
+            // Uses user's timezone from database to convert to UTC
             let publishAt;
             if (scheduler.time) {
-                // scheduler.time is in "HH:MM" format (e.g., "09:00") in IST
+                // scheduler.time is in "HH:MM" format (e.g., "09:00") in user's LOCAL timezone
                 const [hours, minutes] = scheduler.time.split(':').map(Number);
 
                 // Create date in UTC
                 publishAt = new Date();
 
-                // IST is UTC+5:30, so we subtract 5 hours 30 minutes to convert to UTC
-                // If user says 7:00 AM IST, we need to schedule for 1:30 AM UTC
-                const istOffsetHours = 5;
-                const istOffsetMinutes = 30;
+                // Fetch user's timezone from database
+                const user = await UserModel.findById(scheduler.userId);
+                const userTimezone = user?.timezone || 'Asia/Kolkata';  // Default to IST
 
-                // Set the time in UTC (by calculating IST offset)
-                let utcHours = hours - istOffsetHours;
-                let utcMinutes = minutes - istOffsetMinutes;
+                // Timezone offset map (hours, minutes) - positive means ahead of UTC
+                const timezoneOffsets = {
+                    'Asia/Kolkata': { hours: 5, minutes: 30 },      // IST (India)
+                    'Asia/Dubai': { hours: 4, minutes: 0 },         // UAE
+                    'Asia/Singapore': { hours: 8, minutes: 0 },     // Singapore
+                    'Asia/Tokyo': { hours: 9, minutes: 0 },         // Japan
+                    'Europe/London': { hours: 0, minutes: 0 },      // UK (no DST adjustment)
+                    'Europe/Paris': { hours: 1, minutes: 0 },       // Central Europe
+                    'America/New_York': { hours: -5, minutes: 0 },  // US Eastern
+                    'America/Los_Angeles': { hours: -8, minutes: 0 }, // US Pacific
+                    'America/Toronto': { hours: -5, minutes: 0 },   // Canada Eastern
+                    'Australia/Sydney': { hours: 10, minutes: 0 },  // Australia Eastern
+                    'UTC': { hours: 0, minutes: 0 }
+                };
+
+                const offset = timezoneOffsets[userTimezone] || timezoneOffsets['Asia/Kolkata'];
+
+                // Convert user's local time to UTC
+                // If user says 7:00 AM in their timezone, subtract their offset to get UTC
+                let utcHours = hours - offset.hours;
+                let utcMinutes = minutes - offset.minutes;
 
                 // Handle minute underflow
                 if (utcMinutes < 0) {
                     utcMinutes += 60;
                     utcHours -= 1;
                 }
+                if (utcMinutes >= 60) {
+                    utcMinutes -= 60;
+                    utcHours += 1;
+                }
 
                 // Handle hour underflow (goes to previous day)
                 if (utcHours < 0) {
                     utcHours += 24;
                     publishAt.setDate(publishAt.getDate() - 1); // Go back one day first
+                }
+                if (utcHours >= 24) {
+                    utcHours -= 24;
+                    publishAt.setDate(publishAt.getDate() + 1); // Go forward one day
                 }
 
                 publishAt.setUTCHours(utcHours, utcMinutes, 0, 0);
@@ -237,7 +261,7 @@ class VideoGenerationWorker {
                 if (publishAt <= new Date()) {
                     publishAt.setDate(publishAt.getDate() + 1);
                 }
-                console.log(`[Worker] Scheduler time: ${scheduler.time} IST → ${publishAt.toISOString()} UTC`);
+                console.log(`[Worker] Scheduler time: ${scheduler.time} (${userTimezone}) → ${publishAt.toISOString()} UTC`);
             } else {
                 // Fallback: 5 minutes from now
                 publishAt = new Date();

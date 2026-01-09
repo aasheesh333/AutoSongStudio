@@ -10,6 +10,8 @@ const UserSchema = new mongoose.Schema({
     sunoApiKey: { type: String, default: null },
     videosThisMonth: { type: Number, default: 0 },
     lastResetDate: { type: Date, default: Date.now },
+    // Timezone for correct scheduling (e.g., 'Asia/Kolkata' for India, 'America/Toronto' for Canada)
+    timezone: { type: String, default: 'Asia/Kolkata' },  // Default to IST for existing users
     // Data persistence fields
     lastActiveAt: { type: Date, default: Date.now },  // For 24-hour engagement rule
     channels: [{

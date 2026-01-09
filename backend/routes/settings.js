@@ -36,7 +36,8 @@ router.get('/', async (req, res) => {
                 plan: user.plan,
                 videosThisMonth: user.videosThisMonth || 0,
                 schedulersCount: user.schedulersCount || 0,
-                sunoApiKey: user.sunoApiKey || null
+                sunoApiKey: user.sunoApiKey || null,
+                timezone: user.timezone || 'Asia/Kolkata'  // User's timezone for scheduling
             },
             planLimits: {
                 maxSchedulers: planConfig.maxSchedulers,
@@ -46,6 +47,40 @@ router.get('/', async (req, res) => {
             },
             sunoKeyRequired: planConfig.requiresOwnSunoKey && !user.sunoApiKey
         });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * PUT /api/settings/timezone
+ * Update user's timezone for correct scheduling
+ */
+router.put('/timezone', async (req, res) => {
+    const { userId, timezone } = req.body;
+
+    if (!userId || !timezone) {
+        return res.status(400).json({ error: 'userId and timezone required' });
+    }
+
+    // Validate timezone is in our supported list
+    const validTimezones = [
+        'Asia/Kolkata', 'Asia/Dubai', 'Asia/Singapore', 'Asia/Tokyo',
+        'Europe/London', 'Europe/Paris', 'America/New_York', 'America/Los_Angeles',
+        'America/Toronto', 'Australia/Sydney', 'UTC'
+    ];
+
+    if (!validTimezones.includes(timezone)) {
+        return res.status(400).json({
+            error: 'Invalid timezone',
+            validTimezones
+        });
+    }
+
+    try {
+        await UserModel.update(userId, { timezone });
+        console.log(`[Settings] Updated timezone for user ${userId}: ${timezone}`);
+        res.json({ success: true, timezone });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
