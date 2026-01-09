@@ -153,7 +153,7 @@ class SunoService {
             customMode: true,                       // Enable custom lyrics mode
             style: genres.join(', '),               // Music style/genre
             title: cleanLyrics.split('\n')[0].substring(0, 50) || 'Generated Song',
-            model: 'V4_5',                          // Using V4.5 model
+            model: 'V5',                           // Using V5 model (latest, best quality)
             instrumental: false,                    // IMPORTANT: false = include vocals
             callBackUrl: `${config.backendUrl}/api/webhooks/suno`  // Required by Suno API
         };
