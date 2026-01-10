@@ -55,10 +55,18 @@ class UploadWorker {
 
             await VideoModel.markAsUploaded(video.id, result.videoId);
 
-            // CLEANUP (Retention Policy)
+            // CLEANUP (Retention Policy) - Delete local files after upload
             try {
                 this.cleanupVideoFiles(video);
-                console.log('[Upload] Local files deleted (Retention Policy)');
+
+                // Clear file paths from DB (only YouTube URL remains)
+                await VideoModel.update(video.id, {
+                    videoPath: null,
+                    audioPath: null,
+                    thumbnailPath: null
+                });
+
+                console.log('[Upload] ✅ Local files deleted and paths cleared from DB');
             } catch (e) {
                 console.warn(`[Upload] Cleanup failed: ${e.message}`);
             }
