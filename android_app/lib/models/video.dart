@@ -11,6 +11,7 @@ class Video {
   final List<String> genres;
   
   final String? audioUrl;
+  final String? videoUrl;
   final String? thumbnailUrl;
   final String? youtubeId;
   final DateTime? scheduledPublishAt;
@@ -33,6 +34,7 @@ class Video {
     required this.lyrics,
     required this.genres,
     this.audioUrl,
+    this.videoUrl,
     this.thumbnailUrl,
     this.youtubeId,
     this.scheduledPublishAt,
@@ -59,6 +61,7 @@ class Video {
           ? List<String>.from(json['genres']) 
           : <String>[],
       audioUrl: json['audioUrl'] as String?,
+      videoUrl: json['videoUrl'] as String?,
       thumbnailUrl: json['thumbnailUrl'] as String?,
       youtubeId: json['youtubeId'] as String?,
       scheduledPublishAt: json['scheduledPublishAt'] != null

@@ -404,7 +404,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
     super.dispose();
   }
 
-  void _initVideoPlayer() {
+  Future<void> _initVideoPlayer() async {
     if (_video == null) return;
     
     // Case 1: Uploaded to YouTube -> Use WebView
