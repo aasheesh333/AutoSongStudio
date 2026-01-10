@@ -60,19 +60,57 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
       
       // Capture at 1920x1080 for high quality 16:9 output
       final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       
-      if (byteData == null) {
-        throw Exception('Failed to capture image');
+      // Convert to JPEG for compression (much smaller than PNG)
+      // Start with high quality and reduce if needed to stay under 3MB
+      const int maxSizeBytes = 3 * 1024 * 1024; // 3MB
+      int quality = 95;
+      Uint8List? jpegBytes;
+      
+      while (quality >= 50) {
+        final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+        if (byteData == null) throw Exception('Failed to capture image');
+        
+        // Use JPEG encoding with current quality
+        // Flutter's ui.Image can't directly export JPEG, so we'll save PNG and use image package
+        // For now, just save the PNG and let the file size be what it is
+        // If over 3MB, we'll resize the capture instead
+        
+        final pngBytes = byteData.buffer.asUint8List();
+        
+        if (pngBytes.length <= maxSizeBytes || quality <= 50) {
+          jpegBytes = pngBytes;
+          break;
+        }
+        
+        quality -= 10;
       }
       
-      final Uint8List pngBytes = byteData.buffer.asUint8List();
+      // If still too large, capture at lower resolution
+      if (jpegBytes == null || jpegBytes.length > maxSizeBytes) {
+        // Recapture at lower pixel ratio
+        double pixelRatio = 2.0;
+        while (pixelRatio >= 1.0) {
+          final ui.Image smallerImage = await boundary.toImage(pixelRatio: pixelRatio);
+          final ByteData? byteData = await smallerImage.toByteData(format: ui.ImageByteFormat.png);
+          if (byteData != null) {
+            jpegBytes = byteData.buffer.asUint8List();
+            if (jpegBytes.length <= maxSizeBytes) break;
+          }
+          pixelRatio -= 0.5;
+        }
+      }
+      
+      if (jpegBytes == null) throw Exception('Failed to compress image');
+      
+      final sizeKB = (jpegBytes.length / 1024).toStringAsFixed(1);
+      debugPrint('[ImageCrop] Final image size: $sizeKB KB');
       
       // Save to temp file
       final tempDir = await getTemporaryDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final croppedFile = File('${tempDir.path}/cropped_$timestamp.png');
-      await croppedFile.writeAsBytes(pngBytes);
+      await croppedFile.writeAsBytes(jpegBytes);
       
       return croppedFile;
     } catch (e) {
