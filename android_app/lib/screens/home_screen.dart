@@ -503,10 +503,16 @@ class _VideoCard extends StatelessWidget {
                 child: video.thumbnailUrl != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          video.thumbnailUrl!,
-                          key: ValueKey(video.thumbnailUrl),
-                          fit: BoxFit.cover,
+                        child: Builder(
+                          builder: (context) {
+                            // DEBUG: Print thumbnailUrl to verify it has ?t= param
+                            print('[Flutter DEBUG] Video ${video.id} thumbnailUrl: ${video.thumbnailUrl}');
+                            return Image.network(
+                              video.thumbnailUrl!,
+                              key: ValueKey(video.thumbnailUrl),
+                              fit: BoxFit.cover,
+                            );
+                          },
                         ),
                       )
                     : (video.isProcessing 
