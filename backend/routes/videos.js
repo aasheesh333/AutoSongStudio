@@ -250,7 +250,7 @@ router.get('/:id/thumbnail-stream', async (req, res) => {
 });
 
 // POST /api/videos/:id/thumbnail - Upload custom thumbnail (base64)
-router.post('/:id/thumbnail', requireAuth, async (req, res) => {
+router.post('/:id/thumbnail', async (req, res) => {
     try {
         const video = await VideoModel.findById(req.params.id);
         if (!video) return res.status(404).json({ error: 'Video not found' });
