@@ -22,7 +22,6 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
   final TransformationController _transformController = TransformationController();
   
   double _scale = 1.0;
-  Offset _offset = Offset.zero;
   late Size _imageSize;
   bool _imageLoaded = false;
   bool _isCropping = false;
@@ -168,7 +167,6 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
                     _transformController.value = Matrix4.identity();
                     setState(() {
                       _scale = 1.0;
-                      _offset = Offset.zero;
                     });
                   },
                   icon: const Icon(Icons.refresh, color: Colors.white),
@@ -213,8 +211,10 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
                   panEnabled: true,
                   scaleEnabled: true,
                   onInteractionUpdate: (details) {
+                    // Get scale from transformation matrix
+                    final scale = _transformController.value.getMaxScaleOnAxis();
                     setState(() {
-                      _scale = details.scale;
+                      _scale = scale;
                     });
                   },
                   child: Image.file(
