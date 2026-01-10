@@ -304,6 +304,7 @@ class _VideoCard extends StatelessWidget {
                         ),
                         child: Image.network(
                           video.thumbnailUrl!,
+                          key: ValueKey(video.thumbnailUrl),
                           width: double.infinity,
                           height: double.infinity,
                           fit: BoxFit.cover,

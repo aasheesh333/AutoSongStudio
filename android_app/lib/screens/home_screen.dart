@@ -505,6 +505,7 @@ class _VideoCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
                           video.thumbnailUrl!,
+                          key: ValueKey(video.thumbnailUrl),
                           fit: BoxFit.cover,
                         ),
                       )

@@ -395,6 +395,7 @@ class _SchedulerDetailsScreenState extends State<SchedulerDetailsScreen> {
                                     borderRadius: BorderRadius.circular(8),
                                     child: Image.network(
                                       video.thumbnailUrl!,
+                                      key: ValueKey(video.thumbnailUrl),
                                       fit: BoxFit.cover,
                                     ),
                                   )
