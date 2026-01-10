@@ -36,9 +36,9 @@ const limiter = rateLimit({
 
 app.use('/api/', limiter);
 
-// Request logging
+// Request logging - show full URL with query params
 app.use((req, res, next) => {
-    console.log(`${req.method} ${req.path} - ${new Date().toISOString()} `);
+    console.log(`${req.method} ${req.originalUrl} - ${new Date().toISOString()} `);
     next();
 });
 
@@ -53,12 +53,18 @@ app.get('/health', (req, res) => {
 
 // Static file serving for thumbnails, audio, and videos
 // Serves files from config.storage.path at /files URL path
+// NOTE: No caching (maxAge: 0) to ensure fresh thumbnails after updates
 app.use('/files', express.static(config.storage.path, {
-    maxAge: '7d',  // Cache for 7 days
-    etag: true,
-    lastModified: true
+    maxAge: 0,  // No caching - thumbnails change frequently
+    etag: false,
+    lastModified: false,
+    setHeaders: (res) => {
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+    }
 }));
-console.log(`[Server] Static files served from: ${config.storage.path} at /files`);
+console.log(`[Server] Static files served from: ${config.storage.path} at /files (no cache)`);
 
 // API Routes
 const authRoutes = require('./routes/auth');
