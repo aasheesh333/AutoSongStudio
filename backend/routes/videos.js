@@ -249,4 +249,71 @@ router.get('/:id/thumbnail-stream', async (req, res) => {
     }
 });
 
+// POST /api/videos/:id/thumbnail - Upload custom thumbnail (base64)
+router.post('/:id/thumbnail', requireAuth, async (req, res) => {
+    try {
+        const video = await VideoModel.findById(req.params.id);
+        if (!video) return res.status(404).json({ error: 'Video not found' });
+
+        const { thumbnailUrl } = req.body;
+        if (!thumbnailUrl) {
+            return res.status(400).json({ error: 'thumbnailUrl required' });
+        }
+
+        // Check if it's a base64 data URL
+        if (thumbnailUrl.startsWith('data:image')) {
+            const matches = thumbnailUrl.match(/^data:image\/(\w+);base64,(.+)$/);
+            if (!matches) {
+                return res.status(400).json({ error: 'Invalid base64 image format' });
+            }
+
+            const extension = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+            const base64Data = matches[2];
+            const buffer = Buffer.from(base64Data, 'base64');
+
+            // Save to thumbnails directory
+            const config = require('../config');
+            const path = require('path');
+            const storageDir = config.storage?.directory || './storage';
+            const thumbFilename = `${req.params.id}.${extension}`;
+            const thumbnailPath = path.join(storageDir, 'thumbnails', thumbFilename);
+
+            // Ensure directory exists
+            const thumbnailDir = path.join(storageDir, 'thumbnails');
+            if (!fs.existsSync(thumbnailDir)) {
+                fs.mkdirSync(thumbnailDir, { recursive: true });
+            }
+
+            // Write file
+            fs.writeFileSync(thumbnailPath, buffer);
+            console.log(`[Videos] Saved custom thumbnail: ${thumbnailPath}`);
+
+            // Update video record
+            const publicThumbnailUrl = `${config.backendUrl}${config.storage.publicUrl}/thumbnails/${thumbFilename}`;
+            await VideoModel.update(req.params.id, {
+                thumbnailPath: thumbnailPath,
+                thumbnailUrl: publicThumbnailUrl
+            });
+
+            res.json({
+                message: 'Thumbnail uploaded successfully',
+                thumbnailUrl: publicThumbnailUrl
+            });
+        } else {
+            // Direct URL - just update the record
+            await VideoModel.update(req.params.id, {
+                thumbnailUrl: thumbnailUrl
+            });
+
+            res.json({
+                message: 'Thumbnail URL updated',
+                thumbnailUrl: thumbnailUrl
+            });
+        }
+    } catch (error) {
+        console.error('[Videos] Thumbnail upload error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;
