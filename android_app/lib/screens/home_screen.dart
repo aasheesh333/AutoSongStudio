@@ -507,10 +507,16 @@ class _VideoCard extends StatelessWidget {
                           builder: (context) {
                             // DEBUG: Print thumbnailUrl to verify it has ?t= param
                             print('[Flutter DEBUG] Video ${video.id} thumbnailUrl: ${video.thumbnailUrl}');
+                            // Force evict any cached version of this base URL (without query params)
+                            final baseUrl = video.thumbnailUrl!.split('?').first;
+                            NetworkImage(baseUrl).evict();
                             return Image.network(
                               video.thumbnailUrl!,
                               key: ValueKey(video.thumbnailUrl),
                               fit: BoxFit.cover,
+                              // Disable caching at the image level
+                              cacheWidth: null,
+                              cacheHeight: null,
                             );
                           },
                         ),

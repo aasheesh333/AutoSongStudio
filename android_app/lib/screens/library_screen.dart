@@ -302,12 +302,19 @@ class _VideoCard extends StatelessWidget {
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(16),
                         ),
-                        child: Image.network(
-                          video.thumbnailUrl!,
-                          key: ValueKey(video.thumbnailUrl),
-                          width: double.infinity,
-                          height: double.infinity,
-                          fit: BoxFit.cover,
+                        child: Builder(
+                          builder: (context) {
+                            // Force evict any cached version of this base URL
+                            final baseUrl = video.thumbnailUrl!.split('?').first;
+                            NetworkImage(baseUrl).evict();
+                            return Image.network(
+                              video.thumbnailUrl!,
+                              key: ValueKey(video.thumbnailUrl),
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                            );
+                          },
                         ),
                       )
                     else
