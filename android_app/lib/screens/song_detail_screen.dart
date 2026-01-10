@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
 import '../models/video.dart';
@@ -251,38 +252,76 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
       return;
     }
 
-    // Request storage permission with proper Android 11+ handling
-    PermissionStatus status;
+    // Request storage permission based on Android version
+    bool permissionGranted = false;
     
-    // For Android 10 and below, use storage permission
-    // For Android 11+, we use Downloads directory which doesn't need permission
-    // But we still request for better compatibility
-    if (await Permission.storage.isGranted) {
-      status = PermissionStatus.granted;
+    // Check Android version and request appropriate permission
+    if (Platform.isAndroid) {
+      final androidInfo = await DeviceInfoPlugin().androidInfo;
+      final sdkInt = androidInfo.version.sdkInt;
+      
+      debugPrint('[Download] Android SDK: $sdkInt');
+      
+      if (sdkInt >= 33) {
+        // Android 13+ (API 33+): Use READ_MEDIA_AUDIO
+        var status = await Permission.audio.status;
+        debugPrint('[Download] Audio permission status: $status');
+        
+        if (!status.isGranted) {
+          status = await Permission.audio.request();
+          debugPrint('[Download] Audio permission after request: $status');
+        }
+        permissionGranted = status.isGranted;
+        
+      } else if (sdkInt >= 30) {
+        // Android 11-12 (API 30-32): Use MANAGE_EXTERNAL_STORAGE or storage
+        var status = await Permission.manageExternalStorage.status;
+        debugPrint('[Download] ManageStorage status: $status');
+        
+        if (!status.isGranted) {
+          status = await Permission.manageExternalStorage.request();
+        }
+        permissionGranted = status.isGranted;
+        
+        // Fallback to storage permission
+        if (!permissionGranted) {
+          status = await Permission.storage.request();
+          permissionGranted = status.isGranted;
+        }
+        
+      } else {
+        // Android 10 and below: Use storage permission
+        var status = await Permission.storage.status;
+        debugPrint('[Download] Storage status: $status');
+        
+        if (!status.isGranted) {
+          status = await Permission.storage.request();
+          debugPrint('[Download] Storage after request: $status');
+        }
+        permissionGranted = status.isGranted;
+      }
     } else {
-      status = await Permission.storage.request();
+      // iOS or other platforms
+      permissionGranted = true;
     }
     
-    // If denied, try audio permission for Android 13+
-    if (!status.isGranted) {
-      status = await Permission.audio.request();
-    }
-    
-    // If still denied, show dialog to open settings
-    if (!status.isGranted && mounted) {
+    // If permission denied, show dialog to open settings
+    if (!permissionGranted && mounted) {
+      debugPrint('[Download] Permission denied, showing settings dialog');
       final openSettings = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
           title: const Text('Storage Permission Required'),
           content: const Text(
-            'To download audio files, please grant storage permission in Settings.',
+            'To download audio files, please grant storage/media permission in Settings.\n\n'
+            'Go to Settings → Permissions → Storage/Files and allow access.',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: const Text('Cancel'),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
               child: const Text('Open Settings'),
             ),
