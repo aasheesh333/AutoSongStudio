@@ -484,8 +484,13 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
       final appState = Provider.of<AppState>(context, listen: false);
       await appState.uploadThumbnail(_video!.id, croppedFile.path);
       
-      // Reload video to get new thumbnail URL
+      // Reload video to get new thumbnail/video URL
       await _loadVideo(_video!.id);
+      
+      // Reinitialize video player with updated video
+      if (_video?.videoUrl != null) {
+        await _initVideoPlayer();
+      }
       
       // Clean up temp cropped file
       if (await croppedFile.exists()) {
@@ -494,7 +499,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Thumbnail updated!'), backgroundColor: AppTheme.success),
+          const SnackBar(content: Text('✅ Music cover updated successfully!'), backgroundColor: AppTheme.success),
         );
       }
     } catch (e) {
