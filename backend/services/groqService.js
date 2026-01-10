@@ -184,36 +184,58 @@ Ending lyrics...
 
         // TITLE PROMPT - Follow user instructions strictly
         if (titlePrompt && titlePrompt.trim()) {
+            // Detect if user specified a character count
+            const titleLengthMatch = titlePrompt.match(/(\d+)\s*(char|charac|character|chars|characters|words)/i);
+            const requestedTitleLength = titleLengthMatch ? parseInt(titleLengthMatch[1]) : null;
+
             userPrompt += `- TITLE: ${titlePrompt}
-  IMPORTANT: Follow the user's exact instruction above.
-  If user specifies a length (e.g., "50 chars"), generate EXACTLY that length.
-  Otherwise, keep it under 99 characters.
-  (ABSOLUTE MAX: 99 chars, not a single character more)\n`;
+  🚨 MANDATORY LENGTH REQUIREMENT:
+  ${requestedTitleLength ? `User wants EXACTLY ${requestedTitleLength} characters. Generate title that is ${requestedTitleLength} characters long (±5 chars allowed).` : 'Generate a title between 80-99 characters.'}
+  - Count every character including spaces and punctuation
+  - If you cannot match the exact length, get as close as possible
+  (ABSOLUTE MAX: 99 chars)\n`;
         } else {
             userPrompt += `- TITLE: Generate a click-worthy, SEO-optimized title (80-99 chars).\n`;
         }
 
         // DESCRIPTION PROMPT - Follow user instructions strictly
         if (descPrompt && descPrompt.trim()) {
+            // Detect if user specified a character count
+            const descLengthMatch = descPrompt.match(/(\d+)\s*(char|charac|character|chars|characters)/i);
+            const requestedDescLength = descLengthMatch ? parseInt(descLengthMatch[1]) : null;
+
             userPrompt += `- DESCRIPTION: ${descPrompt}
-  CRITICAL INSTRUCTIONS:
-  - If user says "include title in description" → ADD the title to description
-  - If user says "include lyrics in description" → ADD full lyrics to description
-  - If user specifies length (e.g., "4000 characters") → Generate EXACTLY that length (±50 chars)
-  - If user mentions hashtags/tags → Include relevant hashtags in description
-  - Follow ALL user specifications EXACTLY
-  (ABSOLUTE MAX: 4999 chars, not a single character more)\n`;
+  🚨 MANDATORY LENGTH REQUIREMENT:
+  ${requestedDescLength ? `User wants EXACTLY ${requestedDescLength} characters. You MUST generate description that is AT LEAST ${requestedDescLength} characters long.` : 'Generate 3000-4000 characters of rich content.'}
+  
+  TO ACHIEVE REQUIRED LENGTH:
+  - Include full song lyrics in the description
+  - Add the song title at the beginning
+  - Write a detailed story/meaning behind the song
+  - Add timestamps for each section
+  - Include popular hashtags (20-30 hashtags)
+  - Add music credits, genre info, mood description
+  - If still short, add related song suggestions
+  
+  - If user says "include title" → ADD the title
+  - If user says "include lyrics" → ADD full lyrics
+  - If user mentions hashtags → Include 20+ hashtags
+  (ABSOLUTE MAX: 4999 chars)\n`;
         } else {
-            userPrompt += `- DESCRIPTION: Write a rich description including: full lyrics, story behind the song, relevant hashtags. Target 3000-4000 chars. (MAX 4999 chars).\n`;
+            userPrompt += `- DESCRIPTION: Write a rich description (3000-4000 chars) including: full lyrics, story behind the song, timestamps, 20+ relevant hashtags. (MAX 4999 chars).\n`;
         }
 
         // TAGS PROMPT - Follow user instructions strictly
         if (tagsPrompt && tagsPrompt.trim()) {
+            // Detect if user specified a count
+            const tagsCountMatch = tagsPrompt.match(/(\d+)\s*(tag|tags)/i);
+            const requestedTagsCount = tagsCountMatch ? parseInt(tagsCountMatch[1]) : null;
+
             userPrompt += `- TAGS: ${tagsPrompt}
-  Follow user's exact specifications for tags.
+  ${requestedTagsCount ? `Generate EXACTLY ${requestedTagsCount} tags as specified.` : 'Generate 20-30 relevant YouTube tags.'}
   (ABSOLUTE MAX: 499 chars total for all tags combined)\n`;
         } else {
-            userPrompt += `- TAGS: Generate 20-30 high-volume YouTube tags relevant to the song/genre.\n`;
+            userPrompt += `- TAGS: Generate 25-30 high-volume YouTube tags relevant to the song/genre.\n`;
         }
 
         userPrompt += `
