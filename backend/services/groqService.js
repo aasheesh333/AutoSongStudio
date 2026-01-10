@@ -114,11 +114,20 @@ CRITICAL RULES - USER PROMPT PRIORITY:
 🟡 NO PROMPT PROVIDED: Generate MAXIMUM length (within limits), highest-quality content:
    - Title: MAX allowed length (90-99 chars), SEO stuffed.
    - Description: Detailed and rich.
-   - Lyrics: Extended structure (Verse-Chorus-Verse-Chorus-Bridge-Chorus-Outro).
+   - Lyrics: MUST use Suno.com format with structure tags.
+
+SUNO LYRICS FORMAT (REQUIRED):
+- Use [Verse 1], [Verse 2] for story/narrative
+- Use [Chorus] for the hook/repeating part
+- Use [Pre-Chorus] for build-up to chorus
+- Use [Bridge] for middle transition
+- Use [Outro] for ending
+- Use [Intro] for soft opening (optional)
+- Each section on new line after tag
 
 OUTPUT FORMAT:
 - Return ONLY valid JSON
-- Lyrics in ${language}
+- Lyrics in ${language} with Suno structure tags in English
 - Title/Description/Tags in ENGLISH (for YouTube SEO)
 - NO AI phrases like "Here's the song" or "As requested"
 - JSON Structure:
@@ -126,7 +135,7 @@ OUTPUT FORMAT:
     "title": "String (Max 99 chars)",
     "description": "String (Max 4999 chars)",
     "tags": ["tag1", "tag2"],
-    "lyrics": "String (CRITICAL: MAX 3000 chars for Suno API)"
+    "lyrics": "String with [Verse], [Chorus], etc. tags (MAX 3000 chars for Suno API)"
   }`;
 
         // 2. Construct the User Prompt (The "Specific Task")
@@ -137,10 +146,34 @@ OUTPUT FORMAT:
         const LYRICS_MAX_CHARS = 3000;
 
         if (lyricsPrompt && lyricsPrompt.trim()) {
-            userPrompt += `[LYRICS INSTRUCTION]: ${lyricsPrompt}\n(Follow this instruction STRICTLY)\n`;
+            userPrompt += `[LYRICS INSTRUCTION]: ${lyricsPrompt}\n(Follow this instruction STRICTLY. Use Suno format with [Verse], [Chorus], etc. tags)\n`;
         } else {
-            userPrompt += `[LYRICS INSTRUCTION]: Write a creative, emotionally powerful song about a theme suitable for ${genresText} music. Use vivid imagery, metaphors, and make it memorable and catchy. Include 2-3 verses, a strong chorus, and optionally a bridge.\n`;
+            userPrompt += `[LYRICS INSTRUCTION]: Write a creative, emotionally powerful song about a theme suitable for ${genresText} music. Use vivid imagery, metaphors, and make it memorable and catchy.\n`;
         }
+
+        userPrompt += `
+⚠️ SUNO FORMAT REQUIRED - Use these exact structure tags:
+[Verse 1]
+First verse lyrics here...
+
+[Pre-Chorus]
+Build-up lyrics (optional)...
+
+[Chorus]
+Catchy hook lyrics here...
+
+[Verse 2]
+Second verse lyrics...
+
+[Bridge]
+Transition lyrics (optional)...
+
+[Chorus]
+Repeat chorus...
+
+[Outro]
+Ending lyrics...
+\n`;
 
         userPrompt += `\n⚠️ CRITICAL LYRICS LIMIT: Lyrics MUST be under ${LYRICS_MAX_CHARS} characters. This is a HARD LIMIT for the Suno music generation API. If lyrics exceed this limit, the song WILL FAIL to generate. Write concise, impactful lyrics.\n`;
 
