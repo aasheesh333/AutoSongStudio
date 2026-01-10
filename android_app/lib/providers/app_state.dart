@@ -370,8 +370,8 @@ class AppState extends ChangeNotifier {
 
   Future<void> uploadThumbnail(String id, String imagePath) async {
     await _api.uploadThumbnail(id, imagePath);
-    // Reload videos to get updated thumbnail URL
-    await loadVideos();
+    // Force refresh videos to update thumbnailUrl in all lists
+    await loadVideos(forceRefresh: true);
   }
 
   // ==================== SETTINGS ====================
