@@ -290,9 +290,9 @@ router.post('/:id/thumbnail', async (req, res) => {
             fs.writeFileSync(thumbnailPath, buffer);
             console.log(`[Videos] Saved custom thumbnail: ${thumbnailPath}`);
 
-            // Update video record with new thumbnail (with cache-busting timestamp)
-            const cacheBuster = Date.now();
-            const publicThumbnailUrl = `${config.backendUrl}${config.storage.publicUrl}/thumbnails/${thumbFilename}?t=${cacheBuster}`;
+            // Update video record with new thumbnail (fixed URL - no timestamp)
+            // Server uses no-cache headers, and file is replaced on disk
+            const publicThumbnailUrl = `${config.backendUrl}${config.storage.publicUrl}/thumbnails/${thumbFilename}`;
             await VideoModel.update(req.params.id, {
                 thumbnailPath: thumbnailPath,
                 thumbnailUrl: publicThumbnailUrl
