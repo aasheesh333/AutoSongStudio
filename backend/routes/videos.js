@@ -275,8 +275,8 @@ router.post('/:id/thumbnail', async (req, res) => {
             const base64Data = matches[2];
             const buffer = Buffer.from(base64Data, 'base64');
 
-            // Save to thumbnails directory
-            const storageDir = config.storage?.directory || './storage';
+            // Save to thumbnails directory - MUST use same path as videoGenerationWorker!
+            const storageDir = config.storage.path;
             const thumbFilename = `${req.params.id}.${extension}`;
             const thumbnailPath = path.join(storageDir, 'thumbnails', thumbFilename);
 
