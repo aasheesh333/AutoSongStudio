@@ -15,6 +15,7 @@ import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
 import '../models/video.dart';
 import '../services/api_service.dart';
+import 'image_crop_screen.dart';
 
 class SongDetailScreen extends StatefulWidget {
   const SongDetailScreen({super.key});
@@ -462,18 +463,34 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
 
   Future<void> _pickAndUploadThumbnail() async {
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 1280, maxHeight: 720);
+    final image = await picker.pickImage(source: ImageSource.gallery);
     
     if (image == null) return;
+    
+    // Open crop screen with 16:9 ratio
+    final File originalFile = File(image.path);
+    final File? croppedFile = await Navigator.push<File>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ImageCropScreen(imageFile: originalFile),
+      ),
+    );
+    
+    if (croppedFile == null) return; // User cancelled cropping
     
     setState(() => _isUploadingThumbnail = true);
     
     try {
       final appState = Provider.of<AppState>(context, listen: false);
-      await appState.uploadThumbnail(_video!.id, image.path);
+      await appState.uploadThumbnail(_video!.id, croppedFile.path);
       
       // Reload video to get new thumbnail URL
       await _loadVideo(_video!.id);
+      
+      // Clean up temp cropped file
+      if (await croppedFile.exists()) {
+        await croppedFile.delete();
+      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
