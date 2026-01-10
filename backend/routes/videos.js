@@ -272,8 +272,6 @@ router.post('/:id/thumbnail', async (req, res) => {
             const buffer = Buffer.from(base64Data, 'base64');
 
             // Save to thumbnails directory
-            const config = require('../config');
-            const path = require('path');
             const storageDir = config.storage?.directory || './storage';
             const thumbFilename = `${req.params.id}.${extension}`;
             const thumbnailPath = path.join(storageDir, 'thumbnails', thumbFilename);
@@ -288,17 +286,68 @@ router.post('/:id/thumbnail', async (req, res) => {
             fs.writeFileSync(thumbnailPath, buffer);
             console.log(`[Videos] Saved custom thumbnail: ${thumbnailPath}`);
 
-            // Update video record
+            // Update video record with new thumbnail
             const publicThumbnailUrl = `${config.backendUrl}${config.storage.publicUrl}/thumbnails/${thumbFilename}`;
             await VideoModel.update(req.params.id, {
                 thumbnailPath: thumbnailPath,
                 thumbnailUrl: publicThumbnailUrl
             });
 
-            res.json({
-                message: 'Thumbnail uploaded successfully',
-                thumbnailUrl: publicThumbnailUrl
-            });
+            // === REGENERATE VIDEO with FFmpeg ===
+            // Check if audio exists to regenerate video
+            if (video.audioPath && fs.existsSync(video.audioPath)) {
+                console.log(`[Videos] Regenerating video with new thumbnail...`);
+
+                try {
+                    const ffmpegService = require('../services/ffmpegService');
+
+                    // Output path for new video
+                    const videosDir = path.join(storageDir, 'videos');
+                    if (!fs.existsSync(videosDir)) {
+                        fs.mkdirSync(videosDir, { recursive: true });
+                    }
+                    const videoFilename = `${req.params.id}.mp4`;
+                    const videoPath = path.join(videosDir, videoFilename);
+
+                    // Delete old video if exists
+                    if (video.videoPath && fs.existsSync(video.videoPath)) {
+                        fs.unlinkSync(video.videoPath);
+                        console.log(`[Videos] Deleted old video: ${video.videoPath}`);
+                    }
+
+                    // Create new video with FFmpeg
+                    await ffmpegService.createVideo(video.audioPath, thumbnailPath, videoPath);
+
+                    // Update video record with new video path
+                    const publicVideoUrl = `${config.backendUrl}${config.storage.publicUrl}/videos/${videoFilename}`;
+                    await VideoModel.update(req.params.id, {
+                        videoPath: videoPath,
+                        videoUrl: publicVideoUrl
+                    });
+
+                    console.log(`[Videos] ✅ Video regenerated: ${videoPath}`);
+
+                    res.json({
+                        message: 'Thumbnail uploaded and video regenerated!',
+                        thumbnailUrl: publicThumbnailUrl,
+                        videoUrl: publicVideoUrl
+                    });
+                } catch (ffmpegError) {
+                    console.error('[Videos] FFmpeg error:', ffmpegError.message);
+                    // Still return success for thumbnail, just note video failed
+                    res.json({
+                        message: 'Thumbnail uploaded, but video regeneration failed',
+                        thumbnailUrl: publicThumbnailUrl,
+                        error: ffmpegError.message
+                    });
+                }
+            } else {
+                // No audio available, just return thumbnail success
+                res.json({
+                    message: 'Thumbnail uploaded successfully',
+                    thumbnailUrl: publicThumbnailUrl
+                });
+            }
         } else {
             // Direct URL - just update the record
             await VideoModel.update(req.params.id, {
