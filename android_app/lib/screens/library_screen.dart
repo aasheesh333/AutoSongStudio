@@ -376,7 +376,7 @@ class _VideoCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            DateFormat('MMM d').format(video.scheduledPublishAt!),
+                            DateFormat('MMM d').format(video.scheduledPublishAt!.toLocal()),
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: AppTheme.textSecondary,
                             ),

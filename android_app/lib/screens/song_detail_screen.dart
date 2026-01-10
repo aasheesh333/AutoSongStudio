@@ -751,7 +751,7 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
                                 ),
                                 if (_video!.scheduledPublishAt != null)
                                   Text(
-                                    'Scheduled: ${DateFormat('MMM d, h:mm a').format(_video!.scheduledPublishAt!)}',
+                                    'Scheduled: ${DateFormat('MMM d, h:mm a').format(_video!.scheduledPublishAt!.toLocal())}',
                                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: _getStatusColor(_video!.status),
                                     ),

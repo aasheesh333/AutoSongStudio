@@ -466,7 +466,7 @@ class _VideoCard extends StatelessWidget {
         statusText = 'Ready';
         statusColor = AppTheme.warning;
         statusIcon = Icons.play_circle_outline;
-        final scheduledTime = video.scheduledPublishAt ?? video.createdAt;
+        final scheduledTime = (video.scheduledPublishAt ?? video.createdAt).toLocal();
         final now = DateTime.now();
         final isToday = scheduledTime.year == now.year &&
             scheduledTime.month == now.month &&
