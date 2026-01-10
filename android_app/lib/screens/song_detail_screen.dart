@@ -484,6 +484,10 @@ class _SongDetailScreenState extends State<SongDetailScreen> {
       final appState = Provider.of<AppState>(context, listen: false);
       await appState.uploadThumbnail(_video!.id, croppedFile.path);
       
+      // Clear Flutter's image cache to force reload new thumbnails
+      imageCache.clear();
+      imageCache.clearLiveImages();
+      
       // Reload video to get new thumbnail/video URL
       await _loadVideo(_video!.id);
       
