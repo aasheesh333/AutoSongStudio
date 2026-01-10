@@ -40,6 +40,10 @@ router.get('/', async (req, res) => {
             videos = docs.map(d => ({ ...d.toObject(), id: d._id.toString() }));
         }
         console.log(`[Videos API] userId=${userId}, channelId=${channelId || 'none'}, returned=${videos.length} videos`);
+        // DEBUG: Log first video thumbnailUrl to verify cache-busting
+        if (videos.length > 0) {
+            console.log(`[Videos API DEBUG] First video thumbnailUrl: ${videos[0].thumbnailUrl}`);
+        }
         res.json({ videos });
     } catch (error) {
         res.status(500).json({ error: error.message });
