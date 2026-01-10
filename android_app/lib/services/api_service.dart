@@ -200,7 +200,13 @@ class ApiService {
       },
     );
     
-    final videos = (response.data['videos'] as List)
+    // DEBUG: Print raw thumbnailUrl from API before parsing
+    final rawVideos = response.data['videos'] as List;
+    if (rawVideos.isNotEmpty) {
+      print('[ApiService DEBUG] Raw first video thumbnailUrl from API: ${rawVideos[0]['thumbnailUrl']}');
+    }
+    
+    final videos = rawVideos
         .map((json) => Video.fromJson(json))
         .toList();
     return videos;
