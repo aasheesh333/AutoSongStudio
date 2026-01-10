@@ -183,17 +183,28 @@ Ending lyrics...
         userPrompt += `[METADATA INSTRUCTION]:\n`;
 
         // TITLE PROMPT - Follow user instructions strictly
+        // MAX LIMITS (NEVER EXCEED)
+        const TITLE_MAX = 99;
+        const DESC_MAX = 4999;
+        const TAGS_MAX = 499;
+        const LYRICS_MAX = 3000;
+
         if (titlePrompt && titlePrompt.trim()) {
             // Detect if user specified a character count
             const titleLengthMatch = titlePrompt.match(/(\d+)\s*(char|charac|character|chars|characters|words)/i);
-            const requestedTitleLength = titleLengthMatch ? parseInt(titleLengthMatch[1]) : null;
+            let requestedTitleLength = titleLengthMatch ? parseInt(titleLengthMatch[1]) : null;
+
+            // Cap at maximum
+            if (requestedTitleLength && requestedTitleLength > TITLE_MAX) {
+                console.log(`[Groq] User requested ${requestedTitleLength} chars for title, capping at ${TITLE_MAX}`);
+                requestedTitleLength = TITLE_MAX;
+            }
 
             userPrompt += `- TITLE: ${titlePrompt}
-  🚨 MANDATORY LENGTH REQUIREMENT:
-  ${requestedTitleLength ? `User wants EXACTLY ${requestedTitleLength} characters. Generate title that is ${requestedTitleLength} characters long (±5 chars allowed).` : 'Generate a title between 80-99 characters.'}
+  🚨 LENGTH REQUIREMENT:
+  ${requestedTitleLength ? `Target: ${requestedTitleLength} characters (capped at maximum ${TITLE_MAX}).` : 'Generate a title between 80-99 characters.'}
   - Count every character including spaces and punctuation
-  - If you cannot match the exact length, get as close as possible
-  (ABSOLUTE MAX: 99 chars)\n`;
+  (ABSOLUTE MAX: ${TITLE_MAX} chars - NEVER EXCEED)\n`;
         } else {
             userPrompt += `- TITLE: Generate a click-worthy, SEO-optimized title (80-99 chars).\n`;
         }
@@ -202,11 +213,17 @@ Ending lyrics...
         if (descPrompt && descPrompt.trim()) {
             // Detect if user specified a character count
             const descLengthMatch = descPrompt.match(/(\d+)\s*(char|charac|character|chars|characters)/i);
-            const requestedDescLength = descLengthMatch ? parseInt(descLengthMatch[1]) : null;
+            let requestedDescLength = descLengthMatch ? parseInt(descLengthMatch[1]) : null;
+
+            // Cap at maximum
+            if (requestedDescLength && requestedDescLength > DESC_MAX) {
+                console.log(`[Groq] User requested ${requestedDescLength} chars for description, capping at ${DESC_MAX}`);
+                requestedDescLength = DESC_MAX;
+            }
 
             userPrompt += `- DESCRIPTION: ${descPrompt}
-  🚨 MANDATORY LENGTH REQUIREMENT:
-  ${requestedDescLength ? `User wants EXACTLY ${requestedDescLength} characters. You MUST generate description that is AT LEAST ${requestedDescLength} characters long.` : 'Generate 3000-4000 characters of rich content.'}
+  🚨 LENGTH REQUIREMENT:
+  ${requestedDescLength ? `Target: ${requestedDescLength} characters (capped at maximum ${DESC_MAX}).` : 'Generate 3000-4000 characters of rich content.'}
   
   TO ACHIEVE REQUIRED LENGTH:
   - Include full song lyrics in the description
@@ -215,12 +232,11 @@ Ending lyrics...
   - Add timestamps for each section
   - Include popular hashtags (20-30 hashtags)
   - Add music credits, genre info, mood description
-  - If still short, add related song suggestions
   
   - If user says "include title" → ADD the title
   - If user says "include lyrics" → ADD full lyrics
   - If user mentions hashtags → Include 20+ hashtags
-  (ABSOLUTE MAX: 4999 chars)\n`;
+  (ABSOLUTE MAX: ${DESC_MAX} chars - NEVER EXCEED)\n`;
         } else {
             userPrompt += `- DESCRIPTION: Write a rich description (3000-4000 chars) including: full lyrics, story behind the song, timestamps, 20+ relevant hashtags. (MAX 4999 chars).\n`;
         }
@@ -229,13 +245,14 @@ Ending lyrics...
         if (tagsPrompt && tagsPrompt.trim()) {
             // Detect if user specified a count
             const tagsCountMatch = tagsPrompt.match(/(\d+)\s*(tag|tags)/i);
-            const requestedTagsCount = tagsCountMatch ? parseInt(tagsCountMatch[1]) : null;
+            let requestedTagsCount = tagsCountMatch ? parseInt(tagsCountMatch[1]) : null;
 
+            // No cap for count, but chars are limited
             userPrompt += `- TAGS: ${tagsPrompt}
   ${requestedTagsCount ? `Generate EXACTLY ${requestedTagsCount} tags as specified.` : 'Generate 20-30 relevant YouTube tags.'}
-  (ABSOLUTE MAX: 499 chars total for all tags combined)\n`;
+  (ABSOLUTE MAX: ${TAGS_MAX} chars total for all tags combined - NEVER EXCEED)\n`;
         } else {
-            userPrompt += `- TAGS: Generate 25-30 high-volume YouTube tags relevant to the song/genre.\n`;
+            userPrompt += `- TAGS: Generate 25-30 high-volume YouTube tags relevant to the song/genre. (MAX ${TAGS_MAX} chars total)\n`;
         }
 
         userPrompt += `
