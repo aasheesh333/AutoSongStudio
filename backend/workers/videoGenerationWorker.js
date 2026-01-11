@@ -79,7 +79,21 @@ class VideoGenerationWorker {
                 }
             }
 
-            // Create Status Record
+            // CRITICAL: Check credits BEFORE creating video record
+            // This prevents failed videos from being created when credits are exhausted
+            if (user.plan !== 'pro') {
+                if (!user.sunoApiKey) {
+                    throw new Error('Suno API key required. Please add your API key in Settings.');
+                }
+                const usage = await SunoKeyUsageModel.getUsage(user.sunoApiKey);
+                if (usage.usageCount >= 4) {
+                    console.log(`[Worker] ⚠️ API Key limit reached for user ${scheduler.userId}. Usage: ${usage.usageCount}/4`);
+                    await SchedulerModel.deactivateAllForUser(scheduler.userId, 'API key limit reached. Please change your API key in Settings.');
+                    throw new Error('API Key limit reached. Please change your API key in Settings.');
+                }
+            }
+
+            // Now safe to create video record - credits are available
             const videoData = await VideoModel.createVideo({
                 schedulerId: scheduler.id,
                 userId: scheduler.userId,
@@ -89,13 +103,6 @@ class VideoGenerationWorker {
             });
             videoId = videoData.id;
             console.log(`[Worker] Created video: ${videoId}`);
-
-            // Usage Check (Pre-flight)
-            if (user.plan !== 'pro') {
-                if (!user.sunoApiKey) throw new Error('Suno API key required');
-                const usage = await SunoKeyUsageModel.getUsage(user.sunoApiKey);
-                if (usage.usageCount >= 4) throw new Error('API Key Limit Reached (Pre-check)');
-            }
 
             // 2. Generate Content (Groq) - Fast
             const content = await groqService.generateAllContent({
